@@ -22,7 +22,10 @@ This repository currently holds the product and engineering specifications. No c
 | 7 | [Compliance & risk](docs/07-COMPLIANCE-AND-RISK.md) | Stock Token constraints, eligibility, legal review items |
 | 8 | [Delivery plan](docs/08-DELIVERY-PLAN.md) | Milestones, team, testing, launch checklist |
 | 9 | [Open questions](docs/09-OPEN-QUESTIONS.md) | Decisions still needed before build |
+| 10 | [Build plan](docs/10-BUILD-PLAN.md) | Phases and the Claude Code prompt for each; how to start |
 | – | [Glossary](docs/GLOSSARY.md) | Terms used across the docs |
+
+`CLAUDE.md` holds the standing rules every build session reads first.
 
 Machine-readable pieces:
 
