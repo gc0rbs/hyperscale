@@ -1,0 +1,49 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: foundry-rs/foundry-toolchain@v1
+        with: { version: stable }
+      - name: Interfaces match specs
+        run: bash contracts/script/check-interfaces.sh
+      - name: Format
+        run: cd contracts && forge fmt --check
+      - name: Build
+        run: cd contracts && forge build --sizes
+      - name: Test
+        run: cd contracts && FOUNDRY_PROFILE=ci forge test -vv
+      - name: Gas snapshot
+        run: cd contracts && forge snapshot --check || (echo "::warning::gas snapshot changed; run forge snapshot" && exit 1)
+
+  ts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.33.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @stock-miner/app --filter @stock-miner/indexer --filter @stock-miner/ops check
+
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: cd sim && uv sync --extra dev && uv run --extra dev ruff check . && uv run --extra dev pytest -q

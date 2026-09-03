@@ -1,0 +1,29 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 10_000
+via_ir = false
+fs_permissions = [{ access = "read", path = "./" }, { access = "read", path = "../specs" }]
+gas_reports = ["SeasonMine", "RedemptionVault", "StockFragments", "SeasonFactory"]
+
+[profile.default.fuzz]
+runs = 512
+
+[profile.default.invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+
+[profile.ci]
+fuzz = { runs = 4096 }
+invariant = { runs = 1024, depth = 128 }
+
+[fmt]
+line_length = 110
+tab_width = 4
+bracket_spacing = false

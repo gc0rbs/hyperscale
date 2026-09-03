@@ -1,0 +1,9 @@
+{
+  "name": "@stock-miner/contracts",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "check": "bash script/check-interfaces.sh && forge fmt --check && forge build && forge test",
+    "snapshot": "forge snapshot --check"
+  }
+}

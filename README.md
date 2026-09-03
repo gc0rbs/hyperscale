@@ -9,6 +9,29 @@ found the mine closes permanently; stakes are returned and fragments are redeeme
 
 This repository currently holds the product and engineering specifications. No code yet.
 
+## Developing
+
+pnpm workspace with five packages. Every package has a `check` script; the root runs them all.
+
+```
+bash .claude/hooks/session-start.sh   # fresh machine: Foundry, pnpm install, uv sync (idempotent)
+pnpm -r check                          # lint + typecheck + tests for every package
+cd contracts && forge test             # unit / fuzz / invariant / scenario
+cd sim && uv run --extra dev pytest    # simulation tests
+pnpm --filter @stock-miner/app dev     # Next.js dev server
+```
+
+| Package | Stack | Check |
+|---|---|---|
+| `contracts/` | Foundry, OpenZeppelin 5, solc 0.8.28 | interfaces match `specs/contracts/`, fmt, build, test |
+| `sim/` | Python 3.11, uv, numpy, hypothesis | ruff, pytest |
+| `app/` | Next.js 15, React 19, wagmi/viem, Tailwind; tokens from `specs/design/tokens.css` | eslint, tsc, vitest |
+| `indexer/` | Ponder (stub until the ABI exists) | tsc |
+| `ops/` | TypeScript scripts: difficulty sizing, season planning | tsc, vitest |
+
+CI (`.github/workflows/ci.yml`) runs the same three groups. The build follows `docs/10-BUILD-PLAN.md`;
+`docs/BUILD-LOG.md` is the hand-off between sessions.
+
 ## Documents
 
 | # | Doc | What it answers |

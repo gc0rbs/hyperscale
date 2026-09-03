@@ -1,0 +1,8 @@
+{
+  "name": "@stock-miner/sim",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "check": "uv run --extra dev ruff check . && uv run --extra dev pytest -q"
+  }
+}
