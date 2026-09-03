@@ -32,3 +32,22 @@ ships without being rebuilt properly.
 | `12-play-fragments-to-token.webp` | Heap of amber shards → one coin with a cyan rim | Explainer image for "1,000,000 fragments = 1 Stock Token". |
 
 Generated 2026-09-03. Raw 1k PNGs are on the Higgsfield account; the repo keeps web-size versions.
+
+## Brand applications (second set)
+
+Twelve more, generated with the lighter display weight in the prompts.
+
+| File | What it shows | Notes |
+|---|---|---|
+| `13-brand-app-icon.svg` | The mark as an app icon at three sizes, plus mono and cyan variants | Vector; usable as a starting point for the real icon. |
+| `14-brand-landing-hero.webp` | Landing hero: "Mine Stock Fragments", subline, one amber CTA, tick bar, phone | Structure matches the landing-page anatomy in the app spec. The phone screen content is placeholder. |
+| `15-brand-share-card.webp` | "Block 3 found · AAPLx · 3.410 mined" square share card | Closest to shippable. The ticker should be set as "AAPLx" not "AAPLX". |
+| `16-brand-season-recap.webp` | "The mine ran 9h 41m" with four stat tiles and a full tick bar | The post-season share card. Amber headline is a nice exception to the ember-means-energy rule; decide whether to allow it for headlines. |
+| `17-brand-billboard.webp` | Night billboard with the tagline, amber stripe, tick bar, mark | Shows the identity holds at 10 metres. |
+| `18-brand-apparel.webp` | Hoodie, cap, tee with the tick-bar stripe | The tick bar as a stripe is the most ownable apparel device. |
+| `19-brand-community-banner.webp` | Wide banner: mark, wordmark, "Season 1 · Pre-open", countdown | Discord / X header. |
+| `20-brand-splash.webp` | Splash screen: mark, thin cyan loading line, "Reading the mine" | The app's first frame. |
+| `21-brand-badges.svg` | Six achievement pictograms in chamfered squares | Vector. Candidate v1.1 feature; the icon style is the point. |
+| `22-brand-email-header.webp` | "Block 2 found. Claim your TSLAx." email header | Transactional email template. |
+| `23-brand-ticker-tiles.svg` | Four ticker tiles 01–04 as a brand pattern | Vector. Reusable for announcements and the pre-open screen. |
+| `24-brand-collector-card.webp` | Metal collector card: Season 1, Rig #0142, stake, 4/4 blocks | A physical or NFT-style season memento; v1.1 material. |

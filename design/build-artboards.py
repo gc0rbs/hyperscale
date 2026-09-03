@@ -524,6 +524,20 @@ CONCEPTS = [
     ("07-ui-burn-sheet.webp", "Purchase sheet", "what you get, what burns, heat cost, one amber confirm"),
     ("08-ui-block-found-notification.webp", "Push notification", "blocks are found on no schedule, so this is a core surface"),
   ]),
+  ("Brand applications", [
+    ("13-brand-app-icon.svg", "App icon", "the mark at three sizes plus mono and cyan"),
+    ("14-brand-landing-hero.webp", "Landing hero", "one headline, one CTA, the tick bar, a phone"),
+    ("15-brand-share-card.webp", "Share card", "\u201cBlock 3 found\u201d: closest to shippable"),
+    ("16-brand-season-recap.webp", "Season recap", "the post-season share card with four stats"),
+    ("17-brand-billboard.webp", "Billboard", "the identity at ten metres"),
+    ("18-brand-apparel.webp", "Apparel", "the tick bar as a stripe is the ownable device"),
+    ("19-brand-community-banner.webp", "Community banner", "Discord / X header with countdown"),
+    ("20-brand-splash.webp", "Splash screen", "mark, thin cyan loading line, \u201cReading the mine\u201d"),
+    ("21-brand-badges.svg", "Achievement badges", "six pictograms in chamfered squares; v1.1"),
+    ("22-brand-email-header.webp", "Email header", "\u201cBlock 2 found. Claim your TSLAx.\u201d"),
+    ("23-brand-ticker-tiles.svg", "Ticker tiles", "01\u201304 as a reusable pattern"),
+    ("24-brand-collector-card.webp", "Collector card", "season memento; v1.1"),
+  ]),
   ("Gameplay", [
     ("09-play-rig-overclock.webp", "Overclocking", "amber slots, heat gauge toward red, shards rising"),
     ("10-play-rig-tiers.webp", "Upgrade tiers", "GPU = more slots, cooling = cyan fins"),
@@ -541,7 +555,7 @@ def concept_section(title, items):
       <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">{title}</div><div class="hair" style="flex:1;"></div></div>
       <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;">{tiles}</div>
     </div>'''
-concepts_body = f'''<div style="width:1440px;min-height:2000px;padding:40px;box-sizing:border-box;" class="mine col">
+concepts_body = f'''<div style="width:1440px;min-height:3400px;padding:40px;box-sizing:border-box;" class="mine col">
   <div class="row" style="justify-content:space-between;align-items:flex-end;">
     <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp disp-xl" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
     <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated concepts to react to, not assets. Notes on each in design/concepts/README.md.</div>
@@ -563,7 +577,7 @@ canvas = {
     {"file": "Redeem.dc.html",     "title": "6 · Redeem (shell)","x": 1540, "y": 2080, "w": 1440, "h": 940, "page": "page-1"},
     {"file": "AltTerminal.dc.html","title": "Alt A · All-dark terminal", "x": 0,   "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "AltArcade.dc.html",  "title": "Alt B · Bright arcade",     "x": 820, "y": 0, "w": 720, "h": 480, "page": "page-2"},
-    {"file": "Concepts.dc.html",   "title": "Concepts",                  "x": 0,   "y": 0, "w": 1440, "h": 2000, "page": "page-3"},
+    {"file": "Concepts.dc.html",   "title": "Concepts",                  "x": 0,   "y": 0, "w": 1440, "h": 3400, "page": "page-3"},
   ],
   "annotations": [
     {"id": "direction", "x": 0, "y": -200, "w": 620, "page": "page-1",
@@ -571,7 +585,7 @@ canvas = {
     {"id": "numbers", "x": 3080, "y": 1040, "w": 390, "page": "page-1",
      "text": "Numbers match the worked example in docs/03 §7: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."},
     {"id": "concepts", "x": 0, "y": -150, "w": 720, "page": "page-3",
-     "text": "Concepts: twelve generated images of the brand, possible UI and gameplay, made with the token palette as a constraint. Two are real forks to decide on: the light block card inside the dark mine (05) and the isometric rig room as an alternative to the dashboard (06)."},
+     "text": "Concepts: twenty-four generated images of the brand, possible UI and gameplay, made with the token palette as a constraint. Two are real forks to decide on: the light block card inside the dark mine (05) and the isometric rig room as an alternative to the dashboard (06)."},
     {"id": "alts", "x": 0, "y": -150, "w": 700, "page": "page-2",
      "text": "Two directions considered and not taken. Kept so the choice is visible. Say the word and either becomes the main direction; the tokens file is the only thing that changes."},
   ],
