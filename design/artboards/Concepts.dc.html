@@ -7,12 +7,13 @@
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
     body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
     a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
     .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
-    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:700; line-height:1.05; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }
+    .disp-xl { font-weight:500; }
     .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
     .col { display:flex; flex-direction:column; gap:12px; }
     .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
@@ -50,7 +51,7 @@
 </helmet>
 <div style="width:1440px;min-height:2000px;padding:40px;box-sizing:border-box;" class="mine col">
   <div class="row" style="justify-content:space-between;align-items:flex-end;">
-    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
+    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp disp-xl" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
     <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated concepts to react to, not assets. Notes on each in design/concepts/README.md.</div>
   </div>
   <div class="col" style="gap:16px;padding-top:36px;">

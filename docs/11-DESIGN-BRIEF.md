@@ -14,7 +14,7 @@ Two surfaces, deliberately different, sharing one accent pair and one type syste
 | Feel | calm, trustworthy, light. The stock-token prize has to feel legitimate. | dark, dense, mechanical. Coal-black panels, thin hairlines, amber energy. |
 | Background | warm off-white `--shell-bg` | coal `--mine-bg`, panels one step lighter |
 | Motion | almost none; state changes only | the only place the product moves: hash stream, progress bar, counters, heat |
-| Type | IBM Plex Sans | Barlow Condensed for headings, IBM Plex Mono for every number |
+| Type | IBM Plex Sans | Barlow Condensed 600 for headings, IBM Plex Mono for every number |
 
 The seam is intentional: leaving the mine for the claim page should feel like walking out of the pit
 into the office.
@@ -58,7 +58,7 @@ visibly overclock (06) as an alternative to the dashboard mockups.
 
 | Role | Face | Sizes | Notes |
 |---|---|---|---|
-| Display (mine headings, block names, the big ETA) | Barlow Condensed 600/700, uppercase, tracking +0.02em | 32 / 48 / 72 | Fallback Arial Narrow |
+| Display (mine headings, block names, the big ETA) | Barlow Condensed 600, uppercase, tracking +0.02em; 500 at 48px and above | 32 / 48 / 72 | Never 700: the condensed face gets heavy fast. Fallback Arial Narrow |
 | UI | IBM Plex Sans 400/500/600 | 13 / 15 / 18 | Fallback Helvetica |
 | Data (every number, address, hash) | IBM Plex Mono 400/500, tabular figures | 12 / 13 / 15 / 22 / 32 | Never proportional digits for anything that ticks |
 

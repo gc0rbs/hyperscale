@@ -7,12 +7,13 @@
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
     body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
     a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
     .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
-    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:700; line-height:1.05; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }
+    .disp-xl { font-weight:500; }
     .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
     .col { display:flex; flex-direction:column; gap:12px; }
     .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
@@ -57,8 +58,8 @@
       <div class="mono muted" style="font-size:12px;">parameters published 2026-09-01 · hash 0x3e1a…</div></div>
       <div class="panel col" style="gap:24px;padding:32px;">
         <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:24px;">
-          <div class="col" style="gap:4px;"><div class="label">Mine opens in</div><div class="disp" style="font-size:72px;">14h 22m</div><div class="muted" style="font-size:13px;">Rigs activated now start working the moment it opens.</div></div>
-          <div class="col" style="gap:4px;"><div class="label">If it opened now, the season would run</div><div class="disp est" style="font-size:72px;">~1d 6h</div><div class="muted" style="font-size:13px;">estimate from 6.4M RIG-eq staked so far · sized for ~24h at 10M H</div></div>
+          <div class="col" style="gap:4px;"><div class="label">Mine opens in</div><div class="disp disp-xl" style="font-size:72px;">14h 22m</div><div class="muted" style="font-size:13px;">Rigs activated now start working the moment it opens.</div></div>
+          <div class="col" style="gap:4px;"><div class="label">If it opened now, the season would run</div><div class="disp disp-xl est" style="font-size:72px;">~1d 6h</div><div class="muted" style="font-size:13px;">estimate from 6.4M RIG-eq staked so far · sized for ~24h at 10M H</div></div>
         </div>
         <div class="hair"></div>
         <div class="col" style="gap:0;">

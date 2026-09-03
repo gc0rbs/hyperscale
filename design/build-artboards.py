@@ -10,13 +10,14 @@ os.makedirs(OUT, exist_ok=True)
 css = open(os.path.join(ROOT, "specs/design/tokens.css")).read().split("@media")[0]
 T = {m.group(1): m.group(2).strip() for m in re.finditer(r"--([a-z0-9-]+):\s*([^;]+);", css)}
 
-FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">'
+FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">'
 
 BASE_CSS = f"""
     body {{ margin:0; font-family:{T['font-ui']}; color:{T['shell-fg']}; background:{T['shell-bg']}; -webkit-font-smoothing:antialiased; }}
     a {{ color:{T['signal-deep']}; text-decoration:none; }} a:hover {{ color:{T['ember-deep']}; }}
     .mono {{ font-family:{T['font-data']}; font-variant-numeric:tabular-nums; }}
-    .disp {{ font-family:{T['font-display']}; text-transform:uppercase; letter-spacing:0.02em; font-weight:700; line-height:1.05; }}
+    .disp {{ font-family:{T['font-display']}; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }}
+    .disp-xl {{ font-weight:500; }}
     .row {{ display:flex; flex-direction:row; align-items:center; gap:12px; }}
     .col {{ display:flex; flex-direction:column; gap:12px; }}
     .nav {{ height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:{T['shell-card']}; color:{T['shell-fg']}; border-bottom:1px solid {T['shell-line']}; }}
@@ -185,7 +186,7 @@ def block_card(n, ticker, pool, pool_usd, pct, shift, next_shift, block_found, c
       <div class="row" style="justify-content:space-between;align-items:flex-end;">
         <div class="col" style="gap:4px;">
           <div class="label">Block {n} of 4</div>
-          <div class="row" style="gap:14px;align-items:baseline;"><div class="disp" style="font-size:48px;">{ticker}</div><div class="mono muted" style="font-size:14px;">pool {pool} ≈ {pool_usd}</div></div>
+          <div class="row" style="gap:14px;align-items:baseline;"><div class="disp disp-xl" style="font-size:48px;">{ticker}</div><div class="mono muted" style="font-size:14px;">pool {pool} ≈ {pool_usd}</div></div>
         </div>
         <div class="col" style="gap:4px;align-items:flex-end;"><div class="label">Shift</div><div class="mono" style="font-size:22px;">{shift}<span class="muted"> / 8</span></div></div>
       </div>
@@ -265,12 +266,12 @@ long_body = f'''<div style="width:1440px;min-height:940px;" class="mine col">
       {mine_header(1, "Mine open · long haul", "block 2 pays 0.0000278 frag per hash-second")}
       <div class="panel col" style="gap:24px;padding:32px;">
         <div class="row" style="justify-content:space-between;align-items:flex-end;">
-          <div class="col" style="gap:4px;"><div class="label">Block 2 of 4</div><div class="row" style="gap:14px;align-items:baseline;"><div class="disp" style="font-size:48px;">TSLAx</div><div class="mono muted" style="font-size:14px;">pool 6.0 TSLAx ≈ $2,100</div></div></div>
+          <div class="col" style="gap:4px;"><div class="label">Block 2 of 4</div><div class="row" style="gap:14px;align-items:baseline;"><div class="disp disp-xl" style="font-size:48px;">TSLAx</div><div class="mono muted" style="font-size:14px;">pool 6.0 TSLAx ≈ $2,100</div></div></div>
           <div class="col" style="gap:4px;align-items:flex-end;"><div class="label">Shift</div><div class="mono" style="font-size:22px;">2<span class="muted"> / 8</span></div></div>
         </div>
         {progress(21, 2)}
         <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:24px;align-items:end;">
-          <div class="col" style="gap:4px;"><div class="label">Block found</div><div class="disp est" style="font-size:72px;">1d 14h</div><div class="muted" style="font-size:13px;">estimate at the current 1.2M H total. Anyone joining or overclocking changes it.</div></div>
+          <div class="col" style="gap:4px;"><div class="label">Block found</div><div class="disp disp-xl est" style="font-size:72px;">1d 14h</div><div class="muted" style="font-size:13px;">estimate at the current 1.2M H total. Anyone joining or overclocking changes it.</div></div>
           <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px;">
             {stat("Next shift", "4h 50m", "est.", est=True)}
             {stat("Mine closes", "6d 2h", "est.", est=True)}
@@ -313,8 +314,8 @@ preopen_body = f'''<div style="width:1440px;min-height:940px;" class="mine col">
       {mine_header(1, "Pre-open", "parameters published 2026-09-01 · hash 0x3e1a…")}
       <div class="panel col" style="gap:24px;padding:32px;">
         <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:24px;">
-          <div class="col" style="gap:4px;"><div class="label">Mine opens in</div><div class="disp" style="font-size:72px;">14h 22m</div><div class="muted" style="font-size:13px;">Rigs activated now start working the moment it opens.</div></div>
-          <div class="col" style="gap:4px;"><div class="label">If it opened now, the season would run</div><div class="disp est" style="font-size:72px;">~1d 6h</div><div class="muted" style="font-size:13px;">estimate from 6.4M RIG-eq staked so far · sized for ~24h at 10M H</div></div>
+          <div class="col" style="gap:4px;"><div class="label">Mine opens in</div><div class="disp disp-xl" style="font-size:72px;">14h 22m</div><div class="muted" style="font-size:13px;">Rigs activated now start working the moment it opens.</div></div>
+          <div class="col" style="gap:4px;"><div class="label">If it opened now, the season would run</div><div class="disp disp-xl est" style="font-size:72px;">~1d 6h</div><div class="muted" style="font-size:13px;">estimate from 6.4M RIG-eq staked so far · sized for ~24h at 10M H</div></div>
         </div>
         <div class="hair"></div>
         <div class="col" style="gap:0;">
@@ -351,7 +352,7 @@ closed_body = f'''<div style="width:1440px;min-height:940px;" class="mine col">
     <div class="col" style="gap:20px;">
       {mine_header(1, "Mine sealed", "block 4 found 11 min ago")}
       <div class="panel col" style="gap:24px;padding:32px;border-color:{T["mine-dim"]};">
-        <div class="row" style="gap:16px;">{ico("lock", T["mine-muted"], 28)}<div class="disp" style="font-size:48px;color:{T["mine-muted"]};">This mine has closed permanently</div></div>
+        <div class="row" style="gap:16px;">{ico("lock", T["mine-muted"], 28)}<div class="disp disp-xl" style="font-size:48px;color:{T["mine-muted"]};">This mine has closed permanently</div></div>
         <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:16px;">
           {stat("Season ran", "9h 41m", "sized for ~24h")}
           {stat("Peak total hash", "24.1M H")}
@@ -398,7 +399,7 @@ redeem_body = f'''<div style="width:1440px;min-height:940px;background:{T["shell
   {nav("Redeem")}
   <div style="padding:40px 32px;display:grid;grid-template-columns:minmax(0, 2fr) minmax(0, 1fr);gap:32px;max-width:1240px;margin:0 auto;width:100%;box-sizing:border-box;">
     <div class="col" style="gap:24px;">
-      <div class="col" style="gap:6px;"><div class="disp" style="font-size:48px;">Redeem fragments</div><div style="font-size:15px;color:{T["shell-muted"]};">Season 1 closed. One million fragments of a block equal one whole Stock Token of that block's stock.</div></div>
+      <div class="col" style="gap:6px;"><div class="disp disp-xl" style="font-size:48px;">Redeem fragments</div><div style="font-size:15px;color:{T["shell-muted"]};">Season 1 closed. One million fragments of a block equal one whole Stock Token of that block's stock.</div></div>
       <div class="card col" style="gap:0;padding:8px 24px;">
         {bal_row("NVDAx", "2,051,339", "2.051", "$353")}{bal_row("TSLAx", "2,141,338", "2.141", "$749")}{bal_row("AAPLx", "3,410,002", "3.410", "$784")}{bal_row("SPYx", "1,522,906", "1.523", "$1,167", last=True)}
       </div>
@@ -426,7 +427,7 @@ mobile_body = f'''<div style="width:390px;min-height:844px;" class="mine col">
   <div class="col" style="padding:16px;gap:14px;">
     <div class="row" style="justify-content:space-between;"><div class="row" style="gap:10px;"><div class="disp" style="font-size:18px;">Season 1</div><div class="chip" style="color:{T["signal"]};border-color:{T["signal-deep"]};">Open</div></div><div class="mono muted" style="font-size:12px;">19.5M H</div></div>
     <div class="panel col" style="gap:14px;padding:16px;">
-      <div class="row" style="justify-content:space-between;align-items:flex-end;"><div class="col" style="gap:2px;"><div class="label">Block 2 of 4</div><div class="disp" style="font-size:36px;">TSLAx</div></div><div class="col" style="gap:2px;align-items:flex-end;"><div class="label">Shift</div><div class="mono" style="font-size:20px;">5<span class="muted"> / 8</span></div></div></div>
+      <div class="row" style="justify-content:space-between;align-items:flex-end;"><div class="col" style="gap:2px;"><div class="label">Block 2 of 4</div><div class="disp disp-xl" style="font-size:36px;">TSLAx</div></div><div class="col" style="gap:2px;align-items:flex-end;"><div class="label">Shift</div><div class="mono" style="font-size:20px;">5<span class="muted"> / 8</span></div></div></div>
       {progress(58, 5)}
       <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px;">
         <div class="col" style="gap:2px;"><div class="label" style="font-size:10px;">Next shift</div><div class="mono est" style="font-size:16px;">8 min</div></div>
@@ -542,7 +543,7 @@ def concept_section(title, items):
     </div>'''
 concepts_body = f'''<div style="width:1440px;min-height:2000px;padding:40px;box-sizing:border-box;" class="mine col">
   <div class="row" style="justify-content:space-between;align-items:flex-end;">
-    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
+    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp disp-xl" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
     <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated concepts to react to, not assets. Notes on each in design/concepts/README.md.</div>
   </div>
   {"".join(concept_section(t, items) for t, items in CONCEPTS)}
