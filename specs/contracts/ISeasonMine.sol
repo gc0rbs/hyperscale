@@ -1,32 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/// @title ISeasonMine – one 24-hour virtual mine (see docs/05-TECH-SPEC-CONTRACTS.md)
+/// @title ISeasonMine – one progress-based virtual mine (see docs/05-TECH-SPEC-CONTRACTS.md)
+/// @notice Blocks are found by accumulated work (hash-seconds), not by time. Duration is an outcome.
 interface ISeasonMine {
     enum Phase { Funding, PreOpen, Open, Closed, Cancelled }
     enum Asset { RIG, LP }
 
     struct SeasonParams {
         address rig;
-        address lpToken;             // address(0) disables LP staking
-        uint256 lpWeightPerToken;    // 1e18-scaled RIG-equivalent per LP token, bonus included
+        address lpToken;              // address(0) disables LP staking
+        uint256 lpWeightPerToken;     // 1e18-scaled RIG-equivalent per LP token, bonus included
         uint64  openTime;
-        uint32  blockSeconds;        // 21600
-        uint8   blocks;              // 4
-        address[] stocks;            // stocks[b]
-        uint256[] poolTokens;        // 1e18-scaled Stock Token amount per block
-        uint256 fragPerToken;        // 1_000_000
+        uint32  maxDurationSeconds;   // fail-safe close after openTime; not a schedule
+        uint8   blocks;               // 4
+        uint8   shiftsPerBlock;       // 8
+        address[] stocks;             // stocks[b]
+        uint256[] poolTokens;         // 1e18-scaled Stock Token amount per block
+        uint256[] difficulty;         // hash-seconds per block; divisible by shiftsPerBlock
+        uint256 fragPerToken;         // 1_000_000
         uint256 minStakeWeight;
         uint16  activationFeeBps;
+        uint16  earlyExitFeeBps;
         uint16[6] gpuMultBps;
         uint16[5] gpuCostBps;
         uint16[3] coolCostBps;
         uint8[4]  heatPerOc;
-        uint8[4]  coolPerBlock;
+        uint8[4]  coolPerShift;
         uint8   heatMax;
         uint16  ocCostBps;
         uint16  ocBoostBps;
-        uint8   maxOcPerBlock;
+        uint8   maxActiveOc;
+        uint8   ocShiftSpan;          // overclocks expire at end of shift (current + span)
         uint32  redemptionDays;
         uint16  cashOutFeeBps;
         uint32  pauseGraceSeconds;
@@ -41,38 +46,64 @@ interface ISeasonMine {
         uint8   gpuTier;
         uint8   coolingTier;
         uint8   heat;
-        uint8   ocCount;
-        uint8   lastBlock;
+        uint8   activeOc;
+        uint16  ocExpiryShift;
+        uint16  lastShift;
+        uint256 lastX;            // X-time (seconds × 1e18) of last settlement
         uint128 baseHash;
         uint128 ocHash;
-        uint256 debt;
-        uint128[4] earned;   // 1e18-scaled fragments, settled, unclaimed
+        uint128[4] earned;        // 1e18-scaled fragments, settled, unclaimed
         uint8   claimedMask;
-        bool    withdrawn;
+        bool    inactive;
+    }
+
+    struct Progress {
+        uint8   blockIdx;         // current block (== blocks when closed)
+        uint16  shift;            // global shift index
+        uint256 workInShift;
+        uint256 shiftDifficulty;
+        uint256 workRemainingInBlock;
+        uint256 workRemainingInSeason;
+        uint256 closeX;           // 0 while open
+    }
+
+    struct Eta {
+        uint256 toShiftEnd;       // seconds at current totalHash; 0 if idle or closed
+        uint256 toBlockFound;
+        uint256 toClose;
+        bool    idle;             // totalHash == 0
     }
 
     // ── errors ──────────────────────────────────────────────────────────────
     error WrongPhase(Phase current);
     error NotOwner();
+    error RigInactive();
     error BelowMinStake();
     error LpDisabled();
     error MaxTier();
     error HeatTooHigh();
     error MaxOverclocks();
-    error NotUnlocked(uint8 blockIdx);
+    error NotFound(uint8 blockIdx);
     error AlreadyClaimed(uint8 blockIdx);
-    error AlreadyWithdrawn();
+    error PoolExhausted(uint8 blockIdx);
     error PauseGraceNotElapsed();
 
     // ── events ──────────────────────────────────────────────────────────────
     event RigActivated(uint256 indexed rigId, address indexed owner, Asset asset, uint256 amount, uint256 weight, uint256 fee);
     event GpuUpgraded(uint256 indexed rigId, uint8 tier, uint256 burned);
     event CoolingUpgraded(uint256 indexed rigId, uint8 tier, uint256 burned);
-    event Overclocked(uint256 indexed rigId, uint8 blockIdx, uint8 ocCount, uint8 heat, uint256 burned);
-    event BlockSettled(uint8 indexed blockIdx, uint256 accAtEnd, uint256 totalHashAfter);
+    event Overclocked(uint256 indexed rigId, uint16 shift, uint8 activeOc, uint16 expiryShift, uint8 heat, uint256 burned);
+    event ShiftEnded(uint16 indexed shift, uint256 endX, uint256 totalHashAfter);
+    event BlockFound(uint8 indexed blockIdx, uint256 endX);
+    event ClosedByFailSafe(uint16 shift);
     event Claimed(uint256 indexed rigId, uint8 indexed blockIdx, uint256 fragments);
+    event Exited(uint256 indexed rigId, uint256 returned, uint256 fee);
     event Withdrawn(uint256 indexed rigId, uint256 amount);
     event SeasonCancelled(uint64 at);
+
+    // ── permissionless maintenance ──────────────────────────────────────────
+    /// @notice Advances shift/block discovery up to now. Anyone may call; correctness never depends on it.
+    function poke() external;
 
     // ── player actions ──────────────────────────────────────────────────────
     function activate(Asset asset, uint256 amount) external returns (uint256 rigId);
@@ -81,6 +112,8 @@ interface ISeasonMine {
     function overclock(uint256 rigId) external;
     function claim(uint256 rigId, uint8 blockIdx) external returns (uint256 fragments);
     function claimAll(uint256 rigId) external returns (uint256[4] memory fragments);
+    /// @notice Leave while the mine is open: deposit minus earlyExitFee returned, earned fragments kept.
+    function exit(uint256 rigId) external;
     function withdraw(uint256 rigId) external;
     function emergencyWithdraw(uint256 rigId) external;
 
@@ -91,15 +124,16 @@ interface ISeasonMine {
     // ── views ───────────────────────────────────────────────────────────────
     function params() external view returns (SeasonParams memory);
     function phase() external view returns (Phase);
-    function currentBlock() external view returns (uint8);
-    function blockEnd(uint8 blockIdx) external view returns (uint64);
-    function closeTime() external view returns (uint64);
+    function progress() external view returns (Progress memory);
+    function eta() external view returns (Eta memory);
+    function shift() external view returns (uint16);
+    function shiftEndX(uint16 shiftIdx) external view returns (uint256);
+    function blockEndX(uint8 blockIdx) external view returns (uint256);
+    function closeX() external view returns (uint256);
+    function lastX() external view returns (uint256);
     function totalHash() external view returns (uint256);
-    function totalOcHash() external view returns (uint256);
-    function accPerHash() external view returns (uint256);
-    function accAtEnd(uint8 blockIdx) external view returns (uint256);
-    function lastUpdate() external view returns (uint64);
-    function ratePerSecond(uint8 blockIdx) external view returns (uint256);
+    function ocExpiring(uint16 shiftIdx) external view returns (uint256);
+    function ratePerWork(uint8 blockIdx) external view returns (uint256);
     function mintedFragments(uint8 blockIdx) external view returns (uint256);
     function rigs(uint256 rigId) external view returns (Rig memory);
     function rigHash(uint256 rigId) external view returns (uint256);

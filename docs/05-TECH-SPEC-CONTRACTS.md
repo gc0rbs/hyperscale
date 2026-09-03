@@ -7,9 +7,10 @@ immutable; a new season is a new deployment.
 
 ```
                  ┌──────────────┐  deploys per season  ┌────────────────────┐
-                 │ SeasonFactory│ ───────────────────▶ │ SeasonMine (core)  │◀── players
+                 │ SeasonFactory│ ───────────────────▶ │ SeasonMine (core)  │◀── players, poke()
                  └──────────────┘                      │  rigs, hashrate,   │
-                        │                              │  accounting, claim │
+                        │                              │  work accounting,  │
+                        │                              │  claim, exit       │
                         │                              └───────┬────────────┘
                         │                                      │ mint on claim
                         ▼                                      ▼
@@ -30,226 +31,272 @@ immutable; a new season is a new deployment.
 | Contract | Lifetime | Role |
 |---|---|---|
 | `RIG` | permanent | ERC-20, burnable, permit |
-| `SeasonFactory` | permanent | deploys `SeasonMine` + `StockFragments` + `RedemptionVault` for a season from a `SeasonParams` struct; registry of seasons |
-| `SeasonMine` | one season | staking, upgrades, hashrate, emission accounting, claims, withdrawals |
-| `StockFragments` | one season | ERC-1155; id = index of the stock in the season; minter = `SeasonMine`; burner = `RedemptionVault`; transfers disabled in v1 except mint/burn |
+| `SeasonFactory` | permanent | deploys `SeasonMine` + `StockFragments` + `RedemptionVault` from a `SeasonParams` struct; registry |
+| `SeasonMine` | one season | staking, upgrades, hashrate, work accounting, block discovery, claims, exit, withdrawals |
+| `StockFragments` | one season | ERC-1155; id = block index; minter = `SeasonMine`; burner = `RedemptionVault`; transfers disabled in v1 |
 | `RedemptionVault` | one season | holds Stock Tokens + USDC; `redeem`, `cashOut`, `sweep` |
-| `IEligibility` | pluggable | `isEligible(address) → bool` for in-kind redemption (doc 07) |
+| `IEligibility` | pluggable | `isEligible(address)` for in-kind redemption (doc 07) |
 | `IPriceOracle` | pluggable | USD price of each underlying for cash-out |
 
-## 2. Season parameters
+## 2. Units
 
-`SeasonParams` (immutable in `SeasonMine`; JSON twin in `specs/params/season-default.json`):
+| Quantity | Unit | Notes |
+|---|---|---|
+| hash | 1e18 = one RIG of stake weight at 1.0x | `uint128` |
+| time | seconds; boundary timestamps stored as **X-time** = seconds × 1e18 (`uint256`) | exact fractional boundaries |
+| work | hash × seconds (1e18-scaled hash × whole seconds, or hash × X-time / 1e18) | `uint256`, ~1e36 max |
+| fragments | internal 1e18-scaled ("fragment wei"); whole units at claim | |
+| rate | `ratePerWork[b] = S_b × 1e18 / D_b`, fragment-wei per unit work, extra 1e18 for precision | |
+
+## 3. Season parameters
 
 ```solidity
 struct SeasonParams {
-    address rig;                 // RIG token
-    address lpToken;             // address(0) disables LP staking
-    uint256 lpWeightPerToken;    // 1e18-scaled RIG-equivalent per LP token, incl. bonus
-    uint64  openTime;            // T0
-    uint32  blockSeconds;        // 21600
-    uint8   blocks;              // 4
-    address[] stocks;            // stocks[b] for block b
-    uint256[] poolTokens;        // 1e18-scaled Stock Token amount per block
-    uint256 fragPerToken;        // 1_000_000
+    address rig;
+    address lpToken;              // address(0) disables LP staking
+    uint256 lpWeightPerToken;     // 1e18-scaled RIG-equivalent per LP token, bonus included
+    uint64  openTime;
+    uint32  maxDurationSeconds;   // fail-safe close after openTime
+    uint8   blocks;               // 4
+    uint8   shiftsPerBlock;       // 8
+    address[] stocks;             // stocks[b]
+    uint256[] poolTokens;         // 1e18-scaled Stock Token amount per block
+    uint256[] difficulty;         // hash-seconds per block
+    uint256 fragPerToken;         // 1_000_000
     uint256 minStakeWeight;
     uint16  activationFeeBps;
+    uint16  earlyExitFeeBps;
     uint16[6] gpuMultBps;
     uint16[5] gpuCostBps;
     uint16[3] coolCostBps;
     uint8[4]  heatPerOc;
-    uint8[4]  coolPerBlock;
+    uint8[4]  coolPerShift;
     uint8   heatMax;
     uint16  ocCostBps;
     uint16  ocBoostBps;
-    uint8   maxOcPerBlock;
+    uint8   maxActiveOc;
+    uint8   ocShiftSpan;          // 1: expires at end of (currentShift + 1)
     uint32  redemptionDays;
     uint16  cashOutFeeBps;
-    uint32  pauseGraceSeconds;   // e.g. 6h: paused longer than this → season cancelled
+    uint32  pauseGraceSeconds;
     address treasury;
 }
 ```
 
 Phase is derived: `Funding` until the vault reports funded; `PreOpen` until `openTime`; `Open` until
-`openTime + blocks × blockSeconds`; `Closed` afterwards. `SeasonMine.phase()` is a view.
+`closeX != 0`; `Closed` afterwards. `SeasonMine.phase()` is a view.
 
-## 3. Storage
+## 4. Storage
 
 ```solidity
 struct Rig {
     address owner;
-    uint8   asset;        // 0 = RIG, 1 = LP
-    uint128 amount;       // deposit, returned at close
-    uint128 weight;       // W
+    uint8   asset;            // 0 = RIG, 1 = LP
+    uint128 amount;           // deposit
+    uint128 weight;           // W
     uint8   gpuTier;
     uint8   coolingTier;
     uint8   heat;
-    uint8   ocCount;      // overclocks in `lastBlock`
-    uint8   lastBlock;    // block index at last settlement (0..blocks-1; blocks == "closed")
-    uint128 baseHash;     // W × gpuMult
-    uint128 ocHash;       // extra hash from overclocks this block
-    uint256 debt;         // accPerHash[lastBlock] at last settlement (1e18 scaled)
-    uint128[4] earned;    // settled fragments per block, not yet claimed (1e18 scaled)
-    uint8   claimedMask;  // bit b set once block b claimed
-    bool    withdrawn;
+    uint8   activeOc;
+    uint16  ocExpiryShift;    // global shift index at whose end the overclocks expire
+    uint16  lastShift;        // global shift index at last settlement
+    uint256 lastX;            // X-time of last settlement
+    uint128 baseHash;         // W × gpuMult
+    uint128 ocHash;           // baseHash × ocBoost × activeOc
+    uint128[4] earned;        // settled, unclaimed fragment-wei per block
+    uint8   claimedMask;
+    bool    inactive;         // exited or withdrawn
 }
 
 // global
-uint256 public totalHash;            // Σ (baseHash + ocHash) of active rigs
-uint256 public totalOcHash;          // Σ ocHash, removed at the next boundary
-uint256 public accPerHash;           // accumulator for the current block, resets at boundary
-uint256[4] public accAtEnd;          // final accumulator value of each finished block
-uint8   public currentBlock;         // last block that has been settled into
-uint64  public lastUpdate;           // timestamp of last global settlement
-uint256[4] public ratePerSecond;     // poolTokens[b] × fragPerToken / blockSeconds, 1e18 scaled
-uint256[4] public mintedFragments;   // for the invariant mintedFragments[b] ≤ pool supply
+uint16  public shift;                 // current global shift index, 0 .. blocks*shiftsPerBlock-1; == total when closed
+uint256 public workInShift;           // work accumulated in the current shift
+uint256 public lastX;                 // X-time of last global settlement (≥ openTime × 1e18)
+uint256 public totalHash;             // Σ (baseHash + ocHash) over active rigs
+mapping(uint16 => uint256) public ocExpiring;   // hash to remove at the end of shift k
+mapping(uint16 => uint256) public shiftEndX;    // X-time at which shift k ended (0 = not yet)
+uint256 public closeX;                // X-time of close (0 while open)
+uint256[4] public ratePerWork;
+uint256[4] public mintedFragments;
 ```
 
-## 4. Accounting math
+`shiftDifficulty(k) = difficulty[k / shiftsPerBlock] / shiftsPerBlock`. `blockOf(k) = k / shiftsPerBlock`.
+Block *b* is found when shift `(b+1) × shiftsPerBlock − 1` ends; `blockEndX(b)` is that shift's `shiftEndX`.
 
-Standard reward-per-share, with two extensions: (a) the accumulator is **per block** so each block can
-be claimed independently and hashrate changes at boundaries are handled; (b) overclock hash is tracked
-separately so it can be removed at boundaries without touching each rig.
+## 5. Accounting math
 
-### 4.1 Global settlement `_updateGlobal()`
+Because each rig is paid a fixed rate per unit of its own work, there is **no reward-per-share
+accumulator**. Global settlement only has to discover *when* shift boundaries happen; rig settlement is
+then pure arithmetic over stored boundary timestamps.
 
-Called at the start of every state-changing function.
+### 5.1 Global settlement `_updateGlobal()` (also exposed as `poke()`)
 
 ```
-t_now = min(block.timestamp, closeTime)
-while lastUpdate < t_now:
-    b        = currentBlock
-    b_end    = openTime + (b+1) × blockSeconds
-    t_to     = min(t_now, b_end)
-    if totalHash > 0:
-        accPerHash += ratePerSecond[b] × (t_to − lastUpdate) × 1e18 / totalHash
-    lastUpdate = t_to
-    if t_to == b_end:                       # crossing a boundary
-        accAtEnd[b] = accPerHash
-        totalHash  -= totalOcHash           # every overclock expires
-        totalOcHash = 0
-        accPerHash  = 0
-        currentBlock = b + 1
-        if currentBlock == blocks: break    # closed; no further emission
+if closeX != 0 or block.timestamp < openTime: return
+nowX = block.timestamp × 1e18
+deadlineX = (openTime + maxDurationSeconds) × 1e18
+if nowX > deadlineX: nowX = deadlineX
+while lastX < nowX:
+    if totalHash == 0:                          # mine idle: no work, no progress
+        lastX = nowX; break
+    remaining = shiftDifficulty(shift) − workInShift
+    span      = remaining × 1e18 / totalHash    # X-seconds until this shift ends at current hash
+    if lastX + span > nowX:                     # shift does not end in this window
+        workInShift += totalHash × (nowX − lastX) / 1e18
+        lastX = nowX
+        break
+    # shift ends at exactly lastX + span
+    endX = lastX + span
+    shiftEndX[shift] = endX
+    workInShift = 0
+    lastX = endX
+    totalHash −= ocExpiring[shift]              # every overclock scheduled for this shift expires
+    shift += 1
+    emit ShiftEnded(shift − 1, endX, totalHash)
+    if shift % shiftsPerBlock == 0: emit BlockFound(blockOf(shift − 1), endX)
+    if shift == blocks × shiftsPerBlock:        # block 4 found
+        closeX = endX; break
+if closeX == 0 and nowX == deadlineX:           # fail-safe
+    closeX = deadlineX
+    emit ClosedByFailSafe(shift)
 ```
 
-Before `openTime` nothing accrues (`lastUpdate` is initialised to `openTime`). The loop runs at most
-4 iterations ever, and at most once per boundary in practice.
+Rounding: `span` floors, so the recorded boundary can be at most `1/1e18` s early and the shift's real
+work at most `totalHash / 1e18` short of its difficulty. That dust is never paid out and never carried;
+the invariant `minted ≤ pool` holds strictly.
 
-When `totalHash == 0` the accumulator does not advance for that interval, so those fragments are never
-minted (FR-M3).
+The loop runs once per shift boundary crossed since the last transaction. Worst case is all 32 shifts
+in one call (nobody transacted for an entire season). Ops calls `poke()` at least once per expected
+shift; the app also calls it opportunistically. Gas per iteration ≈ 2 cold SSTOREs + arithmetic.
 
-### 4.2 Rig settlement `_settleRig(rigId)`
+### 5.2 Rig settlement `_settleRig(rigId)`
+
+Called (after `_updateGlobal`) at the start of every rig function. Pays the rig for `[rig.lastX, nowX]`
+where `nowX = min(block.timestamp × 1e18, closeX or ∞)`.
 
 ```
 r = rigs[rigId]
-if r.lastBlock == currentBlock:
-    r.earned[currentBlock] += (accPerHash − r.debt) × (r.baseHash + r.ocHash) / 1e18
-else:
-    # block in which the rig was last settled: finish it with its overclock
-    r.earned[r.lastBlock] += (accAtEnd[r.lastBlock] − r.debt) × (r.baseHash + r.ocHash) / 1e18
-    # intermediate finished blocks: base hash only, accumulator started at 0
-    for b in r.lastBlock+1 .. currentBlock−1:
-        r.earned[b] += accAtEnd[b] × r.baseHash / 1e18
-    # current (unfinished) block, if still open
-    if currentBlock < blocks:
-        r.earned[currentBlock] += accPerHash × r.baseHash / 1e18
-    # boundary effects on the rig
-    boundaries = currentBlock − r.lastBlock
-    r.heat     = max(0, r.heat − coolPerBlock[r.coolingTier] × boundaries)
-    r.ocHash   = 0
-    r.ocCount  = 0
-    r.lastBlock = currentBlock
-r.debt = accPerHash
+fromX = r.lastX
+toX   = closeX != 0 ? min(nowX, closeX) : nowX
+
+# 1. base hash, block by block (≤ 4 iterations)
+for b in blockOf(r.lastShift) .. blockOf(shift):
+    startX = b == 0 ? openTime×1e18 : shiftEndX[b×shiftsPerBlock − 1]
+    endX   = blockEndX(b) != 0 ? blockEndX(b) : toX
+    lo = max(fromX, startX); hi = min(toX, endX)
+    if hi > lo: r.earned[b] += mulDiv(r.baseHash × (hi − lo) / 1e18, ratePerWork[b], 1e18)
+
+# 2. overclock hash, until its expiry shift ended (or now)
+if r.ocHash > 0:
+    ocEndX = shiftEndX[r.ocExpiryShift] != 0 ? shiftEndX[r.ocExpiryShift] : toX
+    for the same blocks, with hi = min(hi, ocEndX):
+        r.earned[b] += mulDiv(r.ocHash × (hi − lo) / 1e18, ratePerWork[b], 1e18)
+    if shiftEndX[r.ocExpiryShift] != 0:         # expired
+        r.ocHash = 0; r.activeOc = 0            # (global totalHash already reduced via ocExpiring)
+
+# 3. heat decay: one step per shift boundary crossed
+crossed = shift − r.lastShift
+r.heat  = crossed × coolPerShift[r.coolingTier] >= r.heat ? 0 : r.heat − crossed × coolPerShift[r.coolingTier]
+r.lastShift = shift
+r.lastX = toX
 ```
 
-Multiplications are `mulDiv` (OZ `Math.mulDiv`) to avoid overflow. Per-rig loops are bounded by 4.
+`mintedFragments[b]` is increased at claim and checked against `poolTokens[b] × fragPerToken`.
 
-### 4.3 Invariants (fuzz/invariant tests)
+### 5.3 Invariants (fuzz / invariant tests)
 
-1. `Σ_rigs earned[b] + Σ_rigs claimed[b] ≤ poolTokens[b] × fragPerToken` for every b, always.
-2. `totalHash == Σ_active_rigs (baseHash + ocHash)` after every transaction.
-3. `totalOcHash == Σ_active_rigs ocHash` after every transaction.
-4. A rig's `earned[b]` is non-decreasing and independent of *when* it settles (settling twice gives the
-   same result as settling once).
-5. After close: `SeasonMine` RIG + LP balance equals Σ un-withdrawn deposits (fees already forwarded).
-6. `heat ≤ heatMax` always; `ocCount ≤ maxOcPerBlock` always.
+1. `Σ_rigs (earned[b] + claimed[b]) ≤ poolTokens[b] × fragPerToken × 1e18` for every *b*, always.
+2. `totalHash == Σ_active_rigs (baseHash + ocHash_if_not_expired)` after every transaction.
+3. `Σ_k ocExpiring[k] for k ≥ shift == Σ_active_rigs ocHash_if_not_expired`.
+4. A rig's `earned[b]` is independent of *when* or how often it settles.
+5. For a found block, `Σ_rigs work in block b == difficulty[b]` up to the documented dust.
+6. Shift boundaries are monotone and `shiftEndX[k] ≤ shiftEndX[k+1]`.
+7. `heat ≤ heatMax`; `activeOc ≤ maxActiveOc`.
+8. After close: contract RIG + LP balance equals Σ un-withdrawn deposits of active rigs (fees forwarded).
+9. `closeX != 0` implies no rig's `earned` changes afterwards.
 
-## 5. External functions (see `ISeasonMine.sol`)
+## 6. External functions (see `ISeasonMine.sol`)
 
 | Function | Phase | Effect |
 |---|---|---|
-| `activate(asset, amount)` | PreOpen, Open | `transferFrom` deposit; compute `W`; charge fee (RIG `transferFrom` to treasury); create rig with `baseHash = W`, `debt = accPerHash`; `totalHash += W`. In PreOpen `lastUpdate == openTime` and the settlement loop is a no-op, so the hash is counted but nothing accrues until `T0`. Emits `RigActivated`. |
-| `upgradeGpu(rigId)` | PreOpen, Open | burn `W × gpuCostBps[tier]`; `newBase = W × gpuMultBps[tier+1]`; adjust `totalHash` by `newBase − baseHash`; if `ocCount > 0`, recompute `ocHash = newBase × ocBoost × ocCount` and adjust `totalOcHash`/`totalHash` accordingly. |
-| `upgradeCooling(rigId)` | PreOpen, Open | burn; `coolingTier++`. No hash change. |
-| `overclock(rigId)` | Open | checks heat/ocCount; burn `W × ocCostBps`; `heat += heatPerOc`; `ocCount++`; `delta = baseHash × ocBoostBps / 1e4`; `ocHash += delta`; `totalOcHash += delta`; `totalHash += delta`. |
-| `claim(rigId, b)` / `claimAll(rigId)` | after block b end | settle; mint `earned[b] / 1e18` fragments of id `b` to owner; zero `earned[b]`; set mask. |
-| `withdraw(rigId)` | Closed | settle; `totalHash −= hash` (no-op economically after close); transfer deposit back; `withdrawn = true`. |
-| `emergencyWithdraw(rigId)` | paused > grace | return deposit; forfeits unclaimed; season flagged cancelled; vault `sweep` enabled early. |
-| views | any | `phase()`, `rigHash(rigId)`, `pending(rigId, b)` (settled + unsettled, simulated), `blockInfo(b)`, `params()` |
+| `poke()` | any | `_updateGlobal()` only. Public, permissionless. |
+| `activate(asset, amount)` | PreOpen, Open | `transferFrom` deposit; `W`; fee to treasury; rig with `baseHash = W`, `lastX = max(nowX, openTime×1e18)`, `lastShift = shift`; `totalHash += W`. |
+| `upgradeGpu(rigId)` | PreOpen, Open | burn `W × gpuCostBps[tier]`; `newBase = W × gpuMultBps[tier+1]`; adjust `totalHash`; if `ocHash > 0`, recompute `ocHash` and move the delta in `ocExpiring[ocExpiryShift]`. |
+| `upgradeCooling(rigId)` | PreOpen, Open | burn; `coolingTier++`. |
+| `overclock(rigId)` | Open | require `activeOc < maxActiveOc` and `heat + heatPerOc ≤ heatMax`; burn `W × ocCostBps`; `heat += …`; `activeOc++`; `newOc = baseHash × ocBoostBps × activeOc / 1e4`; move existing `ocHash` out of `ocExpiring[old]`; `ocExpiryShift = shift + ocShiftSpan`; `ocExpiring[new] += newOc`; `totalHash += newOc − oldOc`; `ocHash = newOc`. |
+| `claim(rigId, b)` / `claimAll(rigId)` | block found or closed | settle; `frag = earned[b] / 1e18`; check `mintedFragments[b] + frag ≤ supply`; mint id `b`; zero `earned[b]`. |
+| `exit(rigId)` | Open | settle; remove `baseHash + ocHash` from `totalHash` and `ocHash` from its `ocExpiring` bucket; fee `amount × earlyExitFeeBps` to treasury; return remainder; `inactive = true`. Earned stays claimable. |
+| `withdraw(rigId)` | Closed | settle; return full deposit; `inactive = true`. |
+| `emergencyWithdraw(rigId)` | paused > grace | return deposit; forfeits unclaimed; season cancelled; vault `sweep` enabled early. |
+| views | any | `phase()`, `rigHash(rigId)`, `pending(rigId, b)` (simulated), `progress()` (block, shift, workInShift, remaining), `eta()` (seconds to next shift/block/close at current `totalHash`, 0 if idle), `params()` |
 
-Permission: `activate` is by `msg.sender`; every other rig function requires `rigs[rigId].owner == msg.sender`.
+Permission: `activate` is by `msg.sender`; other rig functions require `rigs[rigId].owner == msg.sender`.
 
-## 6. StockFragments (ERC-1155)
+## 7. StockFragments (ERC-1155)
 
-- `mint(to, id, amount)` only by `SeasonMine`.
-- `burn(from, id, amount)` only by `RedemptionVault`.
-- `_update` reverts for transfers where `from != 0 && to != 0` while `transfersEnabled == false`.
-  `transfersEnabled` is immutable per season (set false for v1). If a later season enables it, this is
-  the only line that changes.
+- `mint(to, id, amount)` only by `SeasonMine`; `burn(from, id, amount)` only by `RedemptionVault`.
+- `_update` reverts for transfers where `from != 0 && to != 0` while `transfersEnabled == false`
+  (immutable per season; false in v1).
 - `uri(id)` returns season metadata (stock symbol, underlying address, `fragPerToken`).
 
-## 7. RedemptionVault
+## 8. RedemptionVault
 
 ```
-fund()                      operator; pulls poolTokens[b] of stocks[b] for each b, and the USDC reserve;
-                            sets funded = true; SeasonMine reads this to leave Funding phase.
-redeem(id, fragments)       require eligibility.isEligible(msg.sender);
-                            tokens = fragments × 1e18 / fragPerToken; burn fragments; transfer stock.
-cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]); usdc = tokens × price × (1 − fee);
-                            require reserve ≥ usdc; burn; transfer USDC; fee stays in vault.
-sweep()                     after close + redemptionDays (or cancelled): send all balances to treasury.
+fund(usdcReserve)           operator; pulls poolTokens[b] of stocks[b] for each b, and USDC; funded = true.
+redeem(id, fragments)       require eligibility.isEligible(msg.sender); require mine closed;
+                            tokens = fragments × 1e18 / fragPerToken; burn; transfer stock.
+cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 1h); usdc = tokens × price × (1 − fee);
+                            require reserve ≥ usdc; burn; transfer USDC.
+sweep()                     after closeX + redemptionDays, or if cancelled: send all balances to treasury.
 ```
 
-Eligibility adapters planned (doc 07): `OpenEligibility` (everyone), `MerkleEligibility` (allowlist
-root), `TokenHookEligibility` (calls the Stock Token's own transfer-restriction check via `staticcall`).
+Redemption opens at close (not per block) so the vault never has to reason about which blocks are
+found; the mine is the source of truth for claims, the vault only sees fragments.
 
-## 8. Security considerations
+Eligibility adapters (doc 07): `OpenEligibility`, `MerkleEligibility`, `TokenHookEligibility`.
+
+## 9. Security considerations
 
 | Concern | Handling |
 |---|---|
-| Reentrancy | `nonReentrant` on all state-changing entry points; checks-effects-interactions; RIG/LP are known tokens (no fee-on-transfer), Stock Tokens may have hooks → vault uses pull pattern and OZ `SafeERC20`. |
-| Timestamp manipulation | Sequencer controls `block.timestamp` within bounds; 6-hour blocks and 1e18-precision make second-level drift immaterial. `closeTime` is enforced with `min()`, so a late settlement can never over-emit. |
-| Rounding | Accumulator 1e18-scaled; claims round down; dust stays unminted. Invariant 1 tested with fuzzing. |
-| Overflow | `uint128` for hash/amounts caps at 3.4e38 wei, far above 1B RIG × 5x; `mulDiv` for products. |
-| Admin risk during a live season | Only `pause`; paused > grace → cancellation path. No parameter setters. Treasury cannot pull from `SeasonMine`. |
-| LP weight manipulation | Fixed at deployment from a 24h TWAP computed off-chain and published; deployment ≥ 48h before `openTime` so it can be challenged. |
-| Sybil / many rigs | No benefit: rewards are linear in weight; upgrades are percent-of-weight. |
-| Front-running | No MEV surface: rewards are time-based, not order-based. Overclocking right before a boundary is allowed and merely wasteful. |
-| Stock Token transfer hooks failing at redemption | `redeem` reverts cleanly; user can `cashOut` instead; `sweep` uses `try/catch` per asset. |
-| Factory misconfiguration | `SeasonFactory.create` validates array lengths, monotone tiers, `ocBoost × maxOc ≤ 30000`, `blocks == 4`, `openTime ≥ now + 48h`. |
+| Reentrancy | `nonReentrant` on all state-changing entry points; checks-effects-interactions; `SafeERC20`; Stock Tokens may have hooks → vault uses pull pattern. |
+| Timestamp manipulation | Sequencer controls `block.timestamp` within bounds. A skewed timestamp shifts *when* work is credited, but every rig is credited by the same clock and the rate per work is fixed, so nobody gains relative to anyone else; the fail-safe uses the same clock. |
+| Long catch-up loop | Bounded by 32 iterations; `poke()` public; ops keeper; gas per iteration small. A pathological 32-iteration call is still well under the block gas limit. |
+| Rounding | Boundaries floor to 1e-18 s; claims floor to whole fragments; `mintedFragments ≤ supply` enforced. |
+| Overflow | Hash is bounded by 1B RIG × 5x = 5e27; over the 30-day fail-safe that is ≤ 1.3e34 work, and × 1e18 rate scaling ≤ 1.3e52, far below `uint256`. `uint128` for per-rig hash; `mulDiv` for every three-factor product. |
+| Admin risk during a live season | Only `pause`; paused > grace → cancellation path. No parameter setters, no difficulty setter. |
+| LP weight manipulation | Fixed at deployment from a 24h TWAP; deployment ≥ 48h before `openTime`. |
+| Sybil / many rigs | No benefit: pay is linear in hash; upgrades are percent-of-weight. |
+| Boundary timing games | Boundaries are computed retroactively from work; no transaction "finds" a block. Overclocking one second before a shift ends is allowed and merely wasteful; the UI warns. |
+| Exit/re-enter churn | Exit fee 3%; upgrades lost; nothing gained. |
+| Idle mine with stuck stakes | `exit` any time; fail-safe close. |
+| Stock Token transfer hooks failing at redemption | `redeem` reverts cleanly; `cashOut` alternative; `sweep` uses `try/catch` per asset. |
+| Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `maxDurationSeconds ≥ 14 days`; `openTime ≥ now + 48h`. |
 
-## 9. Gas targets (Arbitrum-family estimates)
+## 10. Gas targets (Arbitrum-family estimates, normal case = ≤ 1 shift crossed)
 
 | Tx | Target |
 |---|---|
-| `activate` | ≤ 200k |
-| `upgradeGpu` / `overclock` | ≤ 150k |
-| `claimAll` (4 blocks) | ≤ 250k |
-| `withdraw` | ≤ 120k |
+| `activate` | ≤ 220k |
+| `upgradeGpu` / `overclock` | ≤ 170k |
+| `claimAll` (4 blocks) | ≤ 260k |
+| `exit` / `withdraw` | ≤ 140k |
+| `poke()` per shift crossed | ≤ 40k |
 
-## 10. Events
+## 11. Events
 
-`SeasonFunded`, `RigActivated(rigId, owner, asset, amount, weight)`, `GpuUpgraded(rigId, tier, burned)`,
-`CoolingUpgraded(rigId, tier, burned)`, `Overclocked(rigId, blockIdx, ocCount, heat, burned)`,
-`BlockSettled(blockIdx, accAtEnd, totalHashAfter)`, `Claimed(rigId, blockIdx, fragments)`,
-`Withdrawn(rigId, amount)`, `Paused/Unpaused`, `SeasonCancelled`, `Redeemed(user, id, fragments, tokens)`,
-`CashedOut(user, id, fragments, usdc)`, `Swept`.
+`SeasonFunded`, `RigActivated(rigId, owner, asset, amount, weight, fee)`, `GpuUpgraded(rigId, tier, burned)`,
+`CoolingUpgraded(rigId, tier, burned)`, `Overclocked(rigId, shift, activeOc, expiryShift, heat, burned)`,
+`ShiftEnded(shift, endX, totalHashAfter)`, `BlockFound(blockIdx, endX)`, `ClosedByFailSafe(shift)`,
+`Claimed(rigId, blockIdx, fragments)`, `Exited(rigId, returned, fee)`, `Withdrawn(rigId, amount)`,
+`Paused/Unpaused`, `SeasonCancelled`, `Redeemed(user, id, fragments, tokens)`,
+`CashedOut(user, id, fragments, usdc, fee)`, `Swept`.
 
-## 11. Deployment sequence (per season)
+## 12. Deployment sequence (per season)
 
-1. Compute `lpWeightPerToken` from TWAP; publish params JSON + hash.
-2. `SeasonFactory.create(params)` → addresses. Verify on explorer.
+1. Compute `lpWeightPerToken` from TWAP and `difficulty[]` from the sizing model; publish params JSON + hash.
+2. `SeasonFactory.create(params, …)` → addresses. Verify on explorer.
 3. Treasury approves and calls `RedemptionVault.fund()`; confirm `funded == true` and `phase() == PreOpen`.
-4. App points at the new season (reads the factory registry).
-5. `openTime` reached → block 1 starts without any transaction.
+4. App points at the new season (reads the factory registry). Keeper starts calling `poke()` on a
+   cadence of ~¼ of the planned shift length.
+5. `openTime` reached → work starts accruing without any transaction.

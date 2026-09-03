@@ -8,7 +8,7 @@
 | M1 | Contracts | 4 weeks | All contracts + interfaces implemented; 100% branch coverage on `SeasonMine`; invariant suite (doc 05 §4.3) green for 10M runs; economic simulation notebook delivered |
 | M2 | App + indexer (parallel with M1 from week 2) | 5 weeks | All screens; Anvil time-warp e2e passes a full season; parity test green |
 | M3 | Audit + fixes | 3–4 weeks | External audit report, all high/medium fixed and re-reviewed; bug bounty live |
-| M4 | Testnet season | 1 week + 1 week analysis | Public 24h season on Robinhood Chain testnet with test stock tokens; ≥ 200 wallets; no invariant violations; retro doc |
+| M4 | Testnet seasons | 2 weeks + 1 week analysis | Two public seasons on Robinhood Chain testnet with test stock tokens: one sized to run ~1 day, one sized to run ~1 week; ≥ 200 wallets; no invariant violations; retro doc |
 | M5 | Mainnet season 1 | 1 week | Funded, published 48h ahead, run, redeemed; metrics in PRD §12 reported |
 
 Total ≈ 14–16 weeks to season 1.
@@ -29,11 +29,14 @@ Total ≈ 14–16 weeks to season 1.
 - **Unit + fuzz (Foundry)**: every function; fuzz on stake amounts, tiers, timestamps.
 - **Invariant tests**: handlers for activate/upgrade/overclock/claim/withdraw with time warps; assert
   doc 05 §4.3 invariants.
-- **Scenario tests**: the worked example in doc 03 §6 reproduced to the fragment; late entrant;
-  `totalHash == 0` window; overclock at boundary minus 1 second; claim ordering; pause > grace.
+- **Scenario tests**: the worked example in doc 03 §7 reproduced to the fragment; late entrant; idle
+  mine (`totalHash == 0`) then resume; overclock bought one second before a shift ends; 32 shifts crossed
+  in a single `poke()`; the same season replayed at 6-hour, 1-day and 3-week paces yielding identical
+  fragment distributions; exit mid-shift; fail-safe close mid-block; claim ordering; pause > grace.
 - **Economic simulation**: agent-based Python model of N players with strategies (early GPU maxer,
-  finale overclocker, passive LP) to tune params and pool sizing; outputs burn, share distribution,
-  Gini of rewards.
+  finale overclocker, passive LP, early exiter) to tune params, pool sizing and difficulty sizing;
+  outputs burn, share distribution, Gini of rewards, and season duration distribution across
+  participation scenarios.
 - **App**: Playwright full season on Anvil; parity test; reduced-motion audit.
 - **Testnet season** as dress rehearsal for ops scripts and alerting.
 
@@ -44,12 +47,14 @@ Total ≈ 14–16 weeks to season 1.
 - [ ] Vault funded; `phase() == PreOpen`; app shows pool and USD value
 - [ ] Eligibility adapter tested with at least one known-eligible and one ineligible wallet
 - [ ] Oracle feeds live and within staleness bounds
-- [ ] Alerting running (`watch.ts`); on-call rota for the 24h
+- [ ] Difficulty sized from PreOpen TVL preview and simulation; planned pace and fail-safe published
+- [ ] Keeper running (`keeper.ts`); alerting running (`watch.ts`); on-call rota sized to the estimated duration, extendable
 - [ ] Terms, "how rewards work" page, and geo-fence live
 - [ ] Pause key holders and procedure documented; cancellation rehearsal done on testnet
-- [ ] Post-close plan: withdraw comms, redemption reminders at day 1, 7, 25; sweep date
+- [ ] Post-close plan: withdraw comms, redemption reminders at day 1, 7, 25 after close; sweep date
 
 ## 5. Post-season review
 
-Within one week of close: metrics vs PRD §12, param change proposals, incident list, player feedback
-summary, decision on v1.1 items (rig NFTs, fragment transfers, browser boost).
+Within one week of close: metrics vs PRD §12 (including actual vs planned duration and exit rate),
+param and difficulty-sizing change proposals, incident list, player feedback summary, decision on v1.1
+items (rig NFTs, fragment transfers, browser boost, fragment roll-over).

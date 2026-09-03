@@ -25,7 +25,8 @@ interface IRedemptionVault {
     /// @notice Burn fragments and receive USDC at oracle price minus cashOutFeeBps.
     function cashOut(uint256 id, uint256 fragments) external returns (uint256 usdc);
 
-    /// @notice After close + redemptionDays (or cancellation), move all balances to treasury.
+    /// @notice After closeX + redemptionDays (or cancellation), move all balances to treasury,
+    ///         including any pool left unmined by a fail-safe close.
     function sweep() external;
 
     function funded() external view returns (bool);

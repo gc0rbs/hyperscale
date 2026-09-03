@@ -10,7 +10,8 @@ interface ISeasonFactory {
     event SeasonCreated(uint256 indexed seasonId, address mine, address fragments, address vault, bytes32 paramsHash);
 
     /// @dev Validates: array lengths == blocks == 4; gpuMultBps strictly increasing from 10000;
-    ///      ocBoostBps * maxOcPerBlock <= 30000; openTime >= block.timestamp + 48h; heatPerOc <= heatMax.
+    ///      ocBoostBps * maxActiveOc <= 30000; heatPerOc[c] <= heatMax; difficulty[b] > 0 and
+    ///      divisible by shiftsPerBlock; maxDurationSeconds >= 14 days; openTime >= block.timestamp + 48h.
     function create(
         ISeasonMine.SeasonParams calldata params,
         address eligibility,

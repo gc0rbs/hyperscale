@@ -39,8 +39,9 @@ that only allow movement between allowlisted addresses. Consequences for this pr
 
 ## 5. Consumer protection items
 
-- The 24-hour close is prominent and repeated before every burn ("Upgrades are non-refundable and this
-  mine closes at …").
+- Permanent close is prominent and repeated before every burn ("Upgrades are non-refundable; this mine
+  closes when block 4 is found"). Duration is always shown as an estimate.
+- Early exit and its fee are explained at activation; the fail-safe close is disclosed as a fail-safe.
 - Break-even hints are labelled as estimates and never as returns.
 - Redemption window (30 days) and sweep behaviour are shown at claim time.
 - Pause/cancel path returns stakes; burned RIG is never refundable, which must be stated in terms.
@@ -52,12 +53,14 @@ that only allow movement between allowlisted addresses. Consequences for this pr
 | 1 | Vault cannot be allowlisted for Stock Tokens | Medium | Blocks the core prize | Parallel path with a permissionless issuer; cash-only prize as last resort | Product / BD |
 | 2 | Accounting bug over-mints fragments | Low | Vault insolvent for some redeemers | Invariant tests, audit, `mintedFragments[b] ≤ supply` hard check in `claim` | Contracts |
 | 3 | Oracle staleness during cash-out | Medium | Wrong payouts | Staleness check (≤ 1h), pause cash-out only, in-kind unaffected | Contracts |
-| 4 | Sequencer downtime during season | Low | Players cannot overclock/claim; emission continues by time | Documented; pause grace path if > 6h; consider Arbitrum-style delayed-inbox awareness | Ops |
+| 4 | Sequencer downtime during season | Low | Players cannot overclock/claim; work keeps accruing by timestamp | Documented; pause grace path; consider Arbitrum-style delayed-inbox awareness | Ops |
 | 5 | RIG price crash mid-season | Medium | Pool becomes very generous; burn drops | Prize sizing rules, treasury policy; no in-season changes | Treasury |
 | 6 | LP token is v3-style (NFT) | Medium | LP staking impossible as specced | Confirm DEX in discovery; defer LP to v1.1 | Eng |
 | 7 | Whale dominates a season | Medium | Poor retention | Linear rewards mean no one is *excluded*; escalating block value; communicate share live | Product |
 | 8 | Front-end geo-fence bypass | High | Regulatory | Accept as residual; contracts permissionless by design | Legal |
 | 9 | Unclaimed prizes | Medium | Ops overhead | 30-day window, reminders, sweep policy | Ops |
+| 10 | Difficulty badly mis-sized | Medium | Season far shorter or longer than planned | Sizing rules (doc 04 §5.2), PreOpen TVL preview, early exit, fail-safe close; no in-season adjustment by design | Product |
+| 11 | Participation collapses mid-season | Low | Stakes idle for weeks | `exit` any time; fail-safe close returns stakes; comms | Ops |
 
 ## 7. Data and privacy
 
