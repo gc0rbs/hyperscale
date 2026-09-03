@@ -508,37 +508,50 @@ open(os.path.join(OUT, "AltTerminal.dc.html"), "w").write(sketch("All-dark termi
 open(os.path.join(OUT, "AltArcade.dc.html"), "w").write(sketch("Bright arcade", "#FFF3D6", "#22203A", "#FF4F7A", "saturated colour blocks, chunky type, playful chrome. Best first-minute delight; feels like a game.", "colour-as-decoration collides with colour-as-meaning; undermines trust for a product paying out in equities."))
 
 
-# ── 9. Moodboard (page 3) ────────────────────────────────────────────────
-MOOD = [
-  ("01-rig-hall.webp", "The mine at scale", "coal racks, amber pinpoints, one cyan strip at the vanishing point"),
-  ("02-tick-marks.webp", "Progress texture", "hairline ticks on brushed metal, a single amber source"),
-  ("03-heat.webp", "Heat", "ember running to red only at the tip"),
-  ("04-typography.webp", "Type", "condensed stencil caps over a hot stripe; small light numerals"),
-  ("05-shell-still-life.webp", "The shell", "warm off-white, paper, one black instrument, one amber object"),
-  ("06-ore-vein.webp", "The vein", "a seam of ember in dark rock, cyan light at the exit"),
-  ("07-signal-gauge.webp", "The ETA", "one cyan bar, fine ticks, a white needle; a gauge, not a clock"),
-  ("08-the-seam.webp", "The seam", "a bright lobby opening straight into the dark machine hall"),
+
+# ── 9. Concepts (page 3) ─────────────────────────────────────────────────
+CONCEPTS = [
+  ("Brand", [
+    ("01-logo-sheet.svg", "Mark + wordmark", "bolt-and-pickaxe in a chamfered square; three lockups on coal and off-white"),
+    ("02-key-art.webp", "Key art", "\u201cFour blocks. One mine. Closes forever.\u201d The bar-with-ticks as signature device"),
+    ("03-season-card.webp", "Season announcement", "countdown plus four ticker tiles; close to shippable structure"),
+    ("04-merch.webp", "The mark as an object", "pin, RIG coin, sticker"),
+  ]),
+  ("Possible UI", [
+    ("05-ui-phone-mine.webp", "Phone: mine view", "variant with a light block card inside the dark mine; worth a real mockup"),
+    ("06-ui-rig-room-concept.webp", "Alternate: rig room", "isometric rigs that visibly overclock, HUD to the side; game-y, higher build cost"),
+    ("07-ui-burn-sheet.webp", "Purchase sheet", "what you get, what burns, heat cost, one amber confirm"),
+    ("08-ui-block-found-notification.webp", "Push notification", "blocks are found on no schedule, so this is a core surface"),
+  ]),
+  ("Gameplay", [
+    ("09-play-rig-overclock.webp", "Overclocking", "amber slots, heat gauge toward red, shards rising"),
+    ("10-play-rig-tiers.webp", "Upgrade tiers", "GPU = more slots, cooling = cyan fins"),
+    ("11-play-block-found.webp", "Block found", "the vein splits, the block rises, fragments stream to rigs"),
+    ("12-play-fragments-to-token.webp", "Fragments to token", "1,000,000 fragments become one Stock Token"),
+  ]),
 ]
-tiles = "".join(f'''<div class="col" style="gap:10px;">
-      <img src="{f}" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block;border:1px solid {T["mine-line"]};">
-      <div class="row" style="gap:10px;align-items:baseline;"><div class="mono dim" style="font-size:12px;">0{i+1}</div><div class="disp" style="font-size:20px;">{t}</div></div>
+def concept_section(title, items):
+    tiles = "".join(f'''<div class="col" style="gap:10px;">
+      <img src="{f}" style="width:100%;height:auto;display:block;border:1px solid {T["mine-line"]};">
+      <div class="disp" style="font-size:20px;">{t}</div>
       <div class="muted" style="font-size:13px;line-height:1.4;">{c}</div>
-    </div>''' for i,(f,t,c) in enumerate(MOOD))
-mood_body = f'''<div style="width:1440px;min-height:1180px;padding:40px;box-sizing:border-box;" class="mine col">
-  <div class="row" style="justify-content:space-between;align-items:flex-end;padding-bottom:28px;">
-    <div class="col" style="gap:6px;"><div class="label">Moodboard</div><div class="disp" style="font-size:48px;">Clean shell, industrial mine</div></div>
-    <div class="muted" style="font-size:13px;max-width:520px;text-align:right;line-height:1.45;">References for tone, light and material. Generated with the token palette as a constraint. Nothing here ships in the app.</div>
+    </div>''' for f,t,c in items)
+    return f'''<div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">{title}</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;">{tiles}</div>
+    </div>'''
+concepts_body = f'''<div style="width:1440px;min-height:2000px;padding:40px;box-sizing:border-box;" class="mine col">
+  <div class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
+    <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated concepts to react to, not assets. Notes on each in design/concepts/README.md.</div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:28px 24px;">{tiles}</div>
-  <div class="row" style="gap:16px;padding-top:36px;">
-    {"".join(f'<div class="col" style="gap:6px;"><div style="width:96px;height:40px;background:{T[k]};border:1px solid {T["mine-line"]};"></div><div class="mono dim" style="font-size:11px;">--{k}</div></div>' for k in ["shell-bg","shell-fg","mine-bg","mine-panel","mine-line","mine-fg","ember","signal","heat-hot"])}
-  </div>
+  {"".join(concept_section(t, items) for t, items in CONCEPTS)}
 </div>'''
-open(os.path.join(OUT, "Moodboard.dc.html"), "w").write(doc(mood_body))
+open(os.path.join(OUT, "Concepts.dc.html"), "w").write(doc(concepts_body))
 
 # ── canvas.json ──────────────────────────────────────────────────────────
 canvas = {
-  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Moodboard"}],
+  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Concepts"}],
   "artboards": [
     {"file": "Main.dc.html",       "title": "1 · Live mining",   "x": 0,    "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
     {"file": "BlockFound.dc.html", "title": "3 · Block found",   "x": 1540, "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
@@ -549,15 +562,15 @@ canvas = {
     {"file": "Redeem.dc.html",     "title": "6 · Redeem (shell)","x": 1540, "y": 2080, "w": 1440, "h": 940, "page": "page-1"},
     {"file": "AltTerminal.dc.html","title": "Alt A · All-dark terminal", "x": 0,   "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "AltArcade.dc.html",  "title": "Alt B · Bright arcade",     "x": 820, "y": 0, "w": 720, "h": 480, "page": "page-2"},
-    {"file": "Moodboard.dc.html",  "title": "Moodboard",                 "x": 0,   "y": 0, "w": 1440, "h": 1180, "page": "page-3"},
+    {"file": "Concepts.dc.html",   "title": "Concepts",                  "x": 0,   "y": 0, "w": 1440, "h": 2000, "page": "page-3"},
   ],
   "annotations": [
     {"id": "direction", "x": 0, "y": -200, "w": 620, "page": "page-1",
      "text": "Direction: clean fintech shell, industrial mine inside.\nShell (nav, redeem) is light and calm; the mine is coal-dark and dense.\nEmber = energy you control (hash, overclock, burn). Signal = the mine's progress and what it gives back (ETA, found, claimable).\nEvery wall-clock figure is an estimate and says so. Progress bars with shift ticks are the primary clock."},
     {"id": "numbers", "x": 3080, "y": 1040, "w": 390, "page": "page-1",
      "text": "Numbers match the worked example in docs/03 §7: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."},
-    {"id": "mood", "x": 0, "y": -150, "w": 700, "page": "page-3",
-     "text": "Moodboard: eight Higgsfield images generated with the token palette as a constraint. Captions say which token or principle each one feeds. Sources in design/moodboard/README.md."},
+    {"id": "concepts", "x": 0, "y": -150, "w": 720, "page": "page-3",
+     "text": "Concepts: twelve generated images of the brand, possible UI and gameplay, made with the token palette as a constraint. Two are real forks to decide on: the light block card inside the dark mine (05) and the isometric rig room as an alternative to the dashboard (06)."},
     {"id": "alts", "x": 0, "y": -150, "w": 700, "page": "page-2",
      "text": "Two directions considered and not taken. Kept so the choice is visible. Say the word and either becomes the main direction; the tokens file is the only thing that changes."},
   ],
