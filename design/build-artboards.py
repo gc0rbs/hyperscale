@@ -591,9 +591,52 @@ dirs_body = f'''<div style="width:1440px;min-height:2300px;padding:40px;box-sizi
 </div>'''
 open(os.path.join(OUT, "Directions.dc.html"), "w").write(doc(dirs_body))
 
+
+# ── 11. Launch (page 5) ──────────────────────────────────────────────────
+LAUNCH = [
+  ("Web", [
+    ("51-web-landing-full.webp", "Landing page, full length", "hero, ticker tiles, how it works, stats, footer"),
+    ("52-web-hero-gem.webp", "Hero with the gem", "countdown hero with the block-found gem as the object"),
+    ("53-web-dashboard-mine.webp", "Dashboard: the mine", "isometric rig room plus flat cards for block, rig, claim"),
+    ("54-web-dashboard-redeem.webp", "Dashboard: redeem", "fragment table, fragments-to-token explainer, window"),
+  ]),
+  ("Mobile", [
+    ("55-mobile-mine.webp", "Mine view", "block card with gem shard, rig card, sticky overclock"),
+    ("56-mobile-upgrade-sheet.webp", "Upgrade sheet", "tier 2 to 3, coverage, burn, break-even hint"),
+  ]),
+  ("Launch assets", [
+    ("57-x-announce-opens.webp", "X post: the mine opens", "date, countdown, four ticker tiles"),
+    ("58-x-mine-is-open.webp", "X post: the mine is open", "rig room render plus live stats"),
+    ("59-share-pnl.webp", "Shareable PnL card", "+2.141 TSLAx, staked, burned, ROI"),
+    ("60-share-block-found.webp", "Shareable win card", "gem rising from the seam, block 3 found"),
+    ("61-share-leaderboard.webp", "Leaderboard card", "top five rigs, you highlighted"),
+    ("62-x-teaser-card.webp", "X post: teaser", "collector card and RIG coin, opens Sept 12"),
+  ]),
+]
+def launch_section(title, items, cols):
+    tiles = "".join(f'''<div class="col" style="gap:10px;">
+      <img src="{f}" style="width:100%;height:auto;display:block;border:1px solid {T["mine-line"]};">
+      <div class="disp" style="font-size:20px;">{t}</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">{c}</div>
+    </div>''' for f,t,c in items)
+    return f'''<div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">{title}</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat({cols}, minmax(0, 1fr));gap:24px;align-items:start;">{tiles}</div>
+    </div>'''
+launch_body = f'''<div style="width:1440px;min-height:3600px;padding:40px;box-sizing:border-box;" class="mine col">
+  <div class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div class="col" style="gap:6px;"><div class="label">Launch</div><div class="disp disp-xl" style="font-size:48px;">Web, mobile, launch assets</div></div>
+    <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated from the sixteen reference images you picked. Notes in design/launch/README.md.</div>
+  </div>
+  {launch_section("Web", LAUNCH[0][1], 2)}
+  {launch_section("Mobile", LAUNCH[1][1], 4)}
+  {launch_section("Launch assets", LAUNCH[2][1], 3)}
+</div>'''
+open(os.path.join(OUT, "Launch.dc.html"), "w").write(doc(launch_body))
+
 # ── canvas.json ──────────────────────────────────────────────────────────
 canvas = {
-  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Concepts"}, {"id": "page-4", "name": "Directions"}],
+  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Concepts"}, {"id": "page-4", "name": "Directions"}, {"id": "page-5", "name": "Launch"}],
   "artboards": [
     {"file": "Main.dc.html",       "title": "1 · Live mining",   "x": 0,    "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
     {"file": "BlockFound.dc.html", "title": "3 · Block found",   "x": 1540, "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
@@ -606,6 +649,7 @@ canvas = {
     {"file": "AltArcade.dc.html",  "title": "Alt B · Bright arcade",     "x": 820, "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "Concepts.dc.html",   "title": "Concepts",                  "x": 0,   "y": 0, "w": 1440, "h": 3400, "page": "page-3"},
     {"file": "Directions.dc.html", "title": "Directions",                "x": 0,   "y": 0, "w": 1440, "h": 2300, "page": "page-4"},
+    {"file": "Launch.dc.html",     "title": "Launch",                    "x": 0,   "y": 0, "w": 1440, "h": 3600, "page": "page-5"},
   ],
   "annotations": [
     {"id": "direction", "x": 0, "y": -200, "w": 620, "page": "page-1",
@@ -619,7 +663,7 @@ canvas = {
     {"id": "alts", "x": 0, "y": -150, "w": 700, "page": "page-2",
      "text": "Two directions considered and not taken. Kept so the choice is visible. Say the word and either becomes the main direction; the tokens file is the only thing that changes."},
   ],
-  "launch": {"view": "canvas", "page": "page-4"},
+  "launch": {"view": "canvas", "page": "page-5"},
 }
 json.dump(canvas, open(os.path.join(OUT, "canvas.json"), "w"), indent=2)
 print("wrote", sorted(os.listdir(OUT)))
