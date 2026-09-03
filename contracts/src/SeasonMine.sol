@@ -77,22 +77,14 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         _;
     }
 
+    /// @dev Parameter validation lives in SeasonFactory._validate (docs/05 §9); the constructor only
+    ///      enforces what its own arithmetic depends on, to keep the deployer under EIP-170.
     constructor(SeasonParams memory p, address fragments_, address vault_) {
         if (p.blocks != 4 || p.stocks.length != 4 || p.poolTokens.length != 4 || p.difficulty.length != 4) {
             revert InvalidParams("blocks");
         }
-        if (p.shiftsPerBlock == 0) revert InvalidParams("shiftsPerBlock");
-        if (p.gpuMultBps[0] != BPS) revert InvalidParams("gpuMult0");
-        for (uint256 i = 1; i < 6; ++i) {
-            if (p.gpuMultBps[i] <= p.gpuMultBps[i - 1]) revert InvalidParams("gpuMult");
-        }
-        if (uint256(p.ocBoostBps) * p.maxActiveOc > 30_000) revert InvalidParams("ocBoost");
-        for (uint256 c; c < 4; ++c) {
-            if (p.heatPerOc[c] > p.heatMax) revert InvalidParams("heatPerOc");
-        }
-        if (p.maxDurationSeconds < 14 days) revert InvalidParams("maxDuration");
-        if (p.fragPerToken == 0 || p.treasury == address(0) || p.rig == address(0)) {
-            revert InvalidParams("addr");
+        if (p.shiftsPerBlock == 0 || p.fragPerToken == 0 || p.treasury == address(0)) {
+            revert InvalidParams("params");
         }
 
         _p = p;
@@ -463,20 +455,31 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
 
     function _updateGlobal() internal {
         G memory g = _load();
+        uint16 from = g.shift;
+        bool wasOpen = g.closeX == 0;
         uint256[] memory ends = new uint256[](_totalShifts);
-        _advance(g, ends, true);
+        uint256[] memory hashAfter = new uint256[](_totalShifts);
+        _advanceView(g, ends, hashAfter);
+        for (uint16 s = from; s < g.shift; ++s) {
+            shiftEndX[s] = ends[s];
+            delete ocExpiring[s];
+            emit ShiftEnded(s, ends[s], hashAfter[s]);
+            if ((uint256(s) + 1) % _spb == 0) emit BlockFound(uint8(s / _spb), ends[s]);
+        }
+        if (wasOpen && g.closeX == _deadlineX && g.shift < _totalShifts) emit ClosedByFailSafe(g.shift);
         _store(g);
     }
 
     function _simulate() internal view returns (G memory g, uint256[] memory ends) {
         g = _load();
         ends = new uint256[](_totalShifts);
-        _advanceView(g, ends);
+        _advanceView(g, ends, new uint256[](0));
     }
 
     /// @dev Discovers every shift boundary between `g.lastX` and now, exactly, from the piecewise-
     ///      constant total hash. Loop bound: shifts crossed since the last update (≤ blocks × spb).
-    function _advance(G memory g, uint256[] memory ends, bool commit) internal {
+    ///      Pure over memory plus reads of `ocExpiring`; `_updateGlobal` commits the results.
+    function _advanceView(G memory g, uint256[] memory ends, uint256[] memory hashAfter) internal view {
         if (g.closeX != 0 || block.timestamp < openTime) return;
         uint256 nowX = block.timestamp * WAD;
         if (nowX > _deadlineX) nowX = _deadlineX;
@@ -499,48 +502,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
             g.workInShift = 0;
             g.lastX = endX;
             g.totalHash -= ocExpiring[s];
-            if (commit) {
-                shiftEndX[s] = endX;
-                delete ocExpiring[s];
-                emit ShiftEnded(s, endX, g.totalHash);
-                if ((uint256(s) + 1) % _spb == 0) emit BlockFound(uint8(s / _spb), endX);
-            }
-            g.shift = s + 1;
-            if (g.shift == _totalShifts) {
-                g.closeX = endX;
-                return;
-            }
-        }
-        if (g.closeX == 0 && nowX == _deadlineX && g.lastX == _deadlineX) {
-            g.closeX = _deadlineX;
-            if (commit) emit ClosedByFailSafe(g.shift);
-        }
-    }
-
-    /// @dev View twin of `_advance` (Solidity cannot call a non-view function from a view).
-    function _advanceView(G memory g, uint256[] memory ends) internal view {
-        if (g.closeX != 0 || block.timestamp < openTime) return;
-        uint256 nowX = block.timestamp * WAD;
-        if (nowX > _deadlineX) nowX = _deadlineX;
-        while (g.lastX < nowX) {
-            if (g.totalHash == 0) {
-                g.lastX = nowX;
-                break;
-            }
-            uint256 sd = _shiftDiff[g.shift / _spb];
-            uint256 remaining = sd - g.workInShift;
-            uint256 spanX = Math.mulDiv(remaining, WAD, g.totalHash);
-            if (g.lastX + spanX > nowX) {
-                g.workInShift += Math.mulDiv(g.totalHash, nowX - g.lastX, WAD);
-                g.lastX = nowX;
-                break;
-            }
-            uint256 endX = g.lastX + spanX;
-            uint16 s = g.shift;
-            ends[s] = endX;
-            g.workInShift = 0;
-            g.lastX = endX;
-            g.totalHash -= ocExpiring[s];
+            if (hashAfter.length > 0) hashAfter[s] = g.totalHash;
             g.shift = s + 1;
             if (g.shift == _totalShifts) {
                 g.closeX = endX;

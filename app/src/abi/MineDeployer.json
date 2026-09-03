@@ -1,0 +1,240 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "creator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "deploy",
+    "inputs": [
+      {
+        "name": "p",
+        "type": "tuple",
+        "internalType": "struct ISeasonMine.SeasonParams",
+        "components": [
+          {
+            "name": "rig",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "lpToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "lpWeightPerToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "openTime",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "maxDurationSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "blocks",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "shiftsPerBlock",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "stocks",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "poolTokens",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          },
+          {
+            "name": "difficulty",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          },
+          {
+            "name": "fragPerToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minStakeWeight",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "activationFeeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "earlyExitFeeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "gpuMultBps",
+            "type": "uint16[6]",
+            "internalType": "uint16[6]"
+          },
+          {
+            "name": "gpuCostBps",
+            "type": "uint16[5]",
+            "internalType": "uint16[5]"
+          },
+          {
+            "name": "coolCostBps",
+            "type": "uint16[3]",
+            "internalType": "uint16[3]"
+          },
+          {
+            "name": "heatPerOc",
+            "type": "uint8[4]",
+            "internalType": "uint8[4]"
+          },
+          {
+            "name": "coolPerShift",
+            "type": "uint8[4]",
+            "internalType": "uint8[4]"
+          },
+          {
+            "name": "heatMax",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "ocCostBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "ocBoostBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "maxActiveOc",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "ocShiftSpan",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "redemptionDays",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "cashOutFeeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "pauseGraceSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "treasury",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "fragments",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deployments",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "factory",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "init",
+    "inputs": [
+      {
+        "name": "factory_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "error",
+    "name": "AlreadyInitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotFactory",
+    "inputs": []
+  }
+]

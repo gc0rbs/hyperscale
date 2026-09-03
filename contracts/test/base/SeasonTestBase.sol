@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ISeasonMine} from "../../src/interfaces/ISeasonMine.sol";
 import {SeasonMine} from "../../src/SeasonMine.sol";
 import {SeasonFactory} from "../../src/SeasonFactory.sol";
+import {MineDeployer, FragmentsDeployer, VaultDeployer} from "../../src/factory/Deployers.sol";
 import {StockFragments} from "../../src/StockFragments.sol";
 import {RedemptionVault} from "../../src/RedemptionVault.sol";
 import {RIG} from "../../src/tokens/RIG.sol";
@@ -51,7 +52,14 @@ abstract contract SeasonTestBase is Test {
         usdc = new MockERC20("USD Coin", "USDC", 6);
         oracle = new MockPriceOracle();
         elig = new AllowlistEligibility(address(this));
-        factory = new SeasonFactory("https://stockminer.xyz/frag/{id}.json");
+        MineDeployer md = new MineDeployer();
+        FragmentsDeployer fd = new FragmentsDeployer();
+        VaultDeployer vd = new VaultDeployer();
+        factory =
+            new SeasonFactory("https://stockminer.xyz/frag/{id}.json", address(md), address(fd), address(vd));
+        md.init(address(factory));
+        fd.init(address(factory));
+        vd.init(address(factory));
         string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
         for (uint256 i; i < 4; ++i) {
             stocks[i] = new MockStockToken(syms[i], syms[i]);

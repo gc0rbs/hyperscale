@@ -31,6 +31,13 @@ contract ClaimCapFuzzTest is SeasonTestBase {
         }
         assertEq(mine.mintedFragments(0), total);
         assertLe(total, 5_000_000);
-        assertGe(total, 5_000_000 - n - 1);
+        if (mine.blockEndX(0) != 0) {
+            assertGe(total, 5_000_000 - n - 1, "found block pays the whole pool minus dust");
+        } else {
+            // Too little hash to find the block within maxDuration: the fail-safe closed the mine
+            // mid-block and only the work actually done was paid (FR-C5).
+            assertEq(mine.shift() < 8, true);
+            assertLt(total, 5_000_000);
+        }
     }
 }

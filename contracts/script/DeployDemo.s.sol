@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {ISeasonMine} from "../src/interfaces/ISeasonMine.sol";
 import {SeasonFactory} from "../src/SeasonFactory.sol";
+import {MineDeployer, FragmentsDeployer, VaultDeployer} from "../src/factory/Deployers.sol";
 import {SeasonMine} from "../src/SeasonMine.sol";
 import {RedemptionVault} from "../src/RedemptionVault.sol";
 import {RIG} from "../src/tokens/RIG.sol";
@@ -36,7 +37,15 @@ contract DeployDemo is Script {
         MockERC20 usdc = new MockERC20("USD Coin", "USDC", 6);
         MockPriceOracle oracle = new MockPriceOracle();
         AllowlistEligibility elig = new AllowlistEligibility(deployer);
-        SeasonFactory factory = new SeasonFactory("http://localhost:3000/api/frag/{id}.json");
+        MineDeployer md = new MineDeployer();
+        FragmentsDeployer fd = new FragmentsDeployer();
+        VaultDeployer vd = new VaultDeployer();
+        SeasonFactory factory = new SeasonFactory(
+            "http://localhost:3000/api/frag/{id}.json", address(md), address(fd), address(vd)
+        );
+        md.init(address(factory));
+        fd.init(address(factory));
+        vd.init(address(factory));
 
         string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
         uint256[4] memory prices = [uint256(172e8), 350e8, 230e8, 767e8];

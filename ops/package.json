@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit && vitest run",
-    "plan": "tsx src/plan.ts"
+    "plan": "tsx src/plan.ts",
+    "sync-abi": "tsx src/sync-abi.ts",
+    "deploy-demo": "tsx src/deploy-demo.ts",
+    "keeper": "tsx src/keeper.ts",
+    "watch": "tsx src/watch.ts"
   },
   "dependencies": {
     "viem": "2.21.55"

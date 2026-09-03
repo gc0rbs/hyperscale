@@ -27,10 +27,16 @@ contract SeasonFactory is ISeasonFactory {
 
     error AddressMismatch(string which);
 
-    constructor(string memory baseUri_) {
-        mineDeployer = new MineDeployer(address(this));
-        fragmentsDeployer = new FragmentsDeployer(address(this));
-        vaultDeployer = new VaultDeployer(address(this));
+    /// @param mineDeployer_ etc. Pre-deployed deployers; call `init(factory)` on each after this.
+    constructor(
+        string memory baseUri_,
+        address mineDeployer_,
+        address fragmentsDeployer_,
+        address vaultDeployer_
+    ) {
+        mineDeployer = MineDeployer(mineDeployer_);
+        fragmentsDeployer = FragmentsDeployer(fragmentsDeployer_);
+        vaultDeployer = VaultDeployer(vaultDeployer_);
         baseUri = baseUri_;
     }
 

@@ -10,12 +10,21 @@ import {RedemptionVault} from "../RedemptionVault.sol";
 ///      under the EIP-170 size limit. A deployer's CREATE nonce is `deployments + 1`, which the
 ///      factory uses to predict addresses before any of the three mutually-referencing contracts exist.
 contract MineDeployer {
-    address public immutable factory;
+    address public immutable creator;
+    address public factory;
     uint64 public deployments;
 
     error NotFactory();
+    error AlreadyInitialized();
 
-    constructor(address factory_) {
+    constructor() {
+        creator = msg.sender;
+    }
+
+    /// @dev One-time wiring by whoever deployed this deployer; the factory is created afterwards
+    ///      because embedding three creation codes in one factory exceeds the EIP-3860 initcode limit.
+    function init(address factory_) external {
+        if (msg.sender != creator || factory != address(0)) revert AlreadyInitialized();
         factory = factory_;
     }
 
@@ -30,12 +39,21 @@ contract MineDeployer {
 }
 
 contract FragmentsDeployer {
-    address public immutable factory;
+    address public immutable creator;
+    address public factory;
     uint64 public deployments;
 
     error NotFactory();
+    error AlreadyInitialized();
 
-    constructor(address factory_) {
+    constructor() {
+        creator = msg.sender;
+    }
+
+    /// @dev One-time wiring by whoever deployed this deployer; the factory is created afterwards
+    ///      because embedding three creation codes in one factory exceeds the EIP-3860 initcode limit.
+    function init(address factory_) external {
+        if (msg.sender != creator || factory != address(0)) revert AlreadyInitialized();
         factory = factory_;
     }
 
@@ -54,12 +72,21 @@ contract FragmentsDeployer {
 }
 
 contract VaultDeployer {
-    address public immutable factory;
+    address public immutable creator;
+    address public factory;
     uint64 public deployments;
 
     error NotFactory();
+    error AlreadyInitialized();
 
-    constructor(address factory_) {
+    constructor() {
+        creator = msg.sender;
+    }
+
+    /// @dev One-time wiring by whoever deployed this deployer; the factory is created afterwards
+    ///      because embedding three creation codes in one factory exceeds the EIP-3860 initcode limit.
+    function init(address factory_) external {
+        if (msg.sender != creator || factory != address(0)) revert AlreadyInitialized();
         factory = factory_;
     }
 
