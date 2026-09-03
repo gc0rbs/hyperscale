@@ -23,6 +23,13 @@ Why not all-dark or all-playful: an all-dark terminal look reads as "for traders
 redemption flow feel like a hack; an arcade look undermines the "real stocks" promise. Both are
 sketched as alternates on the canvas so the choice is visible, not assumed.
 
+### Moodboard
+
+Eight generated reference images, palette-constrained to the tokens, sit on the third page of the design
+canvas and in `design/moodboard/` with a table of what each one feeds. The two to internalise: the
+rig hall (amber as pinpoints in coal, cyan as the far goal) and the seam (a bright lobby opening
+straight into the dark machine hall).
+
 ## 2. Principles
 
 1. **Progress, never clocks.** The mine's time is work. Every primary indicator is a progress bar with

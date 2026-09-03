@@ -7,6 +7,10 @@
     {
       "id": "page-2",
       "name": "Alternate directions"
+    },
+    {
+      "id": "page-3",
+      "name": "Moodboard"
     }
   ],
   "artboards": [
@@ -90,6 +94,15 @@
       "w": 720,
       "h": 480,
       "page": "page-2"
+    },
+    {
+      "file": "Moodboard.dc.html",
+      "title": "Moodboard",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1180,
+      "page": "page-3"
     }
   ],
   "annotations": [
@@ -110,6 +123,14 @@
       "text": "Numbers match the worked example in docs/03 \u00a77: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."
     },
     {
+      "id": "mood",
+      "x": 0,
+      "y": -150,
+      "w": 700,
+      "page": "page-3",
+      "text": "Moodboard: eight Higgsfield images generated with the token palette as a constraint. Captions say which token or principle each one feeds. Sources in design/moodboard/README.md."
+    },
+    {
       "id": "alts",
       "x": 0,
       "y": -150,
@@ -120,6 +141,6 @@
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-1"
+    "page": "page-3"
   }
 }

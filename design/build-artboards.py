@@ -507,9 +507,38 @@ def sketch(title, bg, fg, accent, blurb, tradeoff, mono=False):
 open(os.path.join(OUT, "AltTerminal.dc.html"), "w").write(sketch("All-dark terminal", "#0E0F10", "#D7DBD2", "#7CFF9B", "everything on black, mono type, dense grids, no shell/mine seam. Reads as a pro trading tool.", "hostile to newcomers; the redeem flow loses its 'real asset' register; the fintech audience bounces.", mono=True))
 open(os.path.join(OUT, "AltArcade.dc.html"), "w").write(sketch("Bright arcade", "#FFF3D6", "#22203A", "#FF4F7A", "saturated colour blocks, chunky type, playful chrome. Best first-minute delight; feels like a game.", "colour-as-decoration collides with colour-as-meaning; undermines trust for a product paying out in equities."))
 
+
+# ── 9. Moodboard (page 3) ────────────────────────────────────────────────
+MOOD = [
+  ("01-rig-hall.webp", "The mine at scale", "coal racks, amber pinpoints, one cyan strip at the vanishing point"),
+  ("02-tick-marks.webp", "Progress texture", "hairline ticks on brushed metal, a single amber source"),
+  ("03-heat.webp", "Heat", "ember running to red only at the tip"),
+  ("04-typography.webp", "Type", "condensed stencil caps over a hot stripe; small light numerals"),
+  ("05-shell-still-life.webp", "The shell", "warm off-white, paper, one black instrument, one amber object"),
+  ("06-ore-vein.webp", "The vein", "a seam of ember in dark rock, cyan light at the exit"),
+  ("07-signal-gauge.webp", "The ETA", "one cyan bar, fine ticks, a white needle; a gauge, not a clock"),
+  ("08-the-seam.webp", "The seam", "a bright lobby opening straight into the dark machine hall"),
+]
+tiles = "".join(f'''<div class="col" style="gap:10px;">
+      <img src="{f}" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block;border:1px solid {T["mine-line"]};">
+      <div class="row" style="gap:10px;align-items:baseline;"><div class="mono dim" style="font-size:12px;">0{i+1}</div><div class="disp" style="font-size:20px;">{t}</div></div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">{c}</div>
+    </div>''' for i,(f,t,c) in enumerate(MOOD))
+mood_body = f'''<div style="width:1440px;min-height:1180px;padding:40px;box-sizing:border-box;" class="mine col">
+  <div class="row" style="justify-content:space-between;align-items:flex-end;padding-bottom:28px;">
+    <div class="col" style="gap:6px;"><div class="label">Moodboard</div><div class="disp" style="font-size:48px;">Clean shell, industrial mine</div></div>
+    <div class="muted" style="font-size:13px;max-width:520px;text-align:right;line-height:1.45;">References for tone, light and material. Generated with the token palette as a constraint. Nothing here ships in the app.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:28px 24px;">{tiles}</div>
+  <div class="row" style="gap:16px;padding-top:36px;">
+    {"".join(f'<div class="col" style="gap:6px;"><div style="width:96px;height:40px;background:{T[k]};border:1px solid {T["mine-line"]};"></div><div class="mono dim" style="font-size:11px;">--{k}</div></div>' for k in ["shell-bg","shell-fg","mine-bg","mine-panel","mine-line","mine-fg","ember","signal","heat-hot"])}
+  </div>
+</div>'''
+open(os.path.join(OUT, "Moodboard.dc.html"), "w").write(doc(mood_body))
+
 # ── canvas.json ──────────────────────────────────────────────────────────
 canvas = {
-  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}],
+  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Moodboard"}],
   "artboards": [
     {"file": "Main.dc.html",       "title": "1 · Live mining",   "x": 0,    "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
     {"file": "BlockFound.dc.html", "title": "3 · Block found",   "x": 1540, "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
@@ -520,16 +549,19 @@ canvas = {
     {"file": "Redeem.dc.html",     "title": "6 · Redeem (shell)","x": 1540, "y": 2080, "w": 1440, "h": 940, "page": "page-1"},
     {"file": "AltTerminal.dc.html","title": "Alt A · All-dark terminal", "x": 0,   "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "AltArcade.dc.html",  "title": "Alt B · Bright arcade",     "x": 820, "y": 0, "w": 720, "h": 480, "page": "page-2"},
+    {"file": "Moodboard.dc.html",  "title": "Moodboard",                 "x": 0,   "y": 0, "w": 1440, "h": 1180, "page": "page-3"},
   ],
   "annotations": [
     {"id": "direction", "x": 0, "y": -200, "w": 620, "page": "page-1",
      "text": "Direction: clean fintech shell, industrial mine inside.\nShell (nav, redeem) is light and calm; the mine is coal-dark and dense.\nEmber = energy you control (hash, overclock, burn). Signal = the mine's progress and what it gives back (ETA, found, claimable).\nEvery wall-clock figure is an estimate and says so. Progress bars with shift ticks are the primary clock."},
     {"id": "numbers", "x": 3080, "y": 1040, "w": 390, "page": "page-1",
      "text": "Numbers match the worked example in docs/03 §7: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."},
+    {"id": "mood", "x": 0, "y": -150, "w": 700, "page": "page-3",
+     "text": "Moodboard: eight Higgsfield images generated with the token palette as a constraint. Captions say which token or principle each one feeds. Sources in design/moodboard/README.md."},
     {"id": "alts", "x": 0, "y": -150, "w": 700, "page": "page-2",
      "text": "Two directions considered and not taken. Kept so the choice is visible. Say the word and either becomes the main direction; the tokens file is the only thing that changes."},
   ],
-  "launch": {"view": "canvas", "page": "page-1"},
+  "launch": {"view": "canvas", "page": "page-3"},
 }
 json.dump(canvas, open(os.path.join(OUT, "canvas.json"), "w"), indent=2)
 print("wrote", sorted(os.listdir(OUT)))
