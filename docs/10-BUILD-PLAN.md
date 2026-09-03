@@ -12,6 +12,7 @@ needs phase 1's ABI; phase 4 needs everything.
 Phase 0  Scaffold + CI + CLAUDE.md wiring                     ~1 session
 Phase 1  Contracts: core + tests + gas                        ~3–5 sessions   ┐ parallel
 Phase 2  Economic simulation + parameter/difficulty tuning    ~2 sessions     ┘
+Design   Brief, tokens, mockups (done: docs/11, specs/design, design/)   – review before phase 3
 Phase 3  App + indexer + keeper against Anvil                 ~4–6 sessions
 Phase 4  Hardening: security review, audit prep, deploy, testnet dry run   ~2–3 sessions
 ```
@@ -201,9 +202,16 @@ BUILD-LOG entry states which parameters you recommend changing and why. Commit o
 ### Phase 3 – App, indexer, keeper
 
 ```
-You are building the Stock Miner app. Read CLAUDE.md, docs/06-TECH-SPEC-APP.md, docs/03-GAME-DESIGN.md
-§8 (UX beats), docs/01-PRD.md §7.6 and §8, docs/07-COMPLIANCE-AND-RISK.md §4–5, and the phase 1
-hand-off in docs/BUILD-LOG.md (ABI location and the Anvil demo-season script).
+You are building the Stock Miner app. Read CLAUDE.md, docs/11-DESIGN-BRIEF.md, docs/06-TECH-SPEC-APP.md,
+docs/03-GAME-DESIGN.md §8 (UX beats), docs/01-PRD.md §7.6 and §8, docs/07-COMPLIANCE-AND-RISK.md
+§4–5, and the phase 1 hand-off in docs/BUILD-LOG.md (ABI location and the Anvil demo-season script).
+
+Visual design is decided, not yours to invent: the app imports specs/design/tokens.css and never
+hard-codes a colour, font, radius or duration; layouts and component anatomy come from the mockups
+in design/artboards/*.dc.html (copy their markup and inline styles into components, then replace
+literal values with tokens). Where a screen has no mockup (activate flow, leaderboard, seasons,
+purchase sheet), compose it from the components in the brief §5 and log the decision. Deviations
+from the brief go in docs/DECISIONS.md with a reason.
 
 Goal: the full player loop against a local Anvil demo season: activate, upgrade, overclock, watch
 progress and ETA, claim found blocks, exit, withdraw after close, redeem or cash out. Plus the
@@ -228,8 +236,9 @@ Constraints: the app must work with the indexer down for every critical action. 
 beyond animation; the hashrate visualiser is a seeded PRNG and carries the "cosmetic" tooltip.
 Geo-fence middleware with a config-driven country list and a self-attestation modal. No PII.
 
-Use the landing-page-design skill for `/` and the artifact-design/dataviz skills for the progress
-and leaderboard visuals if available. Keep the design system small and consistent.
+Use the landing-page-design skill for `/` (within the tokens) and the dataviz skill for the
+leaderboard visuals if available. The brief's motion table (§6) is the spec for every animation;
+implement reduced-motion for each.
 
 Done when the Playwright season passes at all three paces, the parity test is exact, `pnpm -r check`
 is green, and the BUILD-LOG entry includes screenshots' paths for each phase state. Commit on

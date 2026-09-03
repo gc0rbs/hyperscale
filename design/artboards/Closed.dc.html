@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
+    a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
+    .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:700; line-height:1.05; }
+    .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
+    .col { display:flex; flex-direction:column; gap:12px; }
+    .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
+    .navlinks { display:flex; flex-direction:row; gap:24px; font-size:15px; font-weight:500; color:#6F6C64; }
+    .navlinks .on { color:#26241F; }
+    .wallet { margin-left:auto; height:36px; padding:0 14px; border:1px solid #CFCBC2; border-radius:999px; display:flex; align-items:center; gap:8px; font-size:13px; }
+    .mine { background:#171512; color:#EDE9E1; }
+    .panel { background:#1F1C18; border:1px solid #35312B; border-radius:6px; padding:20px; }
+    .label { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#9A948A; font-weight:500; }
+    .muted { color:#9A948A; }
+    .dim { color:#6B665D; }
+    .btn { height:40px; padding:0 16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; gap:10px; font-size:14px; font-weight:600; border:1px solid transparent; white-space:nowrap; }
+    .btn-ember { background:#F2A93B; color:#1A1408; }
+    .btn-signal { background:#45C4DB; color:#062126; }
+    .btn-ghost { background:transparent; color:#EDE9E1; border-color:#35312B; }
+    .btn-shell { background:#26241F; color:#fff; }
+    .btn-shell-ghost { background:#fff; color:#26241F; border-color:#CFCBC2; }
+    .btn .cost { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-weight:400; font-size:12px; opacity:0.8; }
+    .chip { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 7px; border:1px solid #35312B; border-radius:3px; color:#9A948A; }
+    .est { color:#45C4DB; }
+    .pips { display:flex; flex-direction:row; gap:4px; }
+    .pip { width:14px; height:6px; background:#35312B; border-radius:1px; }
+    .pip.on { background:#F2A93B; }
+    .hair { height:1px; background:#35312B; }
+    .card { background:#FFFFFF; border:1px solid #E6E3DC; border-radius:10px; padding:24px; }
+    .stream { position:relative; height:220px; overflow:hidden; font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size:12px; line-height:20px; color:#6B665D; }
+    .stream::before, .stream::after { content:""; position:absolute; left:0; right:0; height:40px; z-index:1; }
+    .stream::before { top:0; background:linear-gradient(#1F1C18, transparent); }
+    .stream::after { bottom:0; background:linear-gradient(transparent, #1F1C18); }
+    .stream-inner { animation: scroll 6s linear infinite; }
+    .stream-inner .hit { color:#F2A93B; }
+    @keyframes scroll { from { transform:translateY(0); } to { transform:translateY(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .stream-inner { animation:none; } }
+</style>
+</helmet>
+<div style="width:1440px;min-height:940px;" class="mine col">
+  <div class="nav"><div class="row" style="gap:10px;"><div style="width:22px;height:22px;background:#26241F;border-radius:3px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2A93B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div class="disp" style="font-size:20px;">Stock Miner</div></div><div class="navlinks"><div class="on">Mine</div><div class="">Claim</div><div class="">Redeem</div><div class="">Leaderboard</div></div><div class="wallet mono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F6C64" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h5"/><path d="M3 10h18"/></svg>0x8a3f…c21e</div></div>
+  <div style="padding:24px 32px 32px;display:grid;grid-template-columns:minmax(0, 2fr) minmax(0, 1fr);gap:24px;">
+    <div class="col" style="gap:20px;">
+      <div class="row" style="justify-content:space-between;padding:0 0 4px;">
+      <div class="row" style="gap:14px;"><div class="disp" style="font-size:22px;">Season 1</div><div class="chip" style="color:#45C4DB;border-color:#1E97AD;">Mine sealed</div></div>
+      <div class="mono muted" style="font-size:12px;">block 4 found 11 min ago</div></div>
+      <div class="panel col" style="gap:24px;padding:32px;border-color:#6B665D;">
+        <div class="row" style="gap:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9A948A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><div class="disp" style="font-size:48px;color:#9A948A;">This mine has closed permanently</div></div>
+        <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:16px;">
+          <div class="col" style="gap:4px;">
+      <div class="label">Season ran</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">9h 41m</div>
+      <div class="muted" style="font-size:12px;">sized for ~24h</div>
+    </div>
+          <div class="col" style="gap:4px;">
+      <div class="label">Peak total hash</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">24.1M H</div>
+      
+    </div>
+          <div class="col" style="gap:4px;">
+      <div class="label">RIG burned</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">3.82M</div>
+      <div class="muted" style="font-size:12px;">of 9.6M staked</div>
+    </div>
+          <div class="col" style="gap:4px;">
+      <div class="label">Redemption window</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">29d 23h</div>
+      <div class="muted" style="font-size:12px;">closes 2026-10-04</div>
+    </div>
+        </div>
+        <div class="col" style="gap:8px;opacity:0.5;"><div style="position:relative;height:10px;background:#26221D;border:1px solid #35312B;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:#6B665D;"></div><div style="position:absolute;left:12.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:25.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:37.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:50.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:62.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:75.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:87.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:12.5%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:25.0%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:37.5%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:50.0%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:62.5%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:75.0%;top:-4px;width:2px;height:18px;background:#6B665D;"></div><div style="position:absolute;left:87.5%;top:-4px;width:2px;height:18px;background:#6B665D;"></div>
+    </div><div class="mono dim" style="font-size:12px;">4 / 4 blocks found</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:20px;">
+        <div class="panel col" style="gap:16px;">
+          <div class="row" style="justify-content:space-between;"><div class="row"><div class="disp" style="font-size:22px;">Rig #0142</div><div class="chip">RIG</div></div><div class="chip">Stopped</div></div>
+          <div class="col" style="gap:4px;">
+      <div class="label">Deposit to withdraw</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">5,000,000 RIG</div>
+      <div class="muted" style="font-size:12px;">returned in full · upgrades were burned</div>
+    </div>
+          <div class="btn btn-ember" style="height:44px;">Withdraw 5,000,000 RIG</div>
+        </div>
+        <div class="panel col" style="gap:16px;">
+          <div class="row" style="justify-content:space-between;"><div class="row"><div class="disp" style="font-size:22px;">Rig #0207</div><div class="chip">RIG/USDC LP</div></div><div class="chip">Stopped</div></div>
+          <div class="col" style="gap:4px;">
+      <div class="label">Deposit to withdraw</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">800,000 LP</div>
+      <div class="muted" style="font-size:12px;">returned in full</div>
+    </div>
+          <div class="btn btn-ember" style="height:44px;">Withdraw 800,000 LP</div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="gap:20px;padding-top:34px;">
+      <div class="panel col" style="gap:8px;"><div class="label">Found · claimable</div><div class="row" style="justify-content:space-between;padding:10px 0;border-top:1px solid #35312B;">
+          <div class="col" style="gap:2px;"><div class="disp" style="font-size:18px;">SPYx</div><div class="mono muted" style="font-size:12px;">1,522,906 frag · 1.523 SPYx</div></div>
+          <div class="btn btn-signal" style="height:34px;">Claim</div></div></div>
+      <div class="panel col" style="gap:12px;">
+        <div class="label">Next</div>
+        <div style="font-size:14px;line-height:1.45;">Fragments you hold can be redeemed for whole Stock Tokens, or cashed out in USDC, until the window closes. Unredeemed fragments are swept afterwards.</div>
+        <div class="btn btn-signal" style="height:44px;">Go to redeem <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062126" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
