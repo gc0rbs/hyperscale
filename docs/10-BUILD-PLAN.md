@@ -207,9 +207,13 @@ docs/03-GAME-DESIGN.md §8 (UX beats), docs/01-PRD.md §7.6 and §8, docs/07-COM
 §4–5, and the phase 1 hand-off in docs/BUILD-LOG.md (ABI location and the Anvil demo-season script).
 
 Visual design is decided, not yours to invent: the app imports specs/design/tokens.css and never
-hard-codes a colour, font, radius or duration; layouts and component anatomy come from the mockups
-in design/artboards/*.dc.html (copy their markup and inline styles into components, then replace
-literal values with tokens). Where a screen has no mockup (activate flow, leaderboard, seasons,
+hard-codes a colour, font, radius or duration. Reference order: design/launch/ (approved
+reference images of the landing page, mine and redeem dashboards, mobile screens, share cards; read
+its README for the known errors you must not reproduce), then design/artboards/*.dc.html (copy
+their markup and inline styles into components, then replace literal values with tokens), then the
+brief. The mine dashboard has an isometric rig room on the left (rigs glow when overclocked) built
+in CSS/SVG, not WebGL; if it cannot hit the performance budget, fall back to the flat layout and
+log it. The gem and shard visuals are SVG/CSS, not raster. Where a screen has no mockup (activate flow, leaderboard, seasons,
 purchase sheet), compose it from the components in the brief §5 and log the decision. Deviations
 from the brief go in docs/DECISIONS.md with a reason.
 

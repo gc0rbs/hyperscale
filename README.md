@@ -23,7 +23,8 @@ This repository currently holds the product and engineering specifications. No c
 | 8 | [Delivery plan](docs/08-DELIVERY-PLAN.md) | Milestones, team, testing, launch checklist |
 | 9 | [Open questions](docs/09-OPEN-QUESTIONS.md) | Decisions still needed before build |
 | 10 | [Build plan](docs/10-BUILD-PLAN.md) | Phases and the Claude Code prompt for each; how to start |
-| 11 | [Design brief](docs/11-DESIGN-BRIEF.md) | Visual direction, principles, type, colour, components, motion; mockups in `design/` |
+| 11 | [Design brief](docs/11-DESIGN-BRIEF.md) | Visual direction (approved), principles, type, colour, components, motion; mockups and references in `design/` |
+| – | [Decisions](docs/DECISIONS.md) | Dated log of spec, design and build decisions |
 | – | [Glossary](docs/GLOSSARY.md) | Terms used across the docs |
 
 `CLAUDE.md` holds the standing rules every build session reads first.

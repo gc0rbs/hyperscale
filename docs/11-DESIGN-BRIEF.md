@@ -23,6 +23,23 @@ Why not all-dark or all-playful: an all-dark terminal look reads as "for traders
 redemption flow feel like a hack; an arcade look undermines the "real stocks" promise. Both are
 sketched as alternates on the canvas so the choice is visible, not assumed.
 
+### Status: direction approved 2026-09-03
+
+The direction below is locked (see `docs/DECISIONS.md`). The closest-to-buildable references are in
+`design/launch/`: full landing page, mine and redeem dashboards, two mobile screens, X posts and share
+cards. Phase 3 builds from those first, then the artboards on the canvas, then this brief.
+
+Three additions to the direction that came out of the concept rounds:
+
+- **The tick bar is the signature device.** Eight ticks, cyan fill, white head. It appears on every
+  surface: block cards, share cards, posters, apparel. It is a brand element, not only a component.
+- **The gem is the reward object.** A faceted amber gem with a cyan edge appears at block found and on
+  win cards; loose shards stand for fragments; shards streaming into a cyan-rimmed coin explains
+  redemption. Nowhere else.
+- **The mine dashboard has a rig room.** Isometric rigs on a dark grid that visibly glow when
+  overclocked, on the left; the flat cards on the right. The flat-only layout on canvas page 1 is
+  the fallback if the rig room is too costly.
+
 ### Concept images
 
 Twelve generated concepts of the brand, possible UI and gameplay live on the third page of the design
