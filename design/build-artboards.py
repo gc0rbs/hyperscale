@@ -564,9 +564,36 @@ concepts_body = f'''<div style="width:1440px;min-height:3400px;padding:40px;box-
 </div>'''
 open(os.path.join(OUT, "Concepts.dc.html"), "w").write(doc(concepts_body))
 
+
+# ── 10. Directions (page 4) ──────────────────────────────────────────────
+DIRS = [
+  ("A · The seam", "a jagged amber vein runs through surfaces; where it opens, cyan shows through. Flat, vector, animatable: it can be the progress bar itself.", "Recommended",
+   ["31-seam-poster.webp", "32-seam-share-card.webp", "33-seam-hero.webp", "34-seam-splash.webp"]),
+  ("B · Material", "brushed metal, etched type, inlaid enamel. Premium and tactile; photographic, so best kept for merch and hero shots.", "Physical goods only",
+   ["35-material-poster.webp", "36-material-share-card.webp", "37-material-hero.webp", "38-material-case.webp"]),
+  ("C · Fragments", "faceted amber gem and shards in motion. Explains \u201cfragments\u201d instantly; reads as generic 3D crypto elsewhere.", "Block-found gem only",
+   ["39-fragments-poster.webp", "40-fragments-share-card.webp", "41-fragments-hero.webp", "42-fragments-splash.webp"]),
+]
+def dir_col(title, blurb, verdict, files):
+    imgs = "".join(f'<img src="{f}" style="width:100%;height:auto;display:block;border:1px solid {T["mine-line"]};">' for f in files)
+    vcol = T["signal"] if verdict == "Recommended" else T["mine-muted"]
+    return f'''<div class="col" style="gap:14px;">
+      <div class="row" style="justify-content:space-between;align-items:baseline;"><div class="disp" style="font-size:28px;">{title}</div><div class="chip" style="color:{vcol};border-color:{vcol};">{verdict}</div></div>
+      <div class="muted" style="font-size:13px;line-height:1.45;min-height:58px;">{blurb}</div>
+      {imgs}
+    </div>'''
+dirs_body = f'''<div style="width:1440px;min-height:2300px;padding:40px;box-sizing:border-box;" class="mine col">
+  <div class="row" style="justify-content:space-between;align-items:flex-end;padding-bottom:28px;">
+    <div class="col" style="gap:6px;"><div class="label">Directions</div><div class="disp disp-xl" style="font-size:48px;">The missing something</div></div>
+    <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Three candidates for a signature device, each on the same four surfaces. Reasoning and recommendation in design/directions/README.md.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:32px;align-items:start;">{"".join(dir_col(*d) for d in DIRS)}</div>
+</div>'''
+open(os.path.join(OUT, "Directions.dc.html"), "w").write(doc(dirs_body))
+
 # ── canvas.json ──────────────────────────────────────────────────────────
 canvas = {
-  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Concepts"}],
+  "pages": [{"id": "page-1", "name": "Screens"}, {"id": "page-2", "name": "Alternate directions"}, {"id": "page-3", "name": "Concepts"}, {"id": "page-4", "name": "Directions"}],
   "artboards": [
     {"file": "Main.dc.html",       "title": "1 · Live mining",   "x": 0,    "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
     {"file": "BlockFound.dc.html", "title": "3 · Block found",   "x": 1540, "y": 0,    "w": 1440, "h": 940, "page": "page-1"},
@@ -578,18 +605,21 @@ canvas = {
     {"file": "AltTerminal.dc.html","title": "Alt A · All-dark terminal", "x": 0,   "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "AltArcade.dc.html",  "title": "Alt B · Bright arcade",     "x": 820, "y": 0, "w": 720, "h": 480, "page": "page-2"},
     {"file": "Concepts.dc.html",   "title": "Concepts",                  "x": 0,   "y": 0, "w": 1440, "h": 3400, "page": "page-3"},
+    {"file": "Directions.dc.html", "title": "Directions",                "x": 0,   "y": 0, "w": 1440, "h": 2300, "page": "page-4"},
   ],
   "annotations": [
     {"id": "direction", "x": 0, "y": -200, "w": 620, "page": "page-1",
      "text": "Direction: clean fintech shell, industrial mine inside.\nShell (nav, redeem) is light and calm; the mine is coal-dark and dense.\nEmber = energy you control (hash, overclock, burn). Signal = the mine's progress and what it gives back (ETA, found, claimable).\nEvery wall-clock figure is an estimate and says so. Progress bars with shift ticks are the primary clock."},
     {"id": "numbers", "x": 3080, "y": 1040, "w": 390, "page": "page-1",
      "text": "Numbers match the worked example in docs/03 §7: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."},
+    {"id": "directions", "x": 0, "y": -150, "w": 720, "page": "page-4",
+     "text": "Pick one. A (the seam) is recommended: it is the product itself, it is flat and buildable, and it can be the progress bar: the seam advances as work accumulates and splits open cyan when the block is found."},
     {"id": "concepts", "x": 0, "y": -150, "w": 720, "page": "page-3",
      "text": "Concepts: twenty-four generated images of the brand, possible UI and gameplay, made with the token palette as a constraint. Two are real forks to decide on: the light block card inside the dark mine (05) and the isometric rig room as an alternative to the dashboard (06)."},
     {"id": "alts", "x": 0, "y": -150, "w": 700, "page": "page-2",
      "text": "Two directions considered and not taken. Kept so the choice is visible. Say the word and either becomes the main direction; the tokens file is the only thing that changes."},
   ],
-  "launch": {"view": "canvas", "page": "page-3"},
+  "launch": {"view": "canvas", "page": "page-4"},
 }
 json.dump(canvas, open(os.path.join(OUT, "canvas.json"), "w"), indent=2)
 print("wrote", sorted(os.listdir(OUT)))

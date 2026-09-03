@@ -11,6 +11,10 @@
     {
       "id": "page-3",
       "name": "Concepts"
+    },
+    {
+      "id": "page-4",
+      "name": "Directions"
     }
   ],
   "artboards": [
@@ -103,6 +107,15 @@
       "w": 1440,
       "h": 3400,
       "page": "page-3"
+    },
+    {
+      "file": "Directions.dc.html",
+      "title": "Directions",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2300,
+      "page": "page-4"
     }
   ],
   "annotations": [
@@ -123,6 +136,14 @@
       "text": "Numbers match the worked example in docs/03 \u00a77: total hash 19.5M, rig #0142 at 7.00M H earning 194.4 frag/s in block 2 (TSLAx pool 6.0, difficulty 2.16e11). Pool USD values are placeholders."
     },
     {
+      "id": "directions",
+      "x": 0,
+      "y": -150,
+      "w": 720,
+      "page": "page-4",
+      "text": "Pick one. A (the seam) is recommended: it is the product itself, it is flat and buildable, and it can be the progress bar: the seam advances as work accumulates and splits open cyan when the block is found."
+    },
+    {
       "id": "concepts",
       "x": 0,
       "y": -150,
@@ -141,6 +162,6 @@
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-3"
+    "page": "page-4"
   }
 }
