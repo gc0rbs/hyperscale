@@ -410,8 +410,8 @@ class Mine:
         p = self.p
         self._touch(now_x)
         self._update_global(now_x)
+        r = self._rig(rig_id, owner)  # ownership before phase, like the contract
         self._require_open_or_preopen()
-        r = self._rig(rig_id, owner)
         self._settle_rig(r, now_x)
         if r.gpu_tier >= len(p.gpu_cost_bps):
             raise MaxTier()
@@ -432,8 +432,8 @@ class Mine:
         p = self.p
         self._touch(now_x)
         self._update_global(now_x)
+        r = self._rig(rig_id, owner)  # ownership before phase, like the contract
         self._require_open_or_preopen()
-        r = self._rig(rig_id, owner)
         self._settle_rig(r, now_x)
         if r.cooling_tier >= len(p.cool_cost_bps):
             raise MaxTier()
@@ -446,9 +446,9 @@ class Mine:
         p = self.p
         self._touch(now_x)
         self._update_global(now_x)
+        r = self._rig(rig_id, owner)
         if self.phase(now_x) is not Phase.OPEN:
             raise WrongPhase(self.phase(now_x))
-        r = self._rig(rig_id, owner)
         self._settle_rig(r, now_x)
         if r.active_oc >= p.max_active_oc:
             raise MaxOverclocks()
@@ -509,9 +509,9 @@ class Mine:
         p = self.p
         self._touch(now_x)
         self._update_global(now_x)
-        if self.phase(now_x) is not Phase.OPEN:
-            raise WrongPhase(self.phase(now_x))
         r = self._rig(rig_id, owner)
+        # PreOpen exit is allowed and pays the fee (docs/DECISIONS.md 2026-09-03, Phase 1)
+        self._require_open_or_preopen()
         self._settle_rig(r, now_x)
         self.total_hash -= r.base_hash + r.oc_hash
         if r.oc_hash:
@@ -532,11 +532,12 @@ class Mine:
     def withdraw(self, now_x: int, rig_id: int, owner: str | None = None) -> int:
         self._touch(now_x)
         self._update_global(now_x)
+        r = self._rig(rig_id, owner)
         if self.phase(now_x) is not Phase.CLOSED:
             raise WrongPhase(self.phase(now_x))
-        r = self._rig(rig_id, owner)
         self._settle_rig(r, now_x)
-        # Spec §6 does not say so, but invariant 2 needs it: withdrawn rigs leave totalHash.
+        # Spec §6 does not say so, but invariant 2 needs it: withdrawn rigs leave totalHash
+        # (the contract's `_removeHash` does the same).
         self.total_hash -= r.base_hash + r.oc_hash
         self.balance[r.asset] -= r.amount
         self.total_weight -= r.weight

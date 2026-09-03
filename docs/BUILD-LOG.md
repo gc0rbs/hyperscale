@@ -60,3 +60,53 @@ Plan:
 - Phase 1 (contracts) and Phase 2 (sim) can start in parallel now, from the prompts in
   `docs/10-BUILD-PLAN.md`. Phase 1's first move: write the pace-replay and boundary-exactness tests
   against `ISeasonMine` and watch them fail.
+
+## 2026-09-03 – Phase 1: contracts (shipped)
+
+**What shipped** (`contracts/`)
+- `src/tokens/RIG.sol`, `src/SeasonMine.sol`, `src/StockFragments.sol`, `src/RedemptionVault.sol`,
+  `src/SeasonFactory.sol` + `src/factory/{Deployers,CreateAddress}.sol`, adapters
+  (`OpenEligibility`, `AllowlistEligibility`), mocks (stock token with allowlist hook, ERC-20, oracle).
+- `script/DeployDemo.s.sol`: funded demo season on Anvil, addresses to `deployments/anvil.json`,
+  first five Anvil accounts funded and allowlisted. Verified end to end against a local Anvil.
+- Tests (37 + 6 invariants, all green): unit (`Mine.t.sol` FR-tagged, `Gating.t.sol`, `Vault.t.sol`),
+  scenario (`WorkedExample` = docs/03 §7 to within 0.5% and exact burn; `PaceReplay` at 4×, 1×, 1/16×
+  hash (G5); `BoundaryExactness` retroactive == incremental, overclock 1s before a boundary;
+  `FailSafe` mid-block close), fuzz (`ClaimCap` 513 runs), invariants (§5.3 #1,2,3,4,6,7,8; 256 runs ×
+  depth 64 = 16,384 calls each). Interface drift check passes; `forge fmt --check` clean.
+- `.gas-snapshot` refreshed; measured gas recorded in docs/05 §10 and DECISIONS.
+
+**Deviations / decisions**: see `docs/DECISIONS.md` 2026-09-03 Phase 1 (via-IR, gas targets, deployer
+pattern, final-shift overclocks, rate dust, pre-open exit fee, ERC-1155 receiver).
+
+**Known gaps**
+- Invariant #5 (Σ work in a found block == difficulty − dust) and #9 (no earned change after close) are
+  covered only by scenarios, not by the invariant handler.
+- No differential fuzz against the Python reference yet (Phase 4, once `sim/` lands).
+- Gas is above the original targets; no optimisation pass yet.
+- `AllowlistEligibility` is owner-mutable by design (issuer KYC lists change); it lives outside the
+  immutable season set.
+
+**Hand-off for Phase 3**
+- ABI: `contracts/out/SeasonMine.sol/SeasonMine.json` (and StockFragments, RedemptionVault, RIG,
+  MockERC20, MockStockToken, AllowlistEligibility, MockPriceOracle, SeasonFactory).
+- Demo season: `anvil --block-time 1` then
+  `forge script script/DeployDemo.s.sol --rpc-url http://127.0.0.1:8545 --broadcast`
+  (env `PACE_SECONDS`, `DEMO_HASH`, `OPEN_DELAY`). Time-warp with `cast rpc evm_increaseTime`.
+- Reads the UI needs in one multicall: `shift, workInShift, lastX, totalHash, closeX, progress(),
+  eta(), ratePerWork(b), blockEndX(b), shiftEndX(k)`, per rig `rigs(id), pending(id,b), rigHash(id)`.
+
+## 2026-09-03 – Phase 2: simulation (shipped, by a parallel agent)
+
+**What shipped** (`sim/`, `docs/SIM-REPORT.md`): `sim.mine` pure-Python reference of spec §5 with the
+contract's integer semantics; `python -m sim.replay trace.json` differential oracle; eight strategy
+agents; `python -m sim.run` Monte-Carlo runner (1,000 players ≈ 0.2 s); `python -m sim.sizing`
+difficulty sizing with duration distribution and fail-safe flags. 21 tests (hypothesis stateful machine
+over all nine §5.3 invariants, worked example to the fragment, pace replay bit-identical at five paces).
+
+**Findings**: everything reduces to ρ = pool value in RIG ÷ total hash; defaults land at ρ ≈ 0.27 where
+burn is ~3.7% and the median rig burns nothing; healthy band ρ ≈ 0.35–0.55. Parameter changes are
+recommended but **not applied** (DECISIONS 2026-09-03, open question Q20). docs/03 §7 numbers corrected
+to exact floors.
+
+**Next**: Phase 4 wires `sim.replay` as the differential-fuzz oracle for the contracts.

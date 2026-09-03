@@ -23,3 +23,4 @@ Decisions needed before or during M0. Each has a recommended default so the buil
 | Q17 | Governance of season params and treasury | multisig / token vote | 3-of-5 multisig for seasons 1–3 | M0 |
 | Q18 | Oracle provider on Robinhood Chain | Pyth / Chainlink / issuer NAV feed | Whichever publishes the underlyings; Pyth likely on an Orbit chain | M0 |
 | Q19 | Who runs the `poke()` keeper and what if it stops? | ops cron / anyone / none | Ops cron; correctness never depends on it; app also triggers it | M2 |
+| Q20 | Adopt the simulation's parameter changes? (pool sized to ρ≈0.4, cheaper GPU/cooling tiers, LP bonus review; docs/SIM-REPORT.md §7) | adopt all / adopt costs only / keep defaults | Adopt all before season 1; re-run the sim after | M3 |

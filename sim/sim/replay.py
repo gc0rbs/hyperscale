@@ -22,7 +22,7 @@ Trace format (times in whole seconds unless ``tX`` is given in X-time = seconds 
       ]
     }
 
-Rig ids are 0-based in activation order (the contract team should map its ids accordingly).
+Rig ids are 0-based in activation order, matching `SeasonMine` (`rigId = _rigs.length`).
 ``amount`` is in wei (string or int); ``asset`` is "RIG" or "LP". An action that would revert is
 reported with the contract error name and does not change state, mirroring a reverted transaction.
 Output: per-rig earned + claimed fragments per block, minted totals, shift boundary X-times, closeX.

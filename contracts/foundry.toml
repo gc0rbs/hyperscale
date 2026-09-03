@@ -8,7 +8,7 @@ evm_version = "cancun"
 optimizer = true
 optimizer_runs = 10_000
 via_ir = true
-fs_permissions = [{ access = "read", path = "./" }, { access = "read", path = "../specs" }]
+fs_permissions = [{ access = "read", path = "./" }, { access = "read", path = "../specs" }, { access = "read-write", path = "./deployments" }]
 gas_reports = ["SeasonMine", "RedemptionVault", "StockFragments", "SeasonFactory"]
 
 [profile.default.fuzz]

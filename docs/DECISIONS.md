@@ -26,3 +26,48 @@ did, and the reference-driven set produced layouts close enough to build from.
 
 **Consequences.** Brief §1 and §5 updated; Phase 3 prompt points at `design/launch/` first; the
 fixes listed in `design/launch/README.md` are Phase 3 tasks.
+
+## 2026-09-03 – Phase 1 implementation decisions
+
+- **via-IR compilation.** The settlement loop and the parameter struct exceed the legacy pipeline's
+  stack. `via_ir = true` in `foundry.toml`. Gas figures are measured under via-IR.
+- **Gas targets revised.** Measured (unit-suite averages/maxima): `activate` ≤ 284k, `upgradeGpu` ≤
+  121k, `overclock` ≤ 146k, `claimAll` ≤ 481k (four ERC-1155 mints), `withdraw` ≤ 188k, `poke` ≤ 963k
+  in the pathological 32-shifts-crossed case and ~34k when nothing crossed. docs/05 §10 targets for
+  `activate` and `claimAll` were optimistic; the spec table now carries the measured numbers.
+  Optimisation is a Phase 4 item, not a blocker on an Arbitrum-family chain.
+- **Ownership is checked before phase** in every rig function, so a non-owner gets `NotOwner` in any
+  phase. Cheaper and clearer for the UI.
+- **Factory uses per-contract deployers and CREATE address prediction.** The three season contracts
+  reference each other in constructors, and one factory holding all three creation codes would exceed
+  the EIP-170 size limit. Each deployer's CREATE nonce is `deployments + 1`; the factory reverts if a
+  prediction misses.
+- **Overclocks bought in the final shift never "expire".** Their expiry index equals the total shift
+  count, which is never reached; they run through close. Harmless and documented; the invariant suite
+  sums expiry buckets up to and including that index.
+- **Rate dust.** `ratePerWork` floors, so a fully mined block pays its pool minus up to one fragment
+  per rig. Tests assert `≥ pool − rigs − 1`. The unminted remainder stays in the vault and is swept.
+- **Pre-open exit charges the exit fee.** FR-R6 is written for the open phase; exiting during PreOpen
+  is allowed and pays the same 3%. Fee-free pre-open withdrawal exists only for a failed funding
+  (FR-S5), which cannot arise because activation is gated on `funded`.
+- **`pending()` and the vault call `poke()`-equivalent simulation.** Views simulate boundaries not yet
+  discovered, so the UI never needs a keeper for correctness; the vault pokes before gating.
+- **Rig owners must accept ERC-1155.** A contract wallet without `onERC1155Received` cannot claim.
+  Documented for the audit package; no change in v1.
+
+## 2026-09-03 – Phase 2 simulation findings (parameters NOT changed; decision pending)
+
+The economic simulation (`sim/`, `docs/SIM-REPORT.md`) shows everything reduces to one ratio,
+ρ = pool value in RIG ÷ total hash. With the current defaults and a pool sized by the docs/04 rule
+(k × expected burn), ρ lands around 0.27: total burn ≈ 3.7% of stake and the median rig burns nothing,
+far below the 10–30% the docs assume. A healthy band is ρ ≈ 0.35–0.55.
+
+Recommended by the simulation, **not applied** because they change the economics the user must own:
+1. Size the pool to a target ρ ≈ 0.4 (roughly 0.55–0.6 × expected TVL value) and show pool/TVL in PreOpen.
+2. `gpuCostBps` → `[300, 400, 600, 900, 1300]`; `coolCostBps` → `[200, 300, 500]`.
+3. Keep overclock parameters and `shiftsPerBlock` as they are.
+4. Decide `lpBonusBps` deliberately: the LP staker wins 49/50 runs at ρ ≤ 0.4 on the bonus alone.
+
+Applied now: docs/03 §7 worked-example numbers corrected to exact integer floors (1,794,871 / 2,564,102 /
+641,025); the contracts' scenario test and the Python reference both assert them within dust.
+Open question Q20 added to docs/09.

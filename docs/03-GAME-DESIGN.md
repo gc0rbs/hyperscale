@@ -181,9 +181,10 @@ Block 1: Bo's hash with 3 overclocks = 4,000,000 + 6,000,000 = 10,000,000. Total
   this mine runs about twice as fast as sized). Each shift ≈ 18.5 min, so Bo re-buys 3 overclocks about
   every 37 min: ~4 rounds, 12 overclocks.
 - Pay rate `r_1 = 5,000,000 fragments / 1.728e11 = 2.894e-5` fragments per hash-second.
-- Ann: `7,000,000 × 8,862 × 2.894e-5 ≈ 1,794,872` fragments = 1.795 NVDAx. (Equivalently `5.0 × 7/19.5`.)
-- Bo: `10,000,000 × 8,862 × 2.894e-5 ≈ 2,564,103` = 2.564 NVDAx.
-- Cy: ≈ 641,026 = 0.641 NVDAx.
+- Ann: `7,000,000 × 8,861.5 × 2.894e-5 = 1,794,871` fragments (exact integer floor; the contract and the
+  Python reference agree) = 1.795 NVDAx. (Equivalently `5.0 × 7/19.5`.)
+- Bo: `2,564,102` = 2.564 NVDAx.
+- Cy: `641,025` = 0.641 NVDAx. The three sum to 4,999,998; two fragments of rounding dust stay in the vault.
 
 Note what Ann sees in the UI: "202.6 fragments/s" from the moment the mine opens, and that number never
 changes when Bo overclocks. What changes is the ETA on the block, which shortens.

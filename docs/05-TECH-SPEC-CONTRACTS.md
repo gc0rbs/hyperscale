@@ -273,15 +273,20 @@ Eligibility adapters (doc 07): `OpenEligibility`, `MerkleEligibility`, `TokenHoo
 | Stock Token transfer hooks failing at redemption | `redeem` reverts cleanly; `cashOut` alternative; `sweep` uses `try/catch` per asset. |
 | Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `maxDurationSeconds ≥ 14 days`; `openTime ≥ now + 48h`. |
 
-## 10. Gas targets (Arbitrum-family estimates, normal case = ≤ 1 shift crossed)
+## 10. Gas (measured, via-IR, unit suite; Arbitrum-family chain)
 
-| Tx | Target |
-|---|---|
-| `activate` | ≤ 220k |
-| `upgradeGpu` / `overclock` | ≤ 170k |
-| `claimAll` (4 blocks) | ≤ 260k |
-| `exit` / `withdraw` | ≤ 140k |
-| `poke()` per shift crossed | ≤ 40k |
+| Tx | Typical | Worst seen | Note |
+|---|---|---|---|
+| `activate` | ~250k | 284k | first rig for an address pays cold storage |
+| `upgradeGpu` / `upgradeCooling` | ~90k | 133k | includes settlement |
+| `overclock` | ~108k | 146k | |
+| `claim` (one block) | ~147k | 216k | one ERC-1155 mint |
+| `claimAll` (4 blocks) | ~437k | 481k | four mints |
+| `exit` / `withdraw` | ~80–96k | 188k | |
+| `poke` | ~34k idle | 963k | worst case: all 32 shifts crossed in one call; the keeper keeps it short |
+
+Original targets (activate ≤ 220k, claimAll ≤ 260k) were optimistic; see `docs/DECISIONS.md`
+2026-09-03. Optimisation is a Phase 4 item.
 
 ## 11. Events
 
