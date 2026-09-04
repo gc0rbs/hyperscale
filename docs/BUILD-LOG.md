@@ -301,3 +301,18 @@ Rounded star radii/opacities prevent server/browser floating-point hydration dif
 Validation: app lint, typecheck and six tests pass. Fresh browser loads and reduced-motion reloads
 return HTTP 200 with no console errors; scroll interaction remains available. Disabling WebGL
 shows the vector illustration and keeps the heading visible. Preview server restarted cleanly.
+
+### Static landing-page publishing
+
+Prepared a separate static export for the user's requested here.now deployment. The export builds
+from the existing landing components and fonts, retains 3D interactions, and shares the unavailable-
+season component for game destinations. Generated output and private publishing state are ignored.
+The normal Next.js app and its active local preview keep their server routes. Build and publishing
+instructions are in docs/HOSTING.md.
+
+Published the landing-page export at https://witty-breeze-ggxj.here.now/ on 2026-09-04.
+The publish was finalized successfully in anonymous mode (24-hour expiry). Private claim details
+remain exclusively in ignored local publisher state and the user handoff.
+Validation: production static export, lint/typecheck and six unit tests pass. The public site loads
+its 3D canvas, changes GPU power to 2.0×, switches reward selection and assembles the token. Game CTA
+and the return link work. At 390 px the page has no horizontal overflow. Browser console is clean.

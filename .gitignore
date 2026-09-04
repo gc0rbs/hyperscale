@@ -27,3 +27,5 @@ ops/seasons/*.json
 !ops/seasons/*.example.json
 .playwright-cli/
 output/playwright/
+
+.herenow/
