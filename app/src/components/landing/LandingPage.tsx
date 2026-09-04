@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon, LogoMark } from "@/components/Icons";
 import { MineralScene } from "./MineralScene";
 import { useScrollChapters } from "./useScrollChapters";
@@ -17,7 +17,7 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? "M5 19 19 5M5 5h14v14" : "M4 12h16m-6-6 6 6-6 6"} stroke="currentColor" strokeWidth="1.5" /></svg>;
 }
 
-// A stable starfield fills the hero independently of the existing 3D viewport.
+// One starfield spans the header and hero, independently of the 3D viewport.
 const HERO_STARS = Array.from({ length: 240 }, (_, index) => {
   const sample = (salt: number) => {
     const value = Math.sin((index + 1) * salt) * 43758.5453;
@@ -36,6 +36,7 @@ export function LandingPage() {
   const { hero, rig, mine, coreProgress, rigPower, reward, rewardPose } = useScrollChapters();
   const [assembled, setAssembled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const purchaseDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -57,12 +58,15 @@ export function LandingPage() {
     <div className="stock-landing">
       <a className="lp-skip" href="#main-content">Skip to content</a>
       <header className="lp-header">
-        <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={40} /><span>STOCK MINER</span></Link>
+        <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={40} /></Link>
         <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a></nav>
-        <Link className="lp-nav-cta" href="/mine">Enter the mine <Arrow diagonal /></Link>
+        <div className="lp-header-actions"><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
         {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a></nav>}
       </header>
+      <dialog ref={purchaseDialog} className="lp-purchase-dialog" aria-labelledby="purchase-title" aria-describedby="purchase-description" onClick={(event) => { if (event.target === event.currentTarget) purchaseDialog.current?.close(); }}>
+        <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>$RIG.</span></h2><p id="purchase-description">Coming soon. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-gold">Got it <Arrow /></button></form></div>
+      </dialog>
 
       <main id="main-content">
         <section ref={hero} className="lp-hero" aria-labelledby="hero-title">

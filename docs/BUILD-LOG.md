@@ -379,3 +379,32 @@ the rig/reward sections are each 1000 px, and a 200 px scroll moves the content 
 390×844 they are each 844 px, with a matching 180 px movement and no horizontal overflow. The four
 rewards advance and reverse correctly; browser errors are empty. Hero copy and art centers both
 measure 564 px in a usable area centered at 564 px. No remaining work in this refinement.
+
+### 2026-09-04 — Uninterrupted section transitions
+
+Plan: remove the decorative horizontal dividers between page sections, including the header,
+hero/reward strip, mine, FAQ introduction and footer. Preserve internal list/control borders and
+the current spacing, middle alignment and native scroll animations. Check desktop/mobile styles,
+run the app checks and static export, and update the existing here.now publish.
+
+Scope update: retain only the pickaxe in the header, extend the hero starfield behind it, add a
+full amber metallic treatment to Enter the mine and an orange Buy token text action. The official
+purchase URL is pending; show a clear purchase-link placeholder until provided. Restore native
+sticky stages for the rig/reward sections, with measured tall-screen handling and continuous,
+gently eased scene progress rather than abrupt state jumps. Keep centered content and reduced
+motion support. The hero composition and its unpinned scroll behavior remain intact.
+
+Shipped: removed section divider rules, retained the standalone pickaxe in the header and extended
+the same starfield behind the transparent navigation. Enter the mine has an amber metallic fill,
+subtle moving sheen and hover lift. The orange Buy token action opens an accessible Coming soon
+dialog because the user confirmed the purchase page is not live. Escape/backdrop dismissal and
+focus return work. Rig/reward stages are sticky again, centered with 110/150 viewport-percent travel.
+Rig upgrades ease into each build with a continuous smootherstep curve and existing frame-rate
+independent scene damping; reward rotation remains continuous. Reduced motion removes pinning.
+
+Verification: app lint, types and six tests pass; static export succeeds at 116 kB initial JS.
+Desktop section borders compute to zero; both stages remain fixed through their entire scroll
+range, and rewards advance/reverse correctly. At 390×844 header controls fit without horizontal
+overflow. At 375×667 the taller reward stage uses a -61 px sticky offset so its bottom remains
+reachable. Browser errors are empty. The existing beads database remains unavailable (`bd sync`);
+this log records the work. Remaining dependency: wire the official purchase URL once it is live.
