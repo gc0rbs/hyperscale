@@ -1,8 +1,8 @@
 {
   "name": "robinhood-testnet",
-  "chainId": 0,
-  "rpcUrl": "${ROBINHOOD_TESTNET_RPC}",
-  "explorerApi": "${ROBINHOOD_EXPLORER_API}",
+  "chainId": 46630,
+  "rpcUrl": "https://rpc.testnet.chain.robinhood.com/rpc",
+  "explorerApi": "https://explorer.testnet.chain.robinhood.com/api",
   "mocks": false,
   "rig": "0x0000000000000000000000000000000000000000",
   "lpToken": "0x0000000000000000000000000000000000000000",
@@ -17,5 +17,5 @@
     "AAPLx": "0x0000000000000000000000000000000000000000",
     "SPYx": "0x0000000000000000000000000000000000000000"
   },
-  "notes": "Placeholders. See ops/chains/README.md for what to fill in and which PRD §10 assumptions each value depends on."
+  "notes": "Robinhood Chain testnet (chain 46630, ETH gas, faucet at faucet.testnet.chain.robinhood.com). Token, oracle, eligibility and treasury addresses are still placeholders: for a mock season run DeployFactory with DEPLOY_MOCKS=true, which records them in contracts/deployments/46630-factory.json, and plan reads from there. See ops/chains/README.md."
 }
