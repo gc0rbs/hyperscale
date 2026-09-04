@@ -28,7 +28,7 @@ const HERO_STARS = Array.from({ length: 240 }, (_, index) => {
     y: `${(sample(78.233) * 100).toFixed(3)}%`,
     radius: (0.35 + sample(39.425) * 0.45).toFixed(3),
     opacity: (0.25 + sample(93.175) * 0.5).toFixed(3),
-    color: index % 13 === 0 ? "#65aeb1" : "#b68b45",
+    color: index % 13 === 0 ? "#45dce4" : "#c08a35",
   };
 });
 
@@ -80,7 +80,7 @@ export function LandingPage() {
             <div className="lp-hero-note"><span className="lp-tiny-cross">+</span> ALL THE STRATEGY. NONE OF THE HARDWARE.</div>
           </div>
           <div className="lp-hero-art">
-            <MineralScene kind="core" value={coreProgress} label="An amber mineral core edged in cyan light. Its dark rock shell opens as you scroll through the hero." />
+            <MineralScene kind="core" value={coreProgress} label="A luminous amber crystal with a cyan edge, surrounded by golden shards and a fine orbital dust trail. The fragments expand as you scroll." />
             <div className="lp-core-callout"><span className="lp-callout-line" /><span>THERE’S MORE<br />BENEATH THE SURFACE.</span></div>
           </div>
           <div className="lp-hero-bottom"><span><span className="lp-gold">04</span> BLOCKS. <span className="lp-gold">01</span> SHARED MINE. YOUR NEXT MOVE.</span><a href="#how-it-works">SCROLL TO GO DEEPER <span>↓</span></a></div>

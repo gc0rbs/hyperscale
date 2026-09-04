@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { ConvexGeometry } from "three/addons/geometries/ConvexGeometry.js";
 
+export const MINERAL_PALETTE = {
+  amber: 0xffb33e,
+  ivory: 0xffedbd,
+  cyan: 0x45e6ec,
+};
+
 // Object-space detail stays attached to each fragment as the mineral rotates and opens.
 const mineralNoise = /* glsl */`
   varying vec3 vMineralPosition;
@@ -47,30 +53,31 @@ function addSurfaceDetail(material: THREE.MeshStandardMaterial, surface: "basalt
       float strata = mineralNoise(vMineralPosition * 7.0);
       float grain = mineralNoise(vMineralPosition * 105.0);
       float mineralHeight = grain * 0.00015;
-      diffuseColor.rgb *= mix(vec3(0.93, 0.85, 0.70), vec3(1.0), strata);
+      diffuseColor.rgb *= mix(vec3(1.0, 0.68, 0.26), vec3(1.0, 0.96, 0.83), strata);
     `;
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <color_fragment>", `#include <color_fragment>\n${detail}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>\nroughnessFactor = ${surface === "basalt" ? "clamp(0.78 + grain * 0.20 - fissure * 0.08, 0.6, 1.0)" : "0.055 + strata * 0.06 + grain * 0.015"};`)
       .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\nnormal = mineralBump(normal, mineralHeight);");
   };
-  material.customProgramCacheKey = () => `hero-mineral-${surface}-v1`;
+  material.customProgramCacheKey = () => `hero-mineral-${surface}-v2`;
   return material;
 }
 
 export function createBasaltMaterial() {
   return addSurfaceDetail(new THREE.MeshStandardMaterial({
-    color: 0x3b4040, metalness: 0.06, roughness: 0.9, flatShading: true,
+    color: 0x302725, metalness: 0.06, roughness: 0.9, flatShading: true,
   }), "basalt");
 }
 
 export function createAmberMaterial() {
   const material = new THREE.MeshPhysicalMaterial({
-    color: 0xffe4af, metalness: 0, roughness: 0.1,
-    transmission: 0.85, thickness: 2.2, ior: 1.52,
-    attenuationColor: new THREE.Color(0xd88415), attenuationDistance: 1.2,
-    clearcoat: 0.8, clearcoatRoughness: 0.08, flatShading: true,
-    envMapIntensity: 1.5,
+    color: 0xffbd49, metalness: 0.04, roughness: 0.1,
+    transmission: 0.6, thickness: 1.8, ior: 1.6,
+    attenuationColor: new THREE.Color(0xffa526), attenuationDistance: 1.8,
+    emissive: 0xff8508, emissiveIntensity: 0.07,
+    clearcoat: 1, clearcoatRoughness: 0.065, flatShading: true,
+    envMapIntensity: 0.9,
   });
   addSurfaceDetail(material, "amber");
   return material;
@@ -102,8 +109,8 @@ export function fractureGeometry(radius: number, seed: number, stone: boolean) {
 
 export function createSeamMaterial(time: THREE.IUniform<number>) {
   const material = new THREE.MeshStandardMaterial({
-    color: 0x4abebc, emissive: 0x2ac8ca, emissiveIntensity: 1.7,
-    metalness: 0.25, roughness: 0.25,
+    color: 0x008797, emissive: 0x008ba3, emissiveIntensity: 1.2,
+    metalness: 0.08, roughness: 0.65, envMapIntensity: 0.5, flatShading: true,
   });
   material.onBeforeCompile = shader => {
     shader.uniforms.uMineralTime = time;
@@ -114,22 +121,23 @@ export function createSeamMaterial(time: THREE.IUniform<number>) {
       "#include <emissivemap_fragment>", /* glsl */`
         #include <emissivemap_fragment>
         float pulse = pow(0.5 + 0.5 * sin(vSeamPosition.y * 3.2 - uMineralTime * 1.1), 8.0);
-        totalEmissiveRadiance *= 0.62 + pulse * 0.72;
+        totalEmissiveRadiance *= 0.9 + pulse * 0.2;
       `,
     );
   };
-  material.customProgramCacheKey = () => "hero-seam-v1";
+  material.customProgramCacheKey = () => "mineral-cyan-v4";
   return material;
 }
 
 export function createMineralEnvironment() {
   const environment = new THREE.Scene();
-  environment.background = new THREE.Color(0x151b20);
+  environment.background = new THREE.Color(0x433024);
   const cards: [number, number, number, number, number, number, number][] = [
-    [-4, 5, 3, 3, 6, 0xffeddb, 6],
-    [4, 1, 1, 1.4, 5, 0xbce5ec, 4],
-    [-2, -1, -4, 3, 4, 0xffb94f, 5],
-    [0, 5, -2, 2, 2, 0xffffff, 3],
+    [-4, 5, 3, 3, 6, 0xffefcc, 5],
+    [4, 1, 1, 1.2, 5, 0xb6f4f3, 2.5],
+    [-2, -1, -4, 3, 4, 0xffb02f, 5],
+    [0, 5, -2, 2, 2, 0xfff7e6, 3],
+    [1, -2, 4, 4, 2, 0xffc253, 2],
   ];
   cards.forEach(([x, y, z, w, h, color, intensity]) => {
     const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(intensity), side: THREE.DoubleSide });

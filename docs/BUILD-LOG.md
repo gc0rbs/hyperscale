@@ -420,3 +420,31 @@ orange styling and Coming soon dialog preserved. The mine button remains separat
 Desktop menu text shares the same vertical center; mobile has no horizontal overflow, and dialog
 Escape dismissal restores focus to Buy token. App lint, types, six tests and static export pass.
 No additional work in this placement change; the purchase URL dependency remains as noted above.
+
+### 2026-09-04 — Reference-aligned mineral art direction
+
+Plan: align the header, page palette and all four procedural scenes with the supplied amber/cyan
+references. Replace the olive cast with warm mineral black, emphasize luminous faceted amber and
+ivory highlights, use cyan on crystal silhouettes and cooling accents, and replace the heavy
+hero rock halo with finer golden fragments and an orbital dust trail. Apply one material/lighting
+language to gems, rig and coin, including vector fallbacks. Preserve typography, layout, header
+navigation, entrance timing and pinned scroll interactions. Inspect rendered desktop/mobile scenes,
+reduced motion and WebGL fallback, then run app checks/export and update the existing preview.
+
+Shipped: warm mineral black now carries through the header, chapters, redemption and FAQ. Amber,
+ivory and cyan replace the olive cast in text, controls and illustrations. The mine CTA includes
+faceted highlights. The hero's heavy rock halo is now smaller golden mineral fragments surrounding
+a brighter transmissive amber core. A depth-tested cyan silhouette replaces the line across the
+crystal face; both hero and reward crystals share the faceted geometry and optical treatment.
+All scenes use the same studio environment, restrained bloom and warm/cool lighting. The rig has
+amber processors and cyan cooling, and the coin floats on the dark page without an edge mask.
+Orbital dust uses one points draw per scene (1100/680/180/400 points for core/reward/rig/token).
+The existing logo, layout, navigation order, introduction, scroll mapping and text entrances remain.
+
+Verification: app lint, typecheck and six tests pass. Desktop/mobile rendered screenshots cover all
+four scenes. Rewards advance NVDAx → TSLAx → AAPLx → SPYx and reverse; the coin still assembles.
+At 390×844 there is no horizontal overflow, and all four canvases have no CSS mask. Reduced motion
+removes both pinned stages and reveals all text; disabling WebGL displays the amber/cyan vector
+fallback. Normal rendering reports no shader or page errors. No new assets or packages were added.
+The beads database remains unavailable; this log records the completed work. The existing purchase
+URL dependency is unchanged.
