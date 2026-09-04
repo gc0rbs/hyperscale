@@ -218,8 +218,8 @@ season at pace 300, parity vs Anvil; indexer codegen + tsc; ops 6 tests.
 
 **Known gaps**
 - No gas optimisation pass (accepted; Arbitrum-family chain).
-- `forge coverage` was not run in this session (via-IR needs `--ir-minimum`; command in the audit
-  package §10).
+- Line coverage of the deterministic suite is 84% (audit package §10); the factory's validation
+  branches and the RLP nonce branches are the bulk of what is uncovered on the Solidity side.
 - The `robinhood-testnet` profile is placeholders; the testnet season itself needs the Q1/Q3
   decisions and the PRD §10 assumptions verified (`ops/chains/README.md`).
 - Simulation-recommended parameter changes (Q20) still not applied.

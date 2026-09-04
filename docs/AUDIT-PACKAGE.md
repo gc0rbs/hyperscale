@@ -198,9 +198,29 @@ DIFF_OUT=diff/traces.jsonl forge test --match-contract DiffTrace --fuzz-runs 100
 cd ../sim && uv run python -m sim.diff ../contracts/diff/traces.jsonl       # 0 mismatches expected
 uv run --extra dev pytest                                # reference: 22 tests incl. the diff fixture
 cd ../contracts && forge snapshot --check --no-match-test 'testFuzz|invariant_'   # gas regressions
-forge coverage --report summary --ir-minimum             # coverage (via-IR needs --ir-minimum)
+forge coverage --report summary --ir-minimum --no-match-coverage "(test|script|mocks)" --no-match-test "invariant_|testFuzz"
 uv tool install slither-analyzer && slither . --filter-paths "lib/|test/|script/|mocks/"
 ```
+
+Coverage (2026-09-04, deterministic tests only: unit + scenario; fuzz, differential and invariant runs
+excluded because coverage instrumentation disables the optimizer):
+
+| File | Lines | Statements | Branches | Functions |
+|---|---|---|---|---|
+| `SeasonMine.sol` | 84.2% | 85.4% | 70.0% | 80.4% |
+| `RedemptionVault.sol` | 89.7% | 92.6% | 88.2% | 72.7% |
+| `SeasonFactory.sol` | 78.9% | 75.0% | 17.4% | 50.0% |
+| `StockFragments.sol` | 89.5% | 90.5% | 66.7% | 80.0% |
+| `factory/Deployers.sol` | 100% | 80.0% | 0% | 100% |
+| `factory/CreateAddress.sol` | 42.9% | 38.5% | 10.0% | 100% |
+| total | 83.7% | 83.7% | 55.0% | 78.3% |
+
+The uncovered branches are almost all factory `InvalidParams` reasons (each rule is exercised by the
+ops-side mirror test instead), the `NotFactory`/`AlreadyInitialized` guards, and the RLP nonce
+branches above 0x7f in `CreateAddress` (a deployer never reaches nonce 128 in practice; the first
+branch is what every season uses). The invariant handler and the differential harness cover the
+mine's accounting paths far beyond what this table shows; they are excluded only because the
+instrumented build is not the audited build.
 
 Scenario tests encode the spec's worked example to the fragment (`WorkedExample`), replay the same
 progress-expressed season at 4×, 1× and 1/16× hash (`PaceReplay`, identical distributions), overclock
