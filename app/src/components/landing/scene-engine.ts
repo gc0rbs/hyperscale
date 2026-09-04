@@ -4,6 +4,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { createAmberMaterial, createBasaltMaterial, createMineralEnvironment, createSeamMaterial, fractureGeometry } from "./hero-materials";
 
 export type SceneKind = "core" | "rig" | "reward" | "token";
 export interface SceneController { setValue: (value: number) => void; dispose: () => void }
@@ -17,47 +18,76 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   const rand = randomSource(4289);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const scene = new THREE.Scene();
+  const isCore = kind === "core";
+  const isFloating = kind !== "token";
+  const mineralTime = { value: 0 };
   const isLight = kind === "token";
-  const background = isLight ? 0xece8de : kind === "rig" ? 0x181916 : 0x11120f;
-  scene.background = new THREE.Color(background);
+  const background = isLight ? 0xece8de : 0x11120f;
+  scene.background = isFloating ? null : new THREE.Color(background);
   scene.fog = new THREE.FogExp2(background, kind === "core" ? 0.035 : 0.026);
   const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 80);
   camera.position.set(0, 1, kind === "core" ? 11.4 : kind === "rig" ? 11.7 : 10);
   camera.lookAt(0, 0, 0);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "low-power" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: isFloating, premultipliedAlpha: false, powerPreference: "low-power" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = isLight ? 1.25 : 1.08;
+  renderer.toneMappingExposure = isCore ? 0.92 : isLight ? 1.25 : 0.95;
+  if (isCore) {
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.transmissionResolutionScale = 0.7;
+  }
   renderer.domElement.setAttribute("aria-hidden", "true");
   host.appendChild(renderer.domElement);
 
-  const environment = new RoomEnvironment();
+  const mineralEnvironment = isCore ? createMineralEnvironment() : undefined;
+  const environment = mineralEnvironment?.scene ?? new RoomEnvironment();
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTarget = pmrem.fromScene(environment, 0.04);
   scene.environment = envTarget.texture;
-  scene.environmentIntensity = isLight ? 1.7 : 1.25;
-  environment.dispose();
+  scene.environmentIntensity = isCore ? 1.0 : isLight ? 1.7 : 0.65;
+  if (mineralEnvironment) mineralEnvironment.dispose();
+  else (environment as RoomEnvironment).dispose();
   pmrem.dispose();
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), isLight ? 0.12 : 0.36, 0.45, 1.05);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), isCore ? 0.16 : 0.12, 0.35, isLight ? 1.05 : isCore ? 1.4 : 1.8);
+  if (isFloating) {
+    // Preserve transparent space around the illustration, including through the bloom pass.
+    bloom.blendMaterial.fragmentShader = bloom.blendMaterial.fragmentShader.replace(
+      "gl_FragColor = opacity * texel;",
+      "gl_FragColor = vec4(opacity * texel.rgb, clamp(max(max(texel.r, texel.g), texel.b), 0.0, 1.0));",
+    );
+    bloom.blendMaterial.blending = THREE.CustomBlending;
+    bloom.blendMaterial.blendSrc = THREE.OneFactor;
+    bloom.blendMaterial.blendDst = THREE.OneFactor;
+    bloom.blendMaterial.blendSrcAlpha = THREE.OneFactor;
+    bloom.blendMaterial.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
+  }
   composer.addPass(bloom);
   const output = new OutputPass();
   composer.addPass(output);
 
-  const ambient = new THREE.HemisphereLight(0xf6f0dc, 0x222420, 2.0);
+  const ambient = new THREE.HemisphereLight(0xf6f0dc, 0x222420, isCore ? 0.35 : isLight ? 2.0 : 0.55);
   scene.add(ambient);
-  const key = new THREE.DirectionalLight(0xffedcd, 5.0);
+  const key = new THREE.DirectionalLight(0xffedcd, isLight ? 5.0 : 2.8);
   key.position.set(-3, 6, 4);
   scene.add(key);
-  const cyan = new THREE.PointLight(0x53e0ee, 48, 18, 2);
-  cyan.position.set(3, 1, 1);
+  if (isCore) {
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    Object.assign(key.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 0.1, far: 20 });
+    key.shadow.bias = -0.0003;
+    key.shadow.normalBias = 0.035;
+  }
+  const cyan = new THREE.PointLight(0x53e0ee, isLight ? 48 : 12, 18, 2);
+  cyan.position.set(3, 1, isCore ? -1 : 1);
   scene.add(cyan);
-  const warm = new THREE.PointLight(0xffaa34, 55, 15, 2);
-  warm.position.set(-2, -0.5, 3);
+  const warm = new THREE.PointLight(0xffaa34, isLight ? 55 : 24, 15, 2);
+  warm.position.set(-2, -0.5, isCore ? -1.5 : 3);
   scene.add(warm);
-  const rim = new THREE.DirectionalLight(0xa2eeef, 3);
+  const rim = new THREE.DirectionalLight(0xa2eeef, isLight ? 3 : 1.7);
   rim.position.set(2, 4, -4);
   scene.add(rim);
 
@@ -66,9 +96,13 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   const dark = new THREE.MeshStandardMaterial({ color: 0x242724, metalness: 0.66, roughness: 0.37, flatShading: true });
   const rock = new THREE.MeshStandardMaterial({ color: 0x32332e, metalness: 0.34, roughness: 0.81, flatShading: true });
   const steel = new THREE.MeshStandardMaterial({ color: 0x7c827a, metalness: 0.84, roughness: 0.27 });
-  const emissiveGold = new THREE.MeshStandardMaterial({ color: 0xffcb65, emissive: 0xffa226, emissiveIntensity: 2.8, metalness: 0.3, roughness: 0.3 });
-  const emissiveCyan = new THREE.MeshStandardMaterial({ color: 0xb0f6f4, emissive: 0x39d2df, emissiveIntensity: 3.2, roughness: 0.24 });
+  const emissiveGold = new THREE.MeshStandardMaterial({ color: 0xffcb65, emissive: 0xffa226, emissiveIntensity: isFloating ? 1.5 : 2.8, metalness: 0.3, roughness: 0.3 });
+  const emissiveCyan = new THREE.MeshStandardMaterial({ color: 0xb0f6f4, emissive: 0x39d2df, emissiveIntensity: isFloating ? 1.8 : 3.2, roughness: 0.24 });
   const materials: THREE.Material[] = [gold, goldLight, dark, rock, steel, emissiveGold, emissiveCyan];
+  const basalt = isCore ? createBasaltMaterial() : rock;
+  const amber = isCore ? createAmberMaterial() : gold;
+  const seamMaterial = isCore ? createSeamMaterial(mineralTime) : emissiveCyan;
+  if (isCore) materials.push(basalt, amber, seamMaterial);
   const world = new THREE.Group();
   scene.add(world);
   const object = new THREE.Group();
@@ -81,6 +115,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
 
   function mesh(geometry: THREE.BufferGeometry, material: THREE.Material, parent: THREE.Object3D, x = 0, y = 0, z = 0) {
     const m = new THREE.Mesh(geometry, material);
+    if (isCore) { m.castShadow = material !== amber && material !== seamMaterial; m.receiveShadow = true; }
     m.position.set(x, y, z);
     parent.add(m);
     return m;
@@ -97,7 +132,11 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
       const radius = inner + rand() * (outer - inner);
       const position = new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.81, (rand() - 0.5) * 2.4);
       const size = stone ? 0.27 + rand() * 0.42 : 0.035 + rand() * 0.14;
-      const shard = mesh(new THREE.IcosahedronGeometry(size, 0), stone ? rock : i % 8 === 0 ? emissiveCyan : i % 3 === 0 ? goldLight : gold, parent);
+      const geometry = isCore ? fractureGeometry(size, i + 472, stone) : new THREE.IcosahedronGeometry(size, 0);
+      const shardMaterial = stone ? basalt : isCore
+        ? (i % 8 === 0 ? seamMaterial : gold)
+        : (i % 8 === 0 ? emissiveCyan : i % 3 === 0 ? goldLight : gold);
+      const shard = mesh(geometry, shardMaterial, parent);
       shard.position.copy(position);
       shard.scale.set(0.7 + rand(), 0.5 + rand(), 0.6 + rand());
       shard.rotation.set(rand() * 5, rand() * 5, rand() * 5);
@@ -113,24 +152,67 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({ color: 0xf1be6a, size: 0.013, transparent: true, opacity: 0.6, sizeAttenuation: true });
+    const material = isCore ? new THREE.ShaderMaterial({
+      uniforms: { uTime: mineralTime, uPixelRatio: { value: renderer.getPixelRatio() }, uColor: { value: new THREE.Color(0xf1be6a) } },
+      transparent: true, depthWrite: false,
+      vertexShader: /* glsl */`
+        uniform float uTime;
+        uniform float uPixelRatio;
+        varying float vBrightness;
+        void main() {
+          vec3 p = position;
+          float phase = position.x * 7.0 + position.z * 11.0;
+          p.y += sin(uTime * 0.2 + phase) * 0.04;
+          vec4 view = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * view;
+          gl_PointSize = clamp(13.0 / -view.z, 0.8, 2.2) * uPixelRatio;
+          vBrightness = 0.35 + 0.3 * pow(0.5 + 0.5 * sin(uTime * 0.5 + phase), 3.0);
+        }
+      `,
+      fragmentShader: /* glsl */`
+        uniform vec3 uColor;
+        varying float vBrightness;
+        void main() {
+          float distanceToCenter = length(gl_PointCoord - 0.5);
+          float alpha = (1.0 - smoothstep(0.12, 0.5, distanceToCenter)) * vBrightness;
+          gl_FragColor = vec4(uColor, alpha);
+        }
+      `,
+    }) : new THREE.PointsMaterial({ color: 0xf1be6a, size: 0.013, transparent: true, opacity: 0.6, sizeAttenuation: true });
     materials.push(material);
     world.add(new THREE.Points(geometry, material));
   }
 
   if (kind === "core" || kind === "reward") {
-    const geometry = new THREE.IcosahedronGeometry(kind === "core" ? 1.43 : 1.48, 0);
+    const geometry = isCore ? fractureGeometry(1.43, 81, false) : new THREE.IcosahedronGeometry(1.48, 0);
     geometry.scale(0.9, 1.12, 0.87);
-    mesh(geometry, gold, mineral);
-    const inner = mesh(new THREE.IcosahedronGeometry(1.0, 1), goldLight, mineral);
-    inner.rotation.set(0.2, 0.5, 0.4);
-    const wireMaterial = new THREE.LineBasicMaterial({ color: 0x6de8e6, transparent: true, opacity: 0.75 });
-    materials.push(wireMaterial);
-    const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 25), wireMaterial);
-    mineral.add(outline);
+    mesh(geometry, amber, mineral);
+    if (isCore) {
+      // Mineral inclusions behind the transmissive shell give the amber optical depth.
+      const inclusion = new THREE.MeshStandardMaterial({ color: 0x9d4e08, metalness: 0.18, roughness: 0.28, flatShading: true });
+      materials.push(inclusion);
+      const interior = mesh(fractureGeometry(0.83, 32, true), inclusion, mineral);
+      interior.scale.set(0.8, 1.1, 0.72);
+      interior.rotation.set(0.2, 0.5, 0.4);
+      const inclusionRand = randomSource(911);
+      for (let i = 0; i < 12; i++) {
+        const fleck = mesh(fractureGeometry(0.08 + inclusionRand() * 0.12, i, false), i % 3 === 0 ? goldLight : inclusion, mineral);
+        fleck.position.set((inclusionRand() - 0.5) * 1.4, (inclusionRand() - 0.5) * 1.8, (inclusionRand() - 0.5) * 1.1);
+        fleck.scale.set(1, 0.22, 0.7);
+        fleck.rotation.set(inclusionRand() * 4, inclusionRand() * 4, inclusionRand() * 4);
+      }
+    } else {
+      const inner = mesh(new THREE.IcosahedronGeometry(1.0, 1), goldLight, mineral);
+      inner.rotation.set(0.2, 0.5, 0.4);
+    }
+    if (!isCore) {
+      const wireMaterial = new THREE.LineBasicMaterial({ color: 0x6de8e6, transparent: true, opacity: 0.75 });
+      materials.push(wireMaterial);
+      mineral.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 25), wireMaterial));
+    }
     // One luminous mineral seam, deliberately separate from the faceted gold surface.
     const seamPath = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.5, 1.22, 0.62), new THREE.Vector3(0.1, 0.82, 1.15), new THREE.Vector3(0.48, 0, 1.08), new THREE.Vector3(0.13, -0.9, 0.9), new THREE.Vector3(-0.44, -1.23, 0.51)], false, "centripetal");
-    mesh(new THREE.TubeGeometry(seamPath, 5, 0.035, 5, false), emissiveCyan, mineral);
+    mesh(new THREE.TubeGeometry(seamPath, isCore ? 30 : 5, isCore ? 0.012 : 0.035, 5, false), seamMaterial, mineral);
     object.rotation.set(0.08, -0.3, -0.17);
     addFragments(kind === "core" ? 31 : 15, kind === "core" ? 1.65 : 1.9, kind === "core" ? 2.8 : 2.6, object, kind === "core");
     addFragments(40, 1.9, 3.4, world);
@@ -170,7 +252,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
       tiers.push(group);
       object.add(group);
     }
-    const floor = new THREE.GridHelper(14, 28, 0x434337, 0x30312b);
+    const floor = new THREE.GridHelper(6.2, 16, 0x35382f, 0x26291f);
     floor.position.y = -1.45;
     world.add(floor);
     const pad = ring(2.13, 0.012, emissiveGold, world);
@@ -226,6 +308,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
     const dt = previous ? Math.min((time - previous) / 1000, 0.05) : 0;
     previous = time;
     if (!reduced.matches) elapsed += dt;
+    mineralTime.value = elapsed;
     const ease = reduced.matches ? 1 : 1 - Math.exp(-dt * 5.5);
     displayed += (value - displayed) * ease;
     rotationX += (pointerY * 0.1 - rotationX) * (reduced.matches ? 1 : 0.06);
@@ -342,6 +425,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
       });
       geometries.forEach(g => g.dispose());
       materials.forEach(m => m.dispose());
+      key.shadow.dispose();
       envTarget.dispose();
       bloom.dispose();
       output.dispose();

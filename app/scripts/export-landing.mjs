@@ -22,7 +22,7 @@ try {
   for (const file of [
     "package.json", "tsconfig.json", "next-env.d.ts", "eslint.config.mjs",
     "postcss.config.mjs", "tailwind.config.ts", "src/fonts", "src/fonts.ts",
-    "src/app/layout.tsx", "src/app/page.tsx", "src/app/globals.css", "src/app/icon.svg",
+    "src/app/layout.tsx", "src/app/page.tsx", "src/app/globals.css", "public/brand",
     "src/components/Icons.tsx", "src/components/SeasonUnavailable.tsx", "src/components/landing",
   ]) copy(file);
   cpSync(join(root, "specs", "design"), join(staging, "specs", "design"), { recursive: true });

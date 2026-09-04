@@ -316,3 +316,44 @@ remain exclusively in ignored local publisher state and the user handoff.
 Validation: production static export, lint/typecheck and six unit tests pass. The public site loads
 its 3D canvas, changes GPU power to 2.0×, switches reward selection and assembles the token. Game CTA
 and the return link work. At 390 px the page has no horizontal overflow. Browser console is clean.
+
+### Hero material realism
+
+Plan: preserve the hero composition, entrance and scroll choreography while replacing uniform
+surfaces with fractured basalt, translucent amber, fine mineral detail and animated cyan seams.
+Use controlled lighting and restrained bloom, then verify desktop/mobile rendering, scroll reversal,
+reduced motion and fallback before updating the existing here.now publish. The installed `bd` CLI
+has no database for this checkout; record this scoped work and any follow-ups here.
+
+Scope extension: remove the hero edge mask; float the rig directly on the page without its preview
+frame, annotation text or controls. Drive the rig's three builds and the four reward blocks from
+native scrolling. Give the four main chapters at least a viewport of space, introduce staggered
+text entrances, and verify sticky scenes on small/short viewports without trapping content.
+
+The user supplied the final gold pickaxe logo during review. Preserve the original transparent PNG
+and use it for the shared brand mark and browser icon; include it in the isolated static export.
+
+Shipped: the hero now uses individually fractured/bevelled basalt meshes, object-space surface
+shaders, transmissive amber with internal inclusions, studio reflections, soft shadows, animated
+cyan seams and fine dust. Its original camera, composition and entrance/scroll layering remain.
+Transparent rendering replaces the hero edge mask. The rig and reward scenes also render directly
+over the page, with restrained lighting/bloom and no rectangular backdrop.
+
+Rig preview annotations and buttons are removed. Native scroll drives three builds with resting
+intervals between smooth upgrades; four reward blocks advance and reverse with scroll. Sticky
+stages allow every state to be read, adapt to tall content on short screens, and fill at least one
+viewport. Text fades/lifts in with small staggered delays. Mobile uses a compact reward sequence;
+at 390×844 both scroll chapters fit their text and illustration in one viewport. Reduced motion
+shows text immediately and skips decorative motion while retaining scroll-dependent states.
+
+Validation: app lint, typecheck and all six tests pass; isolated production export passes at 115 kB
+initial JS with 3D deferred. Desktop screenshots verify all three rig states; the public site cycles
+NVDAx → TSLAx → AAPLx → SPYx and back. The hero has no edge mask, mobile has no horizontal overflow,
+and the live browser reports no console errors. A local desktop sample maintained ~16.5 ms frame
+cadence. At 375×667, reduced motion and disabled WebGL preserve visible fallback art and all reward
+states. The supplied PNG is byte-for-byte preserved and used in the header, footer and browser icon.
+
+Updated https://witty-breeze-ggxj.here.now/ successfully on 2026-09-04 (anonymous 24-hour preview).
+Known gaps: gameplay still requires a live season/backend. Next 15's existing development hot-reload
+manifest issue recurred during edits; restarting the local preview restored normal rendering. The
+production export and hosted version are unaffected. No remaining work in this visual scope.
