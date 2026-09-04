@@ -1,5 +1,0 @@
-# GitBook Git Sync: the public docs live in gitbook/ (player guide + safety). Internal specs stay in docs/.
-root: ./gitbook/
-structure:
-  readme: README.md
-  summary: SUMMARY.md
