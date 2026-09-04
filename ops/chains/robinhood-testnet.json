@@ -1,6 +1,6 @@
 {
   "name": "robinhood-testnet",
-  "chainId": 0,
+  "chainId": 46630,
   "rpcUrl": "${ROBINHOOD_TESTNET_RPC}",
   "explorerApi": "${ROBINHOOD_EXPLORER_API}",
   "mocks": false,
@@ -17,5 +17,5 @@
     "AAPLx": "0x0000000000000000000000000000000000000000",
     "SPYx": "0x0000000000000000000000000000000000000000"
   },
-  "notes": "Placeholders. See ops/chains/README.md for what to fill in and which PRD §10 assumptions each value depends on."
+  "notes": "Robinhood Chain testnet, chain id 46630 (docs.robinhood.com/chain). RPC, explorer, faucet and test stock tokens still to confirm; the mainnet profile shows the shape."
 }

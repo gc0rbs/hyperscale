@@ -273,3 +273,15 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
 - Docs: CLAUDE.md, PRD §10/§11, 04, 05, 09 (Q3 closed), AUDIT-PACKAGE §1–2, DECISIONS.
 - Still open before a testnet season: Q1 (Stock Tokens and their hooks), the oracle for cash-out,
   whether a Robinhood Chain testnet with faucets exists.
+
+## 2026-09-04 – Season-1 stock set and Robinhood token integration
+
+- `ChainlinkOracle` adapter + `MockAggregator` + unit tests (rescaling, negative answers, validation).
+- `RedemptionVault` reads the quote token's `decimals()` at construction (USDG on Robinhood Chain).
+- Symbols NVDA / MU / SNDK / QQQ across params, mocks, tests, app; real token addresses in the
+  template and the mainnet chain profile; USDG address; testnet chain id 46630.
+- `ops plan --pool-usd [--prices]`: pool sizing by value share at live Robinhood prices
+  (`sizePoolByValue`, tested).
+- Docs: PRD §10 (items 2, 4, 5 verified) and risks, 04 §5.1, 05, 07 risk register, 09 (Q1 closed),
+  AUDIT-PACKAGE §1–2, RUNBOOK, chains README, DECISIONS.
+- Checks: forge 47 tests green, snapshot regenerated, interfaces match; ops 7 tests; app check green.

@@ -15,11 +15,11 @@ transferring to the dead address, and LP staking is off (`lpToken` zero, decided
 | `explorerApi` | Blockscout/Etherscan-style verify endpoint; also `[etherscan]` in `contracts/foundry.toml` | §10.1 |
 | `rig` | The $RIG ERC-20: the graduated Pons token. Any standard ERC-20 works; upgrade spend is transferred to `0x…dEaD`. `contracts/src/tokens/RIG.sol` is the test/dev token | §10.4 |
 | `lpToken`, `lpPairKind` | Leave zero: the Pons pool is Uniswap v3 (NFT positions), so LP staking is off in v1 (Q3 closed). The v2-shape sampling in `plan` stays for a future full-range wrapper token | §10.3 |
-| `usdc` | The USDC used by `RedemptionVault.cashOut` (6 decimals assumed by the vault) | §10.1 |
-| `oracle` | An `IPriceOracle` adapter: `usdPrice(stock) → (price 1e8, updatedAt)`. Write one per feed provider; `MockPriceOracle` is the reference shape. Staleness is capped at 1h in the vault | §10.5 oracle |
-| `eligibility` | An `IEligibility` adapter. `AllowlistEligibility` (owner = treasury) if the issuer publishes a list; otherwise an adapter over the Stock Token's own hook/registry | §10.2 Stock Token hooks, open question Q1 |
+| `usdc` | The quote token for `RedemptionVault.cashOut`: USDG on Robinhood Chain (`0x5fc5…d168`); the vault reads its `decimals()` at construction | §10.1 |
+| `oracle` | `ChainlinkOracle(stocks, feeds)` over the per-token Chainlink feeds (addresses from docs.chain.link, network robinhood; fill `feeds` first). Staleness is capped at 1h in the vault | §10.5 oracle |
+| `eligibility` | `OpenEligibility`: Robinhood Stock Tokens have no on-chain restriction; the legal one (no U.S., CA, UK, CH persons) is a front-end geo-fence | §10.2, Q1 closed |
 | `treasury` | Receives activation and exit fees, is the pause guardian, receives sweeps. A multisig | docs/07 |
-| `stocks` | Stock Token addresses per symbol; `plan` orders blocks as listed in the params file | §10.2, Q1 |
+| `stocks` | Canonical Robinhood Stock Token addresses (season 1: NVDA, MU, SNDK, QQQ, from `api.robinhood.com/rhj/assets`); `plan` orders blocks as listed in the params file | §10.2 |
 
 Fill-in order: chain and explorer, then tokens, then oracle and eligibility adapters (deploy and test
 them against one known-eligible and one ineligible wallet, docs/08 §4), then `treasury`.

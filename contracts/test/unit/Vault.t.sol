@@ -53,7 +53,7 @@ contract VaultTest is SeasonTestBase {
         vault.cashOut(1, 1_000_000);
         oracle.set(address(stocks[1]), 350e8, uint64(block.timestamp));
         (uint256 net, uint256 fee) = vault.quoteCashOut(1, 1_000_000);
-        assertEq(net + fee, 350e6, "one TSLAx at $350");
+        assertEq(net + fee, 350e6, "one MU at $350");
         assertEq(fee, 3.5e6, "1% fee");
         vm.prank(ann);
         assertEq(vault.cashOut(1, 1_000_000), 346.5e6);

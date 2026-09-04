@@ -157,3 +157,22 @@ neither is load-bearing for the accounting. Changes:
   nothing; the minimum stake per rig is the anti-spam control and is sized per season.
 - Chain profile `ops/chains/robinhood.json` carries the verified chain, explorer, WETH, Uniswap v3 and
   Pons addresses; season addresses stay zero until launch and Q1.
+
+## 2026-09-04 – Season-1 Stock Tokens and what Robinhood's tokens actually are (user decision)
+
+- **Set: NVDA, MU, SNDK, QQQ** (AI/GPU infrastructure theme; QQQ as the index finale). Canonical
+  addresses on chain 4663 from Robinhood's asset API are in `specs/params/season-default.json` and
+  `ops/chains/robinhood.json`. Value shares stay 15/20/25/40; `ops plan --pool-usd` converts them to
+  token amounts at live mid prices (2026-09-04: NVDA $230, MU $999, SNDK $1,719, QQQ $717).
+- **Robinhood Stock Tokens are plain ERC-20s** (18 decimals, ERC-8056 multiplier, no hook). The
+  allowlist risk that shaped the vault design is gone; the legal restriction (no U.S., CA, UK, CH
+  persons) becomes a front-end geo-fence plus terms. Mainnet uses `OpenEligibility`. Tests keep the
+  stricter allowlisted mock. Q1 closed.
+- **Cash-out oracle is Chainlink.** Every token has a feed with the multiplier baked in;
+  `ChainlinkOracle` adapts it (immutable stock → feed map, rescaled to 1e8, non-positive answers read
+  as stale). The quote token is **USDG**, so the vault now reads the quote token's `decimals()` at
+  construction instead of assuming six.
+- App ticker constants and mocks use the new symbols; the docs/03 worked example keeps its numbers
+  under the NVDA name.
+- Still to fill before the testnet season: the four Chainlink feed addresses, USDG decimals check,
+  testnet (46630) RPC and faucet.

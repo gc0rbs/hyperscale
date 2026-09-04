@@ -100,8 +100,8 @@ contract CappedSeasonTest is SeasonTestBase {
         v.redeem(0, got[0]);
         v.redeem(1, got[1]);
         vm.stopPrank();
-        assertApproxEqAbs(stocks[0].balanceOf(ann), 5e18, 1e13, "5M fragments = 5 NVDAx");
-        assertApproxEqAbs(stocks[1].balanceOf(ann), 4.8e18, 1e13, "4.8M fragments = 4.8 TSLAx");
+        assertApproxEqAbs(stocks[0].balanceOf(ann), 5e18, 1e13, "5M fragments = 5 NVDA");
+        assertApproxEqAbs(stocks[1].balanceOf(ann), 4.8e18, 1e13, "4.8M fragments = 4.8 MU");
 
         // after the window the unmined remainder goes to the treasury ...
         vm.warp(v.redemptionEnd() + 1);

@@ -14,7 +14,7 @@ blocks**. Players stake **$RIG** (the game token) or **RIG/USDC LP tokens** to a
 rigs**. Each rig has a **hashrate** derived from its stake and from upgrades bought by **burning $RIG**
 (GPU tiers, cooling tiers, overclocks). Every second a rig is active it contributes `hashrate × 1s` of
 **work** to the current block. Each block has a **difficulty** (a fixed amount of work) and a pool of
-**Stock Token fragments** – fractional claims on tokenized stocks such as NVDAx. The block pays a
+**Stock Token fragments** – fractional claims on tokenized stocks such as NVDA. The block pays a
 fixed number of fragments per unit of work, so it is **found** exactly when the pool is exhausted.
 When block 4 is found the mine **closes permanently**: stakes are returned and fragments are redeemed
 for whole Stock Tokens (or cashed out) during a redemption window.
@@ -76,7 +76,7 @@ Assumptions about wallet eligibility for Stock Token redemption are critical and
 Pre-open                Mine open: 4 blocks, each found when its difficulty is reached        Post-close (30d)
 ┌──────────────────┐    ┌──────────┬──────────┬──────────┬──────────┐                        ┌───────────────┐
 │ stake RIG or LP  │ ─▶ │ Block 1  │ Block 2  │ Block 3  │ Block 4  │ ── found = close ────▶ │ withdraw stake│
-│ buy GPU/cooling  │    │  NVDAx   │  TSLAx   │  AAPLx   │  SPYx    │                        │ claim block 4 │
+│ buy GPU/cooling  │    │  NVDA   │  MU   │  SNDK   │  QQQ    │                        │ claim block 4 │
 │ (rigs idle)      │    │ work accumulates; shifts tick; overclock; claim found blocks       │ redeem/cash   │
 └──────────────────┘    └──────────┴──────────┴──────────┴──────────┘                        └───────────────┘
         ◀── leave any time (early-exit fee) ──▶            ◀── fail-safe: max duration ──▶
@@ -165,7 +165,7 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 
 | Dependency / risk | Impact | Mitigation |
 |---|---|---|
-| Stock Tokens on Robinhood Chain have transfer restrictions (KYC allowlist) | Vault cannot hold/transfer them; redemption impossible | Partnership + allowlisting of the vault; or use a permissionless issuer (e.g. xStocks) for season 1; cash-out fallback. Doc 07. |
+| ~~Stock Tokens have transfer restrictions~~ Resolved 2026-09-04: they are plain ERC-20s | none on-chain | Geo-fence and terms carry the legal restriction (doc 07); the vault holds and transfers them freely. |
 | Fragments could be characterised as securities/derivatives | Legal exposure | Non-transferable fragments in v1; counsel review; geo-fence the front-end. Doc 07. |
 | Difficulty set far too high for actual participation | Season ends at the cap with part of the pool unmined | Difficulty sizing rules (doc 04 §5), early exit, the cap; the remainder rolls into the next season. Doc 02 §5. |
 | Difficulty set far too low | Season over in minutes; latecomers miss it | Same sizing rules; short seasons run often, so the next one is never far away. |
@@ -176,10 +176,10 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 ## 10. Assumptions to verify (discovery milestone)
 
 1. **Verified 2026-09-04.** Robinhood Chain is an Arbitrum Orbit chain, chain id 4663, ETH for gas, public RPC `rpc.mainnet.chain.robinhood.com`, explorer `robinhoodchain.blockscout.com`.
-2. Stock Tokens are ERC-20 with 18 decimals and a transfer-restriction hook; the exact interface of the restriction is unknown and must be obtained.
+2. **Verified 2026-09-04.** Robinhood Stock Tokens are plain ERC-20s, 18 decimals, no transfer hook or allowlist; any wallet or contract can hold and move them. They carry an ERC-8056 corporate-action multiplier (`uiMultiplier`, `balanceOfUI`). Restrictions are legal, not on-chain: not for U.S., Canadian, UK or Swiss persons, so eligibility is a front-end geo-fence plus terms. Canonical addresses come from `api.robinhood.com/rhj/assets`; look-alike tokens exist.
 3. **Verified 2026-09-04, and decided.** $RIG launches on Pons and graduates to a Uniswap v3 RIG/WETH pool (NFT position, locked). No fungible LP exists; LP staking is off in v1 (Q3). The token has no burn function; upgrade spend is transferred to the dead address.
-4. A price oracle (Pyth or Chainlink) publishes the underlying equity prices on the chain, needed for cash-out.
-5. Explorer and public RPC exist (verified). A Robinhood Chain testnet with faucets is still to be confirmed.
+4. **Verified 2026-09-04.** Every Stock Token has a Chainlink feed (AggregatorV3, multiplier included) on Robinhood Chain; `ChainlinkOracle` adapts it for cash-out. The chain's dollar is USDG, which the vault uses as the quote token.
+5. Explorer and public RPC exist (verified). A testnet exists (chain id 46630); its RPC, faucet and test tokens are still to be confirmed.
 
 ## 11. Release scope
 

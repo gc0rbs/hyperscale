@@ -51,8 +51,8 @@ contract DeployFactory is Script {
             MockERC20 usdc = new MockERC20("USD Coin", "USDC", 6);
             MockPriceOracle oracle = new MockPriceOracle();
             AllowlistEligibility elig = new AllowlistEligibility(deployer);
-            string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
-            uint256[4] memory prices = [uint256(172e8), 350e8, 230e8, 767e8];
+            string[4] memory syms = ["NVDA", "MU", "SNDK", "QQQ"];
+            uint256[4] memory prices = [uint256(230e8), 999e8, 1719e8, 717e8];
             address[] memory stocks = new address[](4);
             for (uint256 i; i < 4; ++i) {
                 MockStockToken s = new MockStockToken(syms[i], syms[i]);

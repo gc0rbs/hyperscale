@@ -13,7 +13,7 @@ repository at the commit tagged in `docs/BUILD-LOG.md` (Phase 4 entry).
 | `contracts/src/SeasonFactory.sol` | ~130 | parameter validation, deterministic deployment of the three above |
 | `contracts/src/factory/Deployers.sol`, `CreateAddress.sol` | 123 | per-contract deployers (EIP-170 split) and CREATE address prediction |
 | `contracts/src/tokens/RIG.sol` | 17 | dev/test ERC-20 standing in for the Pons token; not deployed to mainnet |
-| `contracts/src/adapters/*` | 43 | `OpenEligibility`, `AllowlistEligibility` (owner-mutable, outside the immutable set) |
+| `contracts/src/adapters/*` | ~110 | `OpenEligibility` (mainnet), `AllowlistEligibility` (owner-mutable, tests), `ChainlinkOracle` (immutable stock → feed map over AggregatorV3) |
 
 Out of scope: mocks (`src/mocks/*`, they model expected external restrictions), scripts, the app,
 the indexer, the Python simulation (used as the differential-testing oracle, §6).
@@ -34,16 +34,19 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 3. **The LP token** path is present but off for v1 (`lpToken` zero; the Pons pool is Uniswap v3 with
    NFT positions). When used, it expects a fungible ERC-20 with standard transfer semantics and a
    weight (`lpWeightPerToken`) fixed at creation from a 24 h sampled reserve ratio.
-4. **Stock Tokens** may have transfer hooks that revert for non-allowlisted parties. The vault treats
-   them as opaque ERC-20s that may revert; the mine never touches them.
-5. **The oracle** (`IPriceOracle`) is trusted for `cashOut` only, with a 1 h staleness cap. In-kind
-   redemption never depends on it.
-6. **The eligibility adapter** decides who may receive Stock Tokens in kind. It is external and may
-   be mutable (issuer KYC lists change).
+4. **Stock Tokens** (Robinhood, verified 2026-09-04) are plain ERC-20s with an ERC-8056 multiplier and
+   no transfer hook. The vault still treats them as opaque ERC-20s that may revert (defensive).
+5. **The oracle** (`ChainlinkOracle` over the per-token Chainlink feeds; feeds include the multiplier) is
+   trusted for `cashOut` only, with a 1 h staleness cap. In-kind redemption never depends on it. The
+   quote token is USDG; the vault reads its `decimals()` once at construction.
+6. **The eligibility adapter** decides who may receive Stock Tokens in kind. Mainnet uses
+   `OpenEligibility` (the legal restriction is a front-end geo-fence); `AllowlistEligibility` remains
+   for issuers that require one.
 7. **Sequencer timestamps** are honest within the usual bounds. All work is credited by the same
    clock at a fixed rate per unit of work, so timestamp skew cannot favour one rig over another.
-8. **Chain assumptions** in `docs/01-PRD.md` §10 (Orbit L2, hooks, DEX, oracle) are unverified as of
-   this package; the code is built against mocks of the expected restrictions.
+8. **Chain assumptions** in `docs/01-PRD.md` §10 are verified as of 2026-09-04 (chain 4663, Pons token,
+   Uniswap v3, unrestricted Stock Tokens, Chainlink feeds, USDG); tests still run against a stricter
+   mock Stock Token with an allowlist, which the real token does not have.
 
 ## 3. Actors and powers
 

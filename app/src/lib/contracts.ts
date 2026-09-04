@@ -15,6 +15,6 @@ export const erc20Abi = MockERC20Json as Abi;
 export const eligibilityAbi = AllowlistEligibilityJson as Abi;
 export const oracleAbi = MockPriceOracleJson as Abi;
 
-export const TICKERS = ["NVDAx", "TSLAx", "AAPLx", "SPYx"] as const;
+export const TICKERS = ["NVDA", "MU", "SNDK", "QQQ"] as const;
 export const PHASES = ["Funding", "PreOpen", "Open", "Closed", "Cancelled"] as const;
 export type PhaseName = (typeof PHASES)[number];

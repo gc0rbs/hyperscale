@@ -49,8 +49,8 @@ contract DeployDemo is Script {
         fd.init(address(factory));
         vd.init(address(factory));
 
-        string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
-        uint256[4] memory prices = [uint256(172e8), 350e8, 230e8, 767e8];
+        string[4] memory syms = ["NVDA", "MU", "SNDK", "QQQ"];
+        uint256[4] memory prices = [uint256(230e8), 999e8, 1719e8, 717e8];
         uint256[4] memory pool = [uint256(5e18), 6e18, 10e18, 6e18];
         uint256[4] memory diffShare = [uint256(2000), 2500, 2500, 3000];
         address[] memory stocks = new address[](4);

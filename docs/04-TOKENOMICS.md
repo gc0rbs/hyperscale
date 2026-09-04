@@ -83,8 +83,9 @@ Two operator decisions per season, both fixed at creation, neither adjustable af
 
 - **Target pool value** `V = k × expected RIG burn value`, `k ∈ [1.5, 3]`. If we expect 2M RIG burned
   at $0.05 ($100k), fund a $150k–$300k pool. Early seasons lean generous.
-- Split across blocks by value 15 / 20 / 25 / 40%.
-- Four liquid, recognisable underlyings; block 4 an index (SPYx/QQQx) so the finale prize is the least
+- Season 1 set (decided 2026-09-04): NVDA, MU, SNDK, QQQ. Split across blocks by value 15 / 20 / 25 / 40%;
+  `ops plan --pool-usd` converts the shares to token amounts at live Robinhood prices.
+- Four liquid, recognisable underlyings; block 4 an index (QQQ/QQQx) so the finale prize is the least
   volatile.
 - Fund the vault before `openTime` (right after creation for a season that opens at once). The season
   cannot open unfunded (FR-S5).

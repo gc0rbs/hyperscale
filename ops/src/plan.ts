@@ -6,6 +6,7 @@
  *        --expected-hash 10000000 --planned-seconds 10800 --max-duration 21600 --open-time +600 \
  *        [--params ../specs/params/season-default.json] [--rig-per-lp 2] [--lp-bonus-bps 12500] \
  *        [--treasury 0x…] [--usdc-reserve 50000] [--samples 24] [--allow-spot]
+ *        [--pool-usd 10000 [--prices prices.json]]
  *
  * - lpWeightPerToken = rigPerLp × lpBonusBps / 1e4, where rigPerLp is the RIG-equivalent value of one
  *   LP token sampled hourly over the last 24 h from the pair's reserves (Uniswap v2 shape), or given
@@ -14,6 +15,8 @@
  * - difficulty = expectedTotalHash × plannedSeconds split by diffShareBps, rounded to shifts.
  * - maxDurationSeconds (--max-duration, default the template's sizing.maxDurationSeconds, else 2× planned) is
  *   the cap: the season ends at block 4 or at the cap, whichever first. Warns if the cap is < 1.5× planned.
+ * - --pool-usd sizes poolTokens by the template's valueShareBps at live prices from
+ *   api.robinhood.com/rhj/prices/<symbol> (mid), or from --prices (JSON {symbol: usd}) offline.
  * The result is validated against the factory rules before it is written, and its keccak256 hash of
  * abi.encode(SeasonParams) is printed so it can be published before openTime (docs/08 §4).
  */
@@ -23,7 +26,7 @@ import { createPublicClient, encodeAbiParameters, http, keccak256, parseAbi, par
 import { REPO_ROOT } from "./lib/artifacts.js";
 import { arg, hasFlag, loadChainProfile, loadFactoryDeployment, viemChain, type ChainProfile } from "./lib/season.js";
 import { validateSeasonParams, type SeasonParamsJson } from "./lib/validate.js";
-import { sizeDifficulty } from "./sizing.js";
+import { sizeDifficulty, sizePoolByValue } from "./sizing.js";
 
 const WAD = 10n ** 18n;
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
@@ -101,6 +104,18 @@ export function paramsHash(p: SeasonParamsJson) {
   return keccak256(encoded);
 }
 
+/** Mid prices from Robinhood's Stock Token price API (15 s cache, 60 req/s). */
+async function fetchMidPrices(symbols: string[]): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  for (const s of symbols) {
+    const r = await fetch(`https://api.robinhood.com/rhj/prices/${s}`);
+    if (!r.ok) throw new Error(`price fetch for ${s}: HTTP ${r.status}`);
+    const j = (await r.json()) as { mid?: string; bid?: string; ask?: string };
+    out[s] = Number(j.mid ?? (Number(j.bid) + Number(j.ask)) / 2);
+  }
+  return out;
+}
+
 export async function plan() {
   const chainName = arg("--chain", "anvil")!;
   const name = arg("--name", `${chainName}-season`)!;
@@ -159,6 +174,21 @@ export async function plan() {
     ? `cap ${sizing.maxDurationSeconds}s is under 1.5x the planned pace: any shortfall in hash ends the season at the cap with part of the pool unmined`
     : null;
 
+  // pool: by USD value at live prices, else the template's token amounts
+  let poolTokens: string[] = tpl.stocks.map((s: { poolTokens: string }) => parseUnits(String(s.poolTokens), 18).toString());
+  let poolPrices: Record<string, number> | null = null;
+  const poolUsd = arg("--pool-usd");
+  if (poolUsd) {
+    const pricesFile = arg("--prices");
+    poolPrices = pricesFile ? JSON.parse(readFileSync(pricesFile, "utf8")) : await fetchMidPrices(stockSyms);
+    const prices = stockSyms.map((s) => {
+      const v = poolPrices![s];
+      if (!(v > 0)) throw new Error(`no price for ${s}`);
+      return v;
+    });
+    poolTokens = sizePoolByValue(Number(poolUsd), tpl.stocks.map((s: { valueShareBps: number }) => s.valueShareBps), prices).map(String);
+  }
+
   const params: SeasonParamsJson = {
     rig,
     lpToken: lpDisabled ? ZERO : lpToken,
@@ -168,7 +198,7 @@ export async function plan() {
     blocks: tpl.blocks,
     shiftsPerBlock: tpl.shiftsPerBlock,
     stocks,
-    poolTokens: tpl.stocks.map((s: { poolTokens: string }) => parseUnits(String(s.poolTokens), 18).toString()),
+    poolTokens,
     difficulty: sizing.difficulty.map(String),
     fragPerToken: String(tpl.fragPerToken),
     minStakeWeight: parseUnits(String(tpl.minStakeWeight), 18).toString(),
@@ -213,6 +243,9 @@ export async function plan() {
       lpBonusBps: bonus,
       rigPerLp,
       lpSource,
+      symbols: stockSyms,
+      poolUsd: poolUsd ? Number(poolUsd) : null,
+      poolPrices,
       lpSamples: lpSamples.map((s) => ({ block: s.block.toString(), timestamp: s.timestamp.toString(), rigPerLp: s.rigPerLp })),
       openTimeIso: new Date(openTime * 1000).toISOString(),
       capIso: new Date((openTime + Number(sizing.maxDurationSeconds)) * 1000).toISOString(),
@@ -231,6 +264,7 @@ export async function plan() {
   console.log(`difficulty ${sizing.difficulty.map((d) => (d / WAD).toString()).join(" / ")} hash-seconds (total ${sizing.difficultyTotal / WAD})`);
   console.log(`planned ${plannedSeconds}s at ${expectedHash} RIG-eq; 0.5x-4x hash => ${Number(plannedSeconds) / 4}s-${Number(plannedSeconds) * 2}s`);
   console.log(`lpWeightPerToken ${lpWeightPerToken} (${lpSource}; rigPerLp ${rigPerLp}, bonus ${bonus} bps)`);
+  console.log(`pool ${stockSyms.map((s, i) => `${Number(BigInt(params.poolTokens[i]) / 10n ** 12n) / 1e6} ${s}`).join(" / ")}${poolUsd ? ` (≈ $${poolUsd} at live prices)` : " (template amounts)"}`);
   console.log(`paramsHash ${hash}`);
   if (problems.length) {
     console.error(`INVALID for the factory: ${problems.join("; ")}`);

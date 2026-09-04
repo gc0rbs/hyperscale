@@ -34,6 +34,7 @@ immutable; a new season is a new deployment.
 | `SeasonFactory` | permanent | deploys `SeasonMine` + `StockFragments` + `RedemptionVault` from a `SeasonParams` struct; registry |
 | `SeasonMine` | one season | staking, upgrades, hashrate, work accounting, block discovery, claims, exit, withdrawals |
 | `StockFragments` | one season | ERC-1155; id = block index; minter = `SeasonMine`; burner = `RedemptionVault`; transfers disabled in v1 |
+| `ChainlinkOracle` | permanent | `IPriceOracle` over the per-token Chainlink feeds (immutable stock → feed map); the vault's quote token is USDG (decimals read at construction) |
 | `RedemptionVault` | one season | holds Stock Tokens + USDC; `redeem`, `cashOut`, `sweep` |
 | `IEligibility` | pluggable | `isEligible(address)` for in-kind redemption (doc 07) |
 | `IPriceOracle` | pluggable | USD price of each underlying for cash-out |

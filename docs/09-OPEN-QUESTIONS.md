@@ -4,7 +4,7 @@ Decisions needed before or during M0. Each has a recommended default so the buil
 
 | # | Question | Options | Recommended default | Needed by |
 |---|---|---|---|---|
-| Q1 | Which tokenized stocks are the prize? | (a) Robinhood Stock Tokens with vault allowlisting via partnership; (b) permissionless issuer (xStocks/Ondo) if on Robinhood Chain; (c) USD-only prize | Pursue (a) and (b) in parallel; ship season 1 with whichever is executable; (c) is fallback | M0 |
+| Q1 (**closed 2026-09-04**: NVDA, MU, SNDK, QQQ; Robinhood Stock Tokens are plain ERC-20s, eligibility is a geo-fence, cash-out via Chainlink feeds and USDG) | Which tokenized stocks are the prize? | (a) Robinhood Stock Tokens with vault allowlisting via partnership; (b) permissionless issuer (xStocks/Ondo) if on Robinhood Chain; (c) USD-only prize | Pursue (a) and (b) in parallel; ship season 1 with whichever is executable; (c) is fallback | M0 |
 | Q2 | Should fragments be transferable? | Soulbound v1 / transferable | Soulbound v1; revisit after counsel | M0 |
 | Q3 (**closed 2026-09-04**: no LP staking in v1; $RIG launches on Pons, pool is Uniswap v3; a full-range wrapper token is the v1.1 path if liquidity ever matters) | LP pair and DEX | RIG/USDC or RIG/ETH; which DEX exists | RIG/USDC on the canonical v2-style DEX; defer LP if only v3 | M0 |
 | Q4 | Cash-out for ineligible players | USDC at oracle price / RIG at oracle price / none | USDC | M0 |

@@ -45,6 +45,8 @@ pnpm plan --chain robinhood-testnet --name season-1 \
      [--lp-bonus-bps 12500] [--treasury 0x…] [--usdc-reserve 50000]
 ```
 
+- `--pool-usd 10000` sizes the four pools by value share (15/20/25/40) at live Robinhood mid prices
+  (`--prices file.json` for an offline quote). Without it the template's token amounts are used.
 - `--expected-hash` is expected total hash in RIG-equivalent units (stake weight × average
   multiplier; docs/04 §5.2). `--planned-seconds` is the pace you would like at that hash; duration is
   an outcome. `--max-duration` is the cap (default 2× planned, ≥ 1h): the season ends there if block 4
