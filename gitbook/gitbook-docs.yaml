@@ -1,0 +1,5 @@
+# Referenced by the GitBook Git Sync "config file" setting. Paths are relative to the repository root.
+root: ./gitbook/
+structure:
+  readme: README.md
+  summary: SUMMARY.md
