@@ -220,3 +220,16 @@ neither is load-bearing for the accounting. Changes:
 - **CreateSeason records the creation block** (`block` in the deployment JSON) and the indexer starts
   there by default; indexing a mainnet season from block 0 was the alternative and is wasteful.
   The keeper is restarted only on failure because it exits by itself at close.
+
+## 2026-09-04 – Share card and notifications
+
+- **Share card is rendered from live state** (`app/src/app/opengraph-image.tsx`, `next/og`, Humane
+  Bold): a link pasted mid-season shows which block is mining and the tick bar, with a static
+  fallback when the RPC does not answer within 1.5 s. Twitter card reuses it. `NEXT_PUBLIC_APP_URL`
+  is the metadata base.
+- **Notifications are local browser notifications, opt-in**, not web push: they fire while a Stock
+  Miner tab is open, which covers a ≤6 h season without a push server or a stored subscription. Block
+  found, mine closed, and (long haul only) shift start; the first observation after load is silent.
+  Web push stays a v1.1 item if seasons ever run for days again.
+- Block-found banner gets a Share button (Web Share on mobile, clipboard elsewhere).
+- CI builds both Docker images (no push) so a broken Dockerfile fails the PR, not the launch night.

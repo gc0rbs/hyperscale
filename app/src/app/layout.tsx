@@ -9,6 +9,9 @@ import { DevAccountProvider } from "@/components/DevAccountProvider";
 export const metadata: Metadata = {
   title: "Stock Miner",
   description: "Four blocks. One mine. Closes forever.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  openGraph: { title: "Stock Miner", description: "Stake RIG, run virtual rigs, mine Robinhood Stock Tokens. Four blocks, one mine, closes forever.", type: "website", siteName: "Stock Miner" },
+  twitter: { card: "summary_large_image", title: "Stock Miner", description: "Four blocks. One mine. Closes forever." },
 };
 
 export const dynamic = "force-dynamic";

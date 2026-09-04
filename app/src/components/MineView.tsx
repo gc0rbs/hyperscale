@@ -15,6 +15,8 @@ import { PurchaseSheet } from "./PurchaseSheet";
 import { HashStream } from "./HashStream";
 import { RigRoom } from "./RigRoom";
 import { FoundBanner } from "./FoundBanner";
+import { NotifyToggle } from "./NotifyToggle";
+import { useMineNotifications, useNotifyPref } from "@/lib/use-notify";
 import { FramedIcon } from "./Icons";
 import { Btn, Chip, Label, Mono, Panel, Stat } from "./ui";
 
@@ -46,6 +48,16 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
   }, [live, snap.global.shiftEndX, g.shiftEndX, closed, p.blocks, spb]);
   const justFound = claimable.find((c) => c.b === curBlock - 1 && c.b !== dismissed);
   const longHaul = !closed && !e.idle && Number(e.toShiftEnd) > 2 * 3600;
+  const blocksFound = useMemo(() => {
+    let n = 0;
+    for (let b = 0; b < p.blocks; b++) {
+      const k = (b + 1) * spb - 1;
+      if ((snap.global.shiftEndX[k] ?? 0n) !== 0n || g.shiftEndX[k] !== undefined) n++;
+    }
+    return n;
+  }, [snap.global.shiftEndX, g.shiftEndX, p.blocks, spb]);
+  const notifyPref = useNotifyPref();
+  useMineNotifications(notifyPref.on, blocksFound, closed, g.shift, longHaul, TICKERS);
 
   const phaseChip = snap.phase === 1 ? <Chip tone="signal">Pre-open</Chip> : closed ? <Chip>Mine sealed</Chip> : snap.phase === 4 ? <Chip tone="ember">Cancelled</Chip> : <Chip tone="signal">{longHaul ? "Mine open · long haul" : "Mine open"}</Chip>;
 
@@ -55,7 +67,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
       <div className="p-4 md:px-8 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
         <div className="flex flex-col gap-5">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3.5"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold">Season {dep.seasonId + 1}</div>{phaseChip}</div>
+            <div className="flex items-center gap-3.5"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold">Season {dep.seasonId + 1}</div>{phaseChip}{!closed && <NotifyToggle pref={notifyPref} />}</div>
             <Mono className="text-mine-muted text-[12px] hidden md:block">{closed ? `closed · redemption open` : `block ${curBlock + 1} pays ${(Number(snap.config.ratePerWork[curBlock]) / 1e18).toExponential(3)} frag per hash-second · ends at block 4 or ${capClock(snap)} at the latest`}</Mono>
           </div>
 
@@ -99,7 +111,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
             ))}
           </Panel>
           {!longHaul && snap.phase !== 1 && !closed && <HashStream hashWad={myHash} />}
-          {longHaul && <NotifyCard />}
+          {longHaul && <NotifyCard pref={notifyPref} />}
         </div>
       </div>
       {action && <PurchaseSheet action={action} snap={snap} now={now} onClose={() => setAction(null)} onDone={() => { setAction(null); refetch(); }} />}
@@ -174,12 +186,12 @@ function ClosedCard({ snap, now, closeX, shift }: { snap: SeasonSnapshot; now: b
   );
 }
 
-function NotifyCard() {
-  const [on, setOn] = useState(false);
+function NotifyCard({ pref }: { pref: ReturnType<typeof useNotifyPref> }) {
+  if (!pref.supported) return null;
   return (
     <Panel className="flex flex-col gap-3">
-      <div className="text-[14px]">Get notified at each shift end and when the block is found.</div>
-      <Btn onClick={async () => { if (typeof Notification !== "undefined") { const r = await Notification.requestPermission(); setOn(r === "granted"); } }}>{on ? "Notifications on" : "Turn on notifications"}</Btn>
+      <div className="text-[14px]">Get notified at each shift end, when a block is found, and when the mine closes. Works while this tab stays open.</div>
+      <NotifyToggle pref={pref} className="self-start" />
     </Panel>
   );
 }

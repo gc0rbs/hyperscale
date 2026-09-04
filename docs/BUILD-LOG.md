@@ -317,3 +317,12 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
 - RUNBOOK §5 (hosting, alerts), indexer README, DECISIONS.
 - Checks: forge build, ops 7 tests, indexer check, `docker compose config`. Image builds are not
   verified here (no Docker daemon in the session); first `docker compose up --build` is on the host.
+
+## 2026-09-04 – Share card, notifications, CI images
+
+- `opengraph-image.tsx` + `twitter-image.tsx` (live status, 1200×630, verified on Anvil), layout
+  `openGraph`/`twitter` metadata.
+- `lib/use-notify.ts` (`useNotifyPref`, `useMineNotifications`), `NotifyToggle` in the mine header
+  and the long-haul card, `ShareButton` on the found banner.
+- CI `docker` job builds `ops/Dockerfile` and `indexer/Dockerfile`.
+- Checks: app check; Playwright season rerun.

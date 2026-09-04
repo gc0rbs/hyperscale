@@ -202,7 +202,9 @@ unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC
 WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
 returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
-The wallet button prompts a network switch when the wallet is on the wrong chain. `/how-it-works`
+The wallet button prompts a network switch when the wallet is on the wrong chain. Set
+`NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
+rendered from live season state) and the WalletConnect metadata. `/how-it-works`
 and `/terms` carry the disclosures docs/07 §5 requires; counsel replaces the terms wording before
 launch.
 
