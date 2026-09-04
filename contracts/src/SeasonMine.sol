@@ -79,6 +79,18 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         _;
     }
 
+    /// @dev Claims and post-close withdrawals ignore a pause once the close is persisted (audit R2): the
+    ///      mine then holds only deposits and minting is capped by the pool, so a lost guardian key can
+    ///      never strand earned fragments. A cancelled season has `closeX == 0`, so its unclaimed
+    ///      fragments stay forfeited.
+    modifier whenNotPausedOrClosed() {
+        if (paused()) {
+            _updateGlobal();
+            if (closeX == 0) revert EnforcedPause();
+        }
+        _;
+    }
+
     /// @dev Parameter validation lives in SeasonFactory._validate (docs/05 §9); the constructor only
     ///      enforces what its own arithmetic depends on, to keep the deployer under EIP-170.
     constructor(SeasonParams memory p, address fragments_, address vault_) {
@@ -231,7 +243,12 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc ISeasonMine
     /// @dev FR-M5, FR-M7.
-    function claim(uint256 rigId, uint8 blockIdx) external nonReentrant whenNotPaused returns (uint256) {
+    function claim(uint256 rigId, uint8 blockIdx)
+        external
+        nonReentrant
+        whenNotPausedOrClosed
+        returns (uint256)
+    {
         _updateGlobal();
         Rig storage r = _owned(rigId);
         _settleRig(r);
@@ -241,7 +258,12 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc ISeasonMine
-    function claimAll(uint256 rigId) external nonReentrant whenNotPaused returns (uint256[4] memory out) {
+    function claimAll(uint256 rigId)
+        external
+        nonReentrant
+        whenNotPausedOrClosed
+        returns (uint256[4] memory out)
+    {
         _updateGlobal();
         Rig storage r = _owned(rigId);
         _settleRig(r);
@@ -269,7 +291,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc ISeasonMine
     /// @dev FR-C1: full deposit back after close.
-    function withdraw(uint256 rigId) external nonReentrant whenNotPaused {
+    function withdraw(uint256 rigId) external nonReentrant whenNotPausedOrClosed {
         _updateGlobal();
         Rig storage r = _ownedActive(rigId);
         Phase ph = _phaseAfterUpdate();
@@ -308,7 +330,11 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     // ── admin (emergency only) ──────────────────────────────────────────────
 
     /// @inheritdoc ISeasonMine
+    /// @dev Only while the season can still change (audit R2): once the close is persisted there is
+    ///      nothing a pause could protect, and claims/withdrawals ignore it anyway.
     function pause() external onlyGuardian {
+        _updateGlobal();
+        if (closeX != 0) revert WrongPhase(Phase.Closed);
         pausedAt = uint64(block.timestamp);
         _pause();
     }
@@ -486,7 +512,9 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     ///      constant total hash. Loop bound: shifts crossed since the last update (≤ blocks × spb).
     ///      Pure over memory plus reads of `ocExpiring`; `_updateGlobal` commits the results.
     function _advanceView(G memory g, uint256[] memory ends, uint256[] memory hashAfter) internal view {
-        if (g.closeX != 0 || block.timestamp < openTime) return;
+        // A cancelled season is frozen at the cancellation instant (audit B4): no further boundaries,
+        // work or close are discovered, so later emergency withdrawals settle against a fixed state.
+        if (g.closeX != 0 || cancelled || block.timestamp < openTime) return;
         uint256 nowX = block.timestamp * WAD;
         if (nowX > _deadlineX) nowX = _deadlineX;
         while (g.lastX < nowX) {

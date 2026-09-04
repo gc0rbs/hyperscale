@@ -7,7 +7,6 @@ import { useChainNow } from "@/lib/use-now";
 import { useActiveAddress } from "@/lib/use-account";
 import { advance, eta as etaOf, settle } from "@/lib/mine-math";
 import { formatEta, formatHash, formatInt, formatRig } from "@/lib/format";
-import { TICKERS } from "@/lib/contracts";
 import type { SeasonSnapshot } from "@/lib/season-model";
 import { BlockCard } from "./BlockCard";
 import { RigCard, type RigAction } from "./RigCard";
@@ -17,6 +16,8 @@ import { RigRoom } from "./RigRoom";
 import { FoundBanner } from "./FoundBanner";
 import { NotifyToggle } from "./NotifyToggle";
 import { useMineNotifications, useNotifyPref } from "@/lib/use-notify";
+import { useTx } from "@/lib/use-tx";
+import { seasonMineAbi } from "@/lib/contracts";
 import { FramedIcon } from "./Icons";
 import { Btn, Chip, Label, Mono, Panel, Stat } from "./ui";
 
@@ -57,13 +58,13 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
     return n;
   }, [snap.global.shiftEndX, g.shiftEndX, p.blocks, spb]);
   const notifyPref = useNotifyPref();
-  useMineNotifications(notifyPref.on, blocksFound, closed, g.shift, longHaul, TICKERS);
+  useMineNotifications(notifyPref.on, blocksFound, closed, g.shift, longHaul, snap.symbols);
 
   const phaseChip = snap.phase === 1 ? <Chip tone="signal">Pre-open</Chip> : closed ? <Chip>Mine sealed</Chip> : snap.phase === 4 ? <Chip tone="ember">Cancelled</Chip> : <Chip tone="signal">{longHaul ? "Mine open · long haul" : "Mine open"}</Chip>;
 
   return (
     <>
-      {justFound && <FoundBanner blockIdx={justFound.b} fragments={justFound.frags} fragPerToken={p.fragPerToken} onDismiss={() => setDismissed(justFound.b)} />}
+      {justFound && <FoundBanner blockIdx={justFound.b} symbol={snap.symbols[justFound.b]} fragments={justFound.frags} fragPerToken={p.fragPerToken} onDismiss={() => setDismissed(justFound.b)} />}
       <div className="p-4 md:px-8 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
         <div className="flex flex-col gap-5">
           <div className="flex justify-between items-center flex-wrap gap-y-2">
@@ -105,7 +106,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
             {claimable.length === 0 && <div className="text-mine-muted text-[13px] pt-2">Nothing found yet. Blocks unlock when their work is done.</div>}
             {claimable.map((c) => (
               <div key={c.b} className="flex justify-between items-center py-2.5 border-t border-mine-line">
-                <div><div className="font-display leading-none uppercase text-[36px] font-semibold">{TICKERS[c.b]}</div><Mono className="text-mine-muted text-[12px]">{formatInt(c.frags)} frag · {(Number(c.frags) / Number(p.fragPerToken)).toFixed(3)} {TICKERS[c.b]}</Mono></div>
+                <div><div className="font-display leading-none uppercase text-[36px] font-semibold">{snap.symbols[c.b]}</div><Mono className="text-mine-muted text-[12px]">{formatInt(c.frags)} frag · {(Number(c.frags) / Number(p.fragPerToken)).toFixed(3)} {snap.symbols[c.b]}</Mono></div>
                 <Link href="/claim"><Btn tone="signal" className="h-[34px]">Claim</Btn></Link>
               </div>
             ))}
@@ -132,7 +133,7 @@ function PreOpenCard({ snap, now }: { snap: SeasonSnapshot; now: bigint }) {
       <div className="h-px bg-mine-line" />
       <div className="flex flex-col">
         <div className="flex justify-between"><Label>Four blocks, four stocks</Label></div>
-        {TICKERS.map((t, i) => (
+        {snap.symbols.map((t, i) => (
           <div key={t} className="flex justify-between items-center py-3 border-t border-mine-line first:border-0">
             <div className="flex gap-3.5 items-center"><Mono className="text-mine-dim text-[12px]">0{i + 1}</Mono><div className="font-display leading-none uppercase text-[40px] font-semibold">{t}</div></div>
             <Mono className="text-mine-muted text-[13px]">{Number(snap.params.poolTokens[i] / 10n ** 14n) / 10_000} {t}</Mono>
@@ -168,6 +169,12 @@ function capClock(snap: SeasonSnapshot) {
 }
 
 function ClosedCard({ snap, now, closeX, shift }: { snap: SeasonSnapshot; now: bigint; closeX: bigint; shift: number }) {
+  // Audit B2: the client and the contract's phase() both know the mine is closed before any transaction
+  // has persisted closeX. Offer to record it so withdrawals and redemption open without waiting.
+  const sealTx = useTx();
+  const dep2 = useDeployment();
+  const account2 = useActiveAddress();
+  const sealPending = snap.global.closeX === 0n;
   const closeSec = closeX / 10n ** 18n;
   const ran = Number(closeSec - snap.params.openTime);
   const blocksFound = Math.min(Math.floor(shift / snap.params.shiftsPerBlock), 4);
@@ -181,6 +188,13 @@ function ClosedCard({ snap, now, closeX, shift }: { snap: SeasonSnapshot; now: b
         <Stat label="Blocks found" value={`${blocksFound} / 4`} />
         <Stat label="Redemption" value={formatEta(Number(closeSec) + 30 * 86400 - Number(now))} sub="window remaining" />
       </div>
+      {sealPending && (
+        <div className="flex flex-wrap items-center gap-3 border border-signal-deep rounded-sm p-3" data-testid="seal-mine">
+          <div className="text-[13px] text-mine-muted flex-1 min-w-[240px]">The close is computed but not yet recorded on chain. Any transaction records it; this one does nothing else.</div>
+          <Btn tone="signal" disabled={sealTx.busy || !account2} onClick={() => sealTx.send("seal", { address: dep2.mine, abi: seasonMineAbi, functionName: "poke", account: account2 })}>{sealTx.busy ? "Recording…" : "Record the close"}</Btn>
+          {sealTx.error && <div className="text-[12px] text-[var(--heat-hot)] font-data w-full">{sealTx.error}</div>}
+        </div>
+      )}
       <div className="text-mine-muted text-[13px]">{byCap ? `The cap ended the season with block ${blocksFound + 1} part-mined. Everything earned so far is claimable; the unmined remainder rolls into the next season's pool. Withdraw your deposits below, claim, then redeem.` : "Withdraw your deposits from each rig below, claim block 4, then redeem fragments."}</div>
     </Panel>
   );

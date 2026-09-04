@@ -8,7 +8,7 @@ This section is the plain-language version of the guarantees the contracts enfor
 | --- | --- |
 | Your stake is returned in full at close | The mine holds deposits and nothing else; `withdraw` has no fee and no deadline |
 | Nobody can change a season's rules after creation | No proxies, no setters, no difficulty adjustment. The contracts are immutable |
-| The only admin power is pause | The treasury address can `pause` and `unpause`. It cannot mint, move stakes, change parameters or cancel directly |
+| The only admin power is pause, and only while open | The treasury address can `pause` and `unpause` an open mine. It cannot pause a closed one, block claims or withdrawals after close, mint, move stakes, change parameters or cancel directly |
 | A block never pays more than its pool | `minted fragments ≤ pool × 1,000,000` is checked inside every claim |
 | Your pay does not depend on other rigs | Earned = your hashrate × your seconds × a fixed rate per block |
 | Nothing accrues by the clock alone | Zero hashrate earns zero, however long |

@@ -16,9 +16,11 @@ import {SeasonFactory} from "../src/SeasonFactory.sol";
 ///              FACTORY (optional; default from deployments/<chainId>-factory.json).
 contract CreateSeason is Script {
     function run() external {
-        uint256 key = vm.envOr(
-            "PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
-        );
+        uint256 key = block.chainid == 31337
+            ? vm.envOr(
+                "PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+            )
+            : vm.envUint("PRIVATE_KEY"); // audit R1: the Anvil default key never leaves chain 31337
         string memory file = vm.envString("SEASON_FILE");
         string memory j = vm.readFile(file);
         address factoryAddr = vm.envOr("FACTORY", address(0));

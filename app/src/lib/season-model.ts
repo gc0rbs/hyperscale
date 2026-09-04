@@ -28,10 +28,16 @@ export interface SeasonParamsView {
   ocShiftSpan: number;
   lpWeightPerToken: bigint;
   treasury: Address;
+  redemptionDays: number;
+  cashOutFeeBps: number;
+  pauseGraceSeconds: number;
 }
 
 export interface SeasonSnapshot {
   params: SeasonParamsView;
+  /** Stock symbols read from the tokens (audit B11), falling back to the season-1 set. */
+  symbols: string[];
+  totalShifts: number;
   config: SeasonConfig;
   global: GlobalState;
   phase: number;
@@ -81,6 +87,9 @@ export function toParams(raw: any): SeasonParamsView {
     ocShiftSpan: Number(raw.ocShiftSpan),
     lpWeightPerToken: BigInt(raw.lpWeightPerToken),
     treasury: raw.treasury as Address,
+    redemptionDays: Number(raw.redemptionDays),
+    cashOutFeeBps: Number(raw.cashOutFeeBps),
+    pauseGraceSeconds: Number(raw.pauseGraceSeconds),
   };
 }
 

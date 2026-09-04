@@ -3,14 +3,14 @@ import { useMemo } from "react";
 import { useBlock } from "wagmi";
 import { useActiveAddress } from "./use-account";
 import type { Address } from "viem";
-import { seasonMineAbi, redemptionVaultAbi } from "./contracts";
+import { seasonMineAbi, redemptionVaultAbi, erc20Abi, TICKERS } from "./contracts";
 import { toConfig, toParams, toRigState, type RigSnapshot, type SeasonSnapshot } from "./season-model";
 import { advance, settle } from "./mine-math";
 import { useReads, type Call, type ReadResult } from "./reads";
 
 const POLL = 10_000;
 
-export function useSeason(mine: Address, vault: Address) {
+export function useSeason(mine: Address, vault: Address, stocks: readonly Address[] = []) {
   const globalCalls: Call[] = [
     { address: mine, abi: seasonMineAbi, functionName: "params" },
     { address: mine, abi: seasonMineAbi, functionName: "shift" },
@@ -25,13 +25,20 @@ export function useSeason(mine: Address, vault: Address) {
   const q = useReads(globalCalls, { refetchInterval: POLL });
 
   const shift = q.data?.[1]?.result as number | undefined;
+  const rawParams = q.data?.[0]?.result as { blocks: number; shiftsPerBlock: number } | undefined;
+  const total = rawParams ? Number(rawParams.blocks) * Number(rawParams.shiftsPerBlock) : 0;
   const boundaryCalls = useMemo(() => {
-    if (shift === undefined) return [] as Call[];
+    if (shift === undefined || total === 0) return [] as Call[];
     const calls: Call[] = [];
-    for (let k = 0; k < Math.min(shift, 32); k++) calls.push({ address: mine, abi: seasonMineAbi, functionName: "shiftEndX", args: [k] });
-    for (let k = shift; k < Math.min(shift + 3, 33); k++) calls.push({ address: mine, abi: seasonMineAbi, functionName: "ocExpiring", args: [k] });
+    for (let k = 0; k < Math.min(shift, total); k++) calls.push({ address: mine, abi: seasonMineAbi, functionName: "shiftEndX", args: [k] });
+    for (let k = shift; k < Math.min(shift + 3, total + 1); k++) calls.push({ address: mine, abi: seasonMineAbi, functionName: "ocExpiring", args: [k] });
     return calls;
-  }, [mine, shift]);
+  }, [mine, shift, total]);
+  const symbolReads = useReads(stocks.map((a) => ({ address: a, abi: erc20Abi, functionName: "symbol" })), { enabled: stocks.length > 0, tolerateFailures: true });
+  const symbols = useMemo(() => (stocks.length ? stocks : [...TICKERS]).map((_, i) => {
+    const r = symbolReads.data?.[i];
+    return r?.status === "success" && typeof r.result === "string" && r.result ? (r.result as string) : (TICKERS[i] ?? `Stock ${i + 1}`);
+  }), [stocks, symbolReads.data]);
   const b = useReads(boundaryCalls, { enabled: boundaryCalls.length > 0, refetchInterval: POLL });
   const block = useBlock({ query: { refetchInterval: POLL } });
   const chainTs = block.data?.timestamp;
@@ -45,7 +52,7 @@ export function useSeason(mine: Address, vault: Address) {
     const rate = [8, 9, 10, 11].map((i) => q.data![i].result as bigint);
     const shiftEndX: Record<number, bigint> = {};
     const ocExpiring: Record<number, bigint> = {};
-    const nEnds = Math.min(shift, 32);
+    const nEnds = Math.min(shift, total);
     (b.data ?? []).forEach((r: ReadResult, i: number) => {
       if (r.status !== "success") return;
       if (i < nEnds) shiftEndX[i] = r.result as bigint;
@@ -53,6 +60,8 @@ export function useSeason(mine: Address, vault: Address) {
     });
     return {
       params,
+      symbols,
+      totalShifts: params.blocks * params.shiftsPerBlock,
       config: toConfig(params, rate),
       global: { shift, workInShift: q.data[2].result as bigint, lastX: q.data[3].result as bigint, totalHash: q.data[4].result as bigint, closeX: q.data[5].result as bigint, ocExpiring, shiftEndX },
       phase: Number(q.data[6].result),
@@ -61,7 +70,7 @@ export function useSeason(mine: Address, vault: Address) {
       chainTime: chainTs,
       chainOffset: chainTs - BigInt(Math.floor(Date.now() / 1000)),
     };
-  }, [q.data, b.data, shift, boundaryCalls.length, chainTs]);
+  }, [q.data, b.data, shift, boundaryCalls.length, chainTs, symbols, total]);
 
   return { snapshot, isLoading: q.isLoading, error: q.error ?? b.error, refetch: () => { q.refetch(); b.refetch(); block.refetch(); } };
 }

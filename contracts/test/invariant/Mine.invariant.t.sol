@@ -88,6 +88,15 @@ contract MineInvariantTest is SeasonTestBase {
         assertTrue(h.frozenAfterClose());
     }
 
+    /// Invariant 10 (audit B4): shift, boundary and work never change after cancellation.
+    function invariant_10_frozen_after_cancel() public view {
+        if (!h.cancelSnapshotTaken()) return;
+        assertEq(mine.shift(), h.cancelShift());
+        assertEq(mine.lastX(), h.cancelLastX());
+        assertEq(mine.workInShift(), h.cancelWork());
+        assertEq(mine.closeX(), 0);
+    }
+
     /// Invariant 7: heat and overclock bounds.
     function invariant_7_heat_and_oc_bounds() public view {
         for (uint256 i; i < h.rigCount(); ++i) {

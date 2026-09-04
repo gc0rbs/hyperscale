@@ -262,3 +262,17 @@ neither is load-bearing for the accounting. Changes:
   (operator sizing, the pause key, Chainlink, Robinhood, the geo-fence), and reproduces the known
   limitations from the audit package verbatim in plain language. Nothing is promised that the
   contracts do not enforce.
+
+## 2026-09-04 – Audit remediation
+
+- **Pause is scoped to an open mine** (audit R2): `pause()` reverts after the close is recorded and
+  claims/withdrawals ignore a pause once `closeX != 0`. A cancelled mine keeps `closeX == 0`, so its
+  unclaimed fragments stay forfeited. Rationale: after close the mine holds only deposits and minting
+  is capped by the pool, so a pause protects nothing and a lost key would strand rewards.
+- **A cancelled mine is frozen** at the cancellation instant (audit B4).
+- **The factory refuses zero vault dependencies** (audit B3).
+- **No default signing keys off Anvil** (audit R1): scripts and ops fail closed without the role key.
+- **App transaction handling is one hook** (audit B7) and RPC failures are an error state (B8).
+- **Dependencies**: Next 15.5.25, React 19.2.8; pnpm overrides for vulnerable transitive packages;
+  `pnpm audit --prod --audit-level high` in CI. Foundry pinned to v1.5.1 in CI.
+- Full mapping in `docs/AUDIT-RESPONSE-2026-09-04.md`.

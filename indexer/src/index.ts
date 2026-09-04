@@ -12,8 +12,10 @@ import {
   walletStats,
 } from "ponder:schema";
 import type { Address, Hex } from "viem";
+import { eq } from "ponder";
 
 const BPS = 10_000n;
+const WAD = 10n ** 18n;
 
 /** Immutable season parameters, read once from `SeasonMine.params()` and cached per process. */
 interface SeasonParams {
@@ -21,6 +23,7 @@ interface SeasonParams {
   blocks: number;
   shiftsPerBlock: number;
   gpuMultBps: readonly number[];
+  coolPerShift: readonly number[];
 }
 let paramsCache: SeasonParams | undefined;
 
@@ -36,6 +39,7 @@ async function getParams(context: Context): Promise<SeasonParams> {
     blocks: p.blocks,
     shiftsPerBlock: p.shiftsPerBlock,
     gpuMultBps: p.gpuMultBps,
+    coolPerShift: p.coolPerShift,
   };
   return paramsCache;
 }
@@ -96,6 +100,24 @@ async function requireRig(context: Context, rigId: bigint) {
   const r = await context.db.find(rig, { id: rigId });
   if (!r) throw new Error(`rig ${rigId} not indexed before its event`);
   return r;
+}
+
+/**
+ * Refreshes a rig's transient state (heat, active overclocks, expiry) from the contract after an event
+ * that settled it (audit B6). The contract settles lazily, so its stored values are exact at this block.
+ */
+async function syncRig(context: Context, rigId: bigint) {
+  const r = await context.client.readContract({
+    abi: context.contracts.SeasonMine.abi,
+    address: context.contracts.SeasonMine.address as Address,
+    functionName: "rigs",
+    args: [rigId],
+  });
+  await context.db.update(rig, { id: rigId }).set({
+    heat: Number(r.heat),
+    activeOc: Number(r.activeOc),
+    ocExpiryShift: Number(r.ocExpiryShift),
+  });
 }
 
 /** Marks a rig inactive and removes it from its owner's aggregates. Idempotent. */
@@ -165,6 +187,7 @@ ponder.on("SeasonMine:GpuUpgraded", async ({ event, context }) => {
   await context.db
     .update(rig, { id: r.id })
     .set({ gpuTier: event.args.tier, baseHash: newBase });
+  await syncRig(context, r.id);
   await context.db.insert(burn).values({
     id: event.id,
     rigId: r.id,
@@ -184,6 +207,7 @@ ponder.on("SeasonMine:CoolingUpgraded", async ({ event, context }) => {
   await ensureSeason(context);
   const r = await requireRig(context, event.args.rigId);
   await context.db.update(rig, { id: r.id }).set({ coolingTier: event.args.tier });
+  await syncRig(context, r.id);
   await context.db.insert(burn).values({
     id: event.id,
     rigId: r.id,
@@ -241,6 +265,15 @@ ponder.on("SeasonMine:ShiftEnded", async ({ event, context }) => {
   await context.db.update(season, { id: s.id }).set((row) => ({
     shift: Math.max(row.shift, idx + 1),
   }));
+  // Audit B6: overclocks whose expiry shift just ended lapse, and heat cools by the rig's cooling tier.
+  const active = await context.db.sql.select().from(rig).where(eq(rig.active, true));
+  for (const r of active) {
+    const expired = r.activeOc > 0 && r.ocExpiryShift <= idx;
+    const cool = p.coolPerShift[r.coolingTier] ?? 0;
+    const heat = Math.max(0, r.heat - cool);
+    if (!expired && heat === r.heat) continue;
+    await context.db.update(rig, { id: r.id }).set({ heat, activeOc: expired ? 0 : r.activeOc });
+  }
 });
 
 ponder.on("SeasonMine:BlockFound", async ({ event, context }) => {
@@ -255,7 +288,8 @@ ponder.on("SeasonMine:BlockFound", async ({ event, context }) => {
     .values({
       id: b,
       endX: event.args.endX,
-      foundAt: event.block.timestamp,
+      foundAt: event.args.endX / WAD,
+      foundTxAt: event.block.timestamp,
       durationX: event.args.endX - startX,
     })
     .onConflictDoNothing();
@@ -263,7 +297,8 @@ ponder.on("SeasonMine:BlockFound", async ({ event, context }) => {
   if (b === p.blocks - 1) {
     await context.db.update(season, { id: s.id }).set({
       closeX: event.args.endX,
-      closedAt: event.block.timestamp,
+      closedAt: event.args.endX / WAD,
+      closedTxAt: event.block.timestamp,
     });
   }
 });
@@ -278,7 +313,8 @@ ponder.on("SeasonMine:ClosedByFailSafe", async ({ event, context }) => {
   await context.db.update(season, { id: s.id }).set((row) => ({
     shift: Math.max(row.shift, event.args.shift),
     closeX,
-    closedAt: event.block.timestamp,
+    closedAt: closeX / WAD,
+    closedTxAt: event.block.timestamp,
     closedByFailSafe: true,
   }));
 });
@@ -303,6 +339,7 @@ ponder.on("SeasonMine:Claimed", async ({ event, context }) => {
     claimed3: b === 3 ? row.claimed3 + amount : row.claimed3,
     totalClaimed: row.totalClaimed + amount,
   }));
+  await syncRig(context, r.id);
 });
 
 ponder.on("SeasonMine:Exited", async ({ event, context }) => {

@@ -13,7 +13,7 @@ Every `SeasonMine` event (`RigActivated`, `GpuUpgraded`, `CoolingUpgraded`, `Ove
 Tables (`ponder.schema.ts`): `season`, `shift`, `reward_block`, `rig`, `overclock`, `burn`,
 `claim`, `exit`, `redemption`, `wallet_stats`. `wallet_stats` is the per-wallet aggregate used by
 the leaderboard: active rig count, Σ weight, Σ baseHash (`weight × gpuMultBps[tier] / 10000`,
-overclock boosts excluded because they are transient), total burned, and claimed fragments per
+overclock boosts excluded because they are transient; the field is base hash, not effective hash), total burned, and claimed fragments per
 block (`claimed0..claimed3`) plus `totalClaimed`. Season params are read once via
 `SeasonMine.params()` and cached for the process.
 
@@ -23,7 +23,7 @@ block (`claimed0..claimed3`) plus `totalClaimed`. Season params are read once vi
 | --- | --- |
 | `GET /season` | season row (openTime, current shift, closeX, fail-safe / cancel flags), rig and wallet counts, found blocks |
 | `GET /shifts` | ended shifts in order (`endX`, `totalHashAfter`, block index) and found blocks |
-| `GET /leaderboard?by=hash\|claimed\|burned` | top 50 wallets by Σ baseHash, Σ claimed fragments, or Σ burned RIG |
+| `GET /leaderboard?by=hash\|claimed\|burned` | top 50 wallets by Σ **base** hash (`totalHash`; overclock boosts excluded because they are transient, audit I2), Σ claimed fragments, or Σ burned RIG |
 | `GET /rigs/:owner` | a wallet's rigs (active first), its aggregate stats, and its claim / burn / redemption history |
 | `POST /graphql` | Ponder's auto-generated GraphQL over the whole schema |
 

@@ -31,7 +31,7 @@ The guardian can unpause before the grace period ends and the season continues a
 | Burned $RIG | Stays burned |
 | The pool and the USDG reserve | Sweepable to the treasury immediately |
 
-A season that has already closed cannot be cancelled. If a pause after close outlives the grace period, `emergencyWithdraw` still returns deposits and your fragments stay claimable after an unpause.
+A mine that has already closed cannot be paused at all: `pause` reverts once the close is recorded. A pause that started earlier stops blocking claims and withdrawals the moment the close is recorded, so a lost or compromised guardian key can never strand earned fragments after a normal ending.
 
 {% hint style="warning" %}
 Because unclaimed fragments are forfeited on cancellation, claim as blocks are found. It costs one transaction per block and removes the only way a pause can cost you earned rewards.

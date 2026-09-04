@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateSeasonParams, type SeasonParamsJson } from "../src/lib/validate.js";
+import { validateVaultDeps, validateSeasonParams, type SeasonParamsJson } from "../src/lib/validate.js";
 
 const A = "0x000000000000000000000000000000000000dEaD";
 const NOW = 1_800_000_000;
@@ -68,5 +68,14 @@ describe("validateSeasonParams mirrors SeasonFactory._validate", () => {
     const p = good();
     p.poolTokens = ["1", "1", "1", "1"]; // 1 wei of stock token per block
     expect(validateSeasonParams(p, NOW)).toContain("rate");
+  });
+});
+
+describe("validateVaultDeps (audit B3)", () => {
+  it("rejects zero eligibility, oracle or usdc", () => {
+    const ok = { eligibility: "0x" + "1".repeat(40), oracle: "0x" + "2".repeat(40), usdc: "0x" + "3".repeat(40) };
+    expect(validateVaultDeps(ok)).toEqual([]);
+    expect(validateVaultDeps({ ...ok, oracle: "0x" + "0".repeat(40) })).toEqual(["vault dependencies"]);
+    expect(validateVaultDeps({ ...ok, usdc: "" })).toEqual(["vault dependencies"]);
   });
 });

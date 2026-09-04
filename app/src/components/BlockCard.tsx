@@ -1,5 +1,4 @@
 "use client";
-import { TICKERS } from "@/lib/contracts";
 import { formatEta, formatHash } from "@/lib/format";
 import { advance, blockProgressBps, eta as etaOf } from "@/lib/mine-math";
 import type { SeasonSnapshot } from "@/lib/season-model";
@@ -22,8 +21,8 @@ export function BlockCard({ snap, now, myHash, compact = false }: { snap: Season
         <div className="flex flex-col gap-1">
           <Label>Block {b + 1} of {snap.params.blocks}</Label>
           <div className="flex gap-3.5 items-baseline flex-wrap">
-            <div className={`font-display uppercase tracking-[0.02em] font-bold ${compact ? "text-[64px]" : "text-[80px]"} leading-none`}>{TICKERS[b]}</div>
-            <Mono className="text-mine-muted text-[14px] whitespace-nowrap">pool {pool} {TICKERS[b]}</Mono>
+            <div className={`font-display uppercase tracking-[0.02em] font-bold ${compact ? "text-[64px]" : "text-[80px]"} leading-none`}>{snap.symbols[b]}</div>
+            <Mono className="text-mine-muted text-[14px] whitespace-nowrap">pool {pool} {snap.symbols[b]}</Mono>
           </div>
         </div>
         <div className="flex flex-col gap-1 items-end shrink-0"><Label>Shift</Label><Mono className="text-[22px] whitespace-nowrap">{shiftInBlock}<span className="text-mine-muted"> / {spb}</span></Mono></div>

@@ -89,7 +89,7 @@ app's `NEXT_PUBLIC_*` addresses from it. Confirm the emitted `paramsHash` equals
 ## 4. Fund the vault
 
 ```
-OPERATOR_KEY=0x… pnpm fund --dry-run      # shows balances needed vs held
+OPERATOR_KEY=0x… pnpm fund [--usdc-reserve 50000] --dry-run      # shows balances needed vs held
 OPERATOR_KEY=0x… pnpm fund                # approve + RedemptionVault.fund(usdcReserve)
 ```
 
@@ -109,8 +109,10 @@ ALERT_WEBHOOK_URL=https://… pnpm watch --interval 60 --planned-seconds 10800  
 ```
 
 The keeper is a convenience: shift boundaries are computed retroactively and exactly by any
-transaction, so a missed poke costs nothing but gas for the next player. Keep one keeper per season;
-it stops itself at close. The watcher pages on `Paused`, `SeasonCancelled`, warns on
+transaction, so a missed poke costs nothing but gas for the next player. It pokes when a boundary has
+passed or the stored view is over ten minutes stale, and once more when the mine is logically closed
+but the close is not yet recorded (so redemption opens without waiting for a player). Keep one keeper
+per season; it stops itself after that final poke. The watcher pages on `Paused`, `SeasonCancelled`, warns on
 `totalHash == 0` for over an hour, ETA to close over 5× planned, and a low USDG reserve after close.
 Alerts at `warn` and `page` level go to `ALERT_WEBHOOK_URL` (Slack or Discord incoming webhook, JSON
 `{text, content}`), the same message at most once per `ALERT_REPEAT_SECONDS` (default 15 min); every
@@ -155,9 +157,10 @@ GUARDIAN_KEY=0x… pnpm guardian unpause        # before the grace deadline
 ```
 
 Rules: the guardian key is the treasury wallet (one signer, by the client's decision); pause only for a suspected accounting
-bug or a Stock Token / oracle incident that would make claims or redemptions wrong. A pause after
-close does not cancel anything (players use `emergencyWithdraw` to recover deposits if it outlives the
-grace period; their fragments stay claimable after an unpause).
+bug or a Stock Token / oracle incident that would make claims or redemptions wrong. A pause is
+impossible once the close is recorded (`pause()` reverts), and a pause that started earlier stops
+blocking claims and withdrawals the moment the close is recorded, so a lost guardian key can never
+strand earned fragments (audit R2).
 
 ## 8. Close, redemption, sweep
 
@@ -165,6 +168,9 @@ grace period; their fragments stay claimable after an unpause).
   reports the reserve. Players `claimAll` and `withdraw`; the app guides them. Redemption
   (`redeem` in kind, `cashOut` to USDC) is open for `redemptionDays` after `closeX`.
 - Comms cadence (docs/08 §4): withdraw reminder at close, redemption reminders at day 1, 7, 25.
+- If the app or explorer shows the mine closed but `closeX()` is still zero (nobody transacted after
+  the final boundary), the keeper's last poke records it; otherwise `pnpm keeper --once` or the
+  "Record the close" button on the closed screen.
 - After the window: `OPERATOR_KEY=0x… pnpm sweep` (permissionless, repeatable). Its output names any
   Stock Token whose transfer hook refused the treasury; allowlist the treasury with the issuer and run
   it again. `sweep --dry-run` shows what would move.
@@ -206,7 +212,11 @@ WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
 returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
 The wallet button prompts a network switch when the wallet is on the wrong chain. Set
 `NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
-rendered from live season state) and the WalletConnect metadata. `/how-it-works`
+rendered from live season state) and the WalletConnect metadata. `NEXT_PUBLIC_INDEXER_URL` (the
+Ponder API, §5) enables wallet rankings and mine history; without it those screens read the chain.
+Security headers (nosniff, frame deny, referrer, permissions, HSTS) come from `next.config.ts`; a
+Content-Security-Policy is the edge's job because WalletConnect needs host-specific `connect-src` and
+`frame-src` allowances. Verify the live response headers after the first deploy. `/how-it-works`
 and `/terms` carry the disclosures docs/07 §5 requires; counsel replaces the terms wording before
 launch.
 

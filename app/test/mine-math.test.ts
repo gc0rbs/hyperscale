@@ -43,3 +43,31 @@ describe("mine-math mirrors the contract (values from contracts/test/unit/Mine.t
     expect(g.shift).toBe(0);
   });
 });
+
+import { coverage, estimateFragments, remainingWork, totalWork } from "../src/lib/mine-math";
+
+describe("coverage and estimates (audit B10, I3)", () => {
+  const c = { openTime: 0n, maxDurationSeconds: 21600n, shiftsPerBlock: 8, blocks: 4, difficulty: [2000n, 2500n, 2500n, 3000n], ratePerWork: [10n ** 36n, 10n ** 36n, 10n ** 36n, 10n ** 36n], coolPerShift: [10, 18, 26, 36] };
+  const g = (shift: number, workInShift: bigint) => ({ shift, workInShift, lastX: 0n, totalHash: 100n, closeX: 0n, ocExpiring: {}, shiftEndX: {} });
+  it("permanent coverage is remaining work over total work, not a shift-index mix", () => {
+    // shift 7 (block 1, last shift) with 95% of that shift done: 7.95 of 8 shifts of block 1 done
+    const st = g(7, 237n); // shiftDiff block 1 = 250; 7×250 + 237 = 1987 of 2000
+    expect(totalWork(c)).toBe(10000n);
+    expect(remainingWork(c, st)).toBe(10000n - 1987n);
+    expect(coverage(c, st).fraction).toBeCloseTo(0.8013, 3);
+  });
+  it("overclock coverage is the rest of this shift plus the span, truncated at close", () => {
+    const st = g(30, 100n); // block 4, shiftDiff 375
+    const cov = coverage(c, st, 1);
+    expect(cov.work).toBe(375n - 100n + 375n);
+    expect(cov.truncated).toBe(false);
+    const late = coverage(c, g(31, 0n), 1);
+    expect(late.work).toBe(375n);
+    expect(late.truncated).toBe(true);
+  });
+  it("fragment estimate: extra hash × seconds at the new pace × rate", () => {
+    // 100 hash mining, add 100 → pace 200; remaining 10000 work → 50 s; 100 hash × 50 s × 1 frag/hash-s = 5000
+    expect(estimateFragments(c, g(0, 0n), 100n)).toBe(5000n);
+    expect(estimateFragments(c, g(0, 0n), 100n, 1000n)).toBe(500n);
+  });
+});

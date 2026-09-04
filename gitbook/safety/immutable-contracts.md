@@ -12,7 +12,7 @@ This is deliberate. A game where the operator can adjust difficulty mid-season i
 | --- | --- | --- |
 | Player | Activate, upgrade, overclock, claim, exit, withdraw after close, emergency-withdraw after an over-long pause, redeem or cash out fragments | Touch anyone else's rig; claim more than a block's pool |
 | Anyone | `poke` (advance the mine's bookkeeping); `sweep` after the redemption window or a cancellation | Alter accounting. `poke` is a pure catch-up; every boundary is computed retroactively and exactly by any transaction |
-| Treasury (the guardian) | `pause`, `unpause`; receives fees and sweeps | Set parameters, mint, move stakes, cancel a season directly, withdraw the pool |
+| Treasury (the guardian) | `pause` while the mine is open, `unpause`; receives fees and sweeps | Pause a closed mine, block claims or withdrawals after close, set parameters, mint, move stakes, cancel a season directly, withdraw the pool |
 | Operator | Fund the vault, once | Withdraw the pool or the reserve |
 | Factory | Deploy seasons with validated parameters | Touch a deployed season |
 

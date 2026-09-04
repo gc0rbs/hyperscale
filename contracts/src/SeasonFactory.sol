@@ -49,6 +49,10 @@ contract SeasonFactory is ISeasonFactory {
         bool transfersEnabled
     ) external returns (uint256 seasonId, address mine, address fragments, address vault) {
         _validate(params);
+        // Audit B3: a vault with a zero adapter or quote token reverts on every redemption and sweep.
+        if (eligibility == address(0) || oracle == address(0) || usdc == address(0)) {
+            revert InvalidParams("vault dependencies");
+        }
 
         mine = CreateAddress.predict(address(mineDeployer), mineDeployer.deployments() + 1);
         fragments = CreateAddress.predict(address(fragmentsDeployer), fragmentsDeployer.deployments() + 1);

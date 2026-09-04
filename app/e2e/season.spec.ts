@@ -1,7 +1,8 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createPublicClient, http, parseAbi, type Address } from "viem";
+import { createPublicClient, createWalletClient, http, parseAbi, type Address } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { warpTo, warp, DEV } from "./helpers";
 
@@ -16,7 +17,12 @@ const mineAbi = parseAbi([
   "function pending(uint256,uint8) view returns (uint256)",
   "function rigsOf(address) view returns (uint256[])",
   "function poke()",
+  "function pause()",
+  "function unpause()",
+  "function paused() view returns (bool)",
 ]);
+// deploy-demo makes the deployer (Anvil account 0) the treasury, which is the guardian.
+const guardian = createWalletClient({ chain: foundry, transport: http("http://127.0.0.1:8545"), account: privateKeyToAccount("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80") });
 const fragAbi = parseAbi(["function balanceOf(address,uint256) view returns (uint256)"]);
 
 const test = base;
@@ -69,6 +75,25 @@ test("pre-open: activate a rig and buy a GPU tier", async ({ page }) => {
   await expect(page.getByTestId("purchase-sheet")).toBeVisible();
   await page.getByTestId("purchase-sheet").getByRole("button", { name: /Confirm burn/ }).click();
   await expect(page.getByTestId("purchase-sheet")).toBeHidden({ timeout: 30_000 });
+});
+
+/** Audit B7: a transaction that fails must show a plain-language error and release the control. */
+test("paused: a failed purchase shows an error and the sheet recovers", async ({ page }) => {
+  await guardian.writeContract({ address: dep.mine, abi: mineAbi, functionName: "pause" });
+  expect(await pub.readContract({ address: dep.mine, abi: mineAbi, functionName: "paused" })).toBe(true);
+  await page.goto("/mine");
+  await connectDev(page, 1);
+  const rigs = await pub.readContract({ address: dep.mine, abi: mineAbi, functionName: "rigsOf", args: [DEV[1]] });
+  await expect(page.getByTestId(`rig-${rigs[0]}`)).toBeVisible({ timeout: 20_000 });
+  await page.getByTestId(`rig-${rigs[0]}`).getByRole("button", { name: /GPU 2/ }).click();
+  const sheet = page.getByTestId("purchase-sheet");
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: /Confirm burn/ }).click();
+  await expect(sheet.getByTestId("tx-error")).toContainText(/paused/i, { timeout: 30_000 });
+  await expect(sheet.getByRole("button", { name: /Confirm burn/ })).toBeEnabled();
+  await sheet.getByRole("button", { name: /Cancel/ }).click();
+  await guardian.writeContract({ address: dep.mine, abi: mineAbi, functionName: "unpause" });
+  expect(await pub.readContract({ address: dep.mine, abi: mineAbi, functionName: "paused" })).toBe(false);
 });
 
 test("open: overclock, block found, claim, close, withdraw, redeem", async ({ page }) => {

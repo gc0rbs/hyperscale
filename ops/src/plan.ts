@@ -25,7 +25,7 @@ import { join } from "node:path";
 import { createPublicClient, encodeAbiParameters, http, keccak256, parseAbi, parseUnits, type Address } from "viem";
 import { REPO_ROOT } from "./lib/artifacts.js";
 import { arg, hasFlag, loadAdapters, loadChainProfile, loadFactoryDeployment, viemChain, type ChainProfile } from "./lib/season.js";
-import { validateSeasonParams, type SeasonParamsJson } from "./lib/validate.js";
+import { validateSeasonParams, validateVaultDeps, type SeasonParamsJson } from "./lib/validate.js";
 import { sizeDifficulty, sizePoolByValue } from "./sizing.js";
 
 const WAD = 10n ** 18n;
@@ -222,7 +222,7 @@ export async function plan() {
     treasury,
   };
 
-  const problems = validateSeasonParams(params, now);
+  const problems = [...validateSeasonParams(params, now), ...validateVaultDeps({ eligibility, oracle, usdc })];
   const usdcReserve = parseUnits(arg("--usdc-reserve", "50000")!, 6).toString();
   const hash = paramsHash(params);
   const out = {

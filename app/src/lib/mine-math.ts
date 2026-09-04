@@ -196,3 +196,67 @@ export function blockProgressBps(c: SeasonConfig, g: GlobalState): number {
   const done = doneShifts * sd + g.workInShift;
   return Number((done * 10_000n) / (sd * BigInt(spb)));
 }
+
+/** Total work of the season, Σ difficulty. */
+export function totalWork(c: SeasonConfig): bigint {
+  return c.difficulty.reduce((a, b) => a + b, 0n);
+}
+
+/** Work left in the season from an advanced global state: the rest of the current block plus every later block. */
+export function remainingWork(c: SeasonConfig, g: GlobalState): bigint {
+  const spb = c.shiftsPerBlock;
+  if (g.closeX !== 0n || g.shift >= totalShifts(c)) return 0n;
+  const b = Math.floor(g.shift / spb);
+  const sd = shiftDiff(c, g.shift);
+  const doneInBlock = BigInt(g.shift % spb) * sd + g.workInShift;
+  let rem = c.difficulty[b] - doneInBlock;
+  for (let k = b + 1; k < c.blocks; k++) rem += c.difficulty[k];
+  return rem;
+}
+
+/**
+ * Fraction of the season's total work that an upgrade still covers (audit B10): a permanent tier covers
+ * everything remaining; an overclock covers the rest of the current shift plus `spanShifts` more,
+ * capped at the season's remaining work.
+ */
+export function coverage(c: SeasonConfig, g: GlobalState, spanShifts?: number): { fraction: number; work: bigint; truncated: boolean } {
+  const total = totalWork(c);
+  const rem = remainingWork(c, g);
+  if (total === 0n) return { fraction: 0, work: 0n, truncated: false };
+  if (spanShifts === undefined) return { fraction: Number((rem * 10_000n) / total) / 10_000, work: rem, truncated: false };
+  let work = 0n;
+  const s = g.shift;
+  const tot = totalShifts(c);
+  if (s < tot) work += shiftDiff(c, s) - g.workInShift;
+  for (let k = 1; k <= spanShifts; k++) {
+    if (s + k >= tot) break;
+    work += shiftDiff(c, s + k);
+  }
+  const truncated = s + spanShifts >= tot;
+  if (work > rem) work = rem;
+  return { fraction: Number((work * 10_000n) / total) / 10_000, work, truncated };
+}
+
+/**
+ * Whole fragments an extra `deltaHash` would earn over the next `workLimit` units of season work at the
+ * current pace (audit I3). Pace: the mine's total hash after the purchase. An estimate; it moves with
+ * everyone else's actions.
+ */
+export function estimateFragments(c: SeasonConfig, g: GlobalState, deltaHash: bigint, workLimit?: bigint): bigint {
+  const spb = c.shiftsPerBlock;
+  const pace = g.totalHash + deltaHash;
+  if (pace === 0n || g.closeX !== 0n || g.shift >= totalShifts(c)) return 0n;
+  let budget = workLimit ?? remainingWork(c, g);
+  let frags = 0n;
+  let b = Math.floor(g.shift / spb);
+  let remInBlock = c.difficulty[b] - (BigInt(g.shift % spb) * shiftDiff(c, g.shift) + g.workInShift);
+  while (budget > 0n && b < c.blocks) {
+    const w = remInBlock < budget ? remInBlock : budget;
+    // seconds in this stretch = w / pace; fragments = deltaHash × seconds × rate
+    frags += mulDiv(mulDiv(deltaHash, w, pace), c.ratePerWork[b], WAD);
+    budget -= w;
+    b += 1;
+    if (b < c.blocks) remInBlock = c.difficulty[b];
+  }
+  return frags / WAD;
+}

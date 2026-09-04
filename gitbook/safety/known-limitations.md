@@ -4,7 +4,9 @@ Accepted, deliberate, and disclosed. None of these is a bug, but each is somethi
 
 | Limitation | Why it is this way |
 | --- | --- |
-| **Pause does not stop the clock.** Work accrues for everyone during a pause; you cannot overclock, exit or claim until it ends | A pause must not alter rewards. The grace period bounds how long you can be locked out |
+| **Pause does not stop the clock.** Work accrues for everyone during a pause; you cannot overclock, exit or claim until it ends, unless the mine has closed, in which case claims and withdrawals go through | A pause must not alter rewards. The grace period bounds how long you can be locked out |
+| **A cancelled mine is frozen** at the instant of cancellation: no further shifts, work or close | Later emergency withdrawals settle against one fixed state |
+| **The close must be recorded by a transaction.** The mine knows it is closed the instant the work is done, but withdrawals and redemption read the recorded close; the keeper, any player transaction, or the "Record the close" button records it | Contracts cannot act on their own |
 | **Cancellation forfeits unclaimed fragments** and sends the pool to the treasury | A season whose accounting is in doubt should not keep minting. Claim as blocks are found |
 | **Contract wallets** must implement `onERC1155Received` to claim | Fragments are ERC-1155 tokens |
 | **Claiming a block that paid you nothing reverts** | Claim all skips such blocks automatically |
