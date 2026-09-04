@@ -77,7 +77,7 @@ function Activate({ snap }: { snap: SeasonSnapshot }) {
   return (
     <div className="p-4 md:px-8 md:py-6 max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
       <Panel className="flex flex-col gap-6" data-testid="activate">
-        <div className="font-display uppercase tracking-[0.02em] text-[36px] font-medium">Activate a rig</div>
+        <div className="font-display leading-none uppercase tracking-[0.02em] text-[64px] font-medium">Activate a rig</div>
         <div className="flex gap-2">
           {(["RIG", "RIG/USDC LP"] as const).map((l, i) => <button key={l} onClick={() => setAsset(i as 0 | 1)} className={`h-10 px-4 rounded-sm border text-[14px] font-semibold ${asset === i ? "border-ember text-ember bg-[var(--ember-tint)]" : "border-mine-line text-mine-muted"}`}>{l}</button>)}
         </div>

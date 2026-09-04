@@ -3,7 +3,7 @@
  * into the resolved season JSON that `CreateSeason.s.sol` deploys from:
  *
  *   pnpm --filter @stock-miner/ops plan --chain anvil --name season-1 \
- *        --expected-hash 10000000 --planned-seconds 86400 --open-time +176400 \
+ *        --expected-hash 10000000 --planned-seconds 10800 --max-duration 21600 --open-time +600 \
  *        [--params ../specs/params/season-default.json] [--rig-per-lp 2] [--lp-bonus-bps 12500] \
  *        [--treasury 0x…] [--usdc-reserve 50000] [--samples 24] [--allow-spot]
  *
@@ -12,7 +12,8 @@
  *   with --rig-per-lp when there is no pair (Anvil mocks) or no archive node (--allow-spot uses the
  *   latest block only, and says so).
  * - difficulty = expectedTotalHash × plannedSeconds split by diffShareBps, rounded to shifts.
- * - maxDurationSeconds = max(14 days, 30 × plannedSeconds).
+ * - maxDurationSeconds (--max-duration, default the template's sizing.maxDurationSeconds, else 2× planned) is
+ *   the cap: the season ends at block 4 or at the cap, whichever first. Warns if the cap is < 1.5× planned.
  * The result is validated against the factory rules before it is written, and its keccak256 hash of
  * abi.encode(SeasonParams) is printed so it can be published before openTime (docs/08 §4).
  */
@@ -106,7 +107,7 @@ export async function plan() {
   const paramsPath = arg("--params", join(REPO_ROOT, "specs", "params", "season-default.json"))!;
   const expectedHash = BigInt(arg("--expected-hash")!.replace(/_/g, ""));
   const plannedSeconds = BigInt(arg("--planned-seconds")!);
-  const openArg = arg("--open-time", "+176400")!;
+  const openArg = arg("--open-time", "+600")!;
   const lpBonusArg = arg("--lp-bonus-bps");
   const samples = Number(arg("--samples", "24"));
   const chain = loadChainProfile(chainName);
@@ -146,12 +147,17 @@ export async function plan() {
   const lpWeightPerToken = lpDisabled ? 0n : (parseUnits(rigPerLp.toFixed(18), 18) * BigInt(bonus)) / 10_000n;
 
   // difficulty
+  const capArg = arg("--max-duration") ?? tpl.sizing?.maxDurationSeconds;
   const sizing = sizeDifficulty({
     expectedTotalHash: expectedHash * WAD,
     plannedSeconds,
     diffShareBps: tpl.sizing.diffShareBps,
     shiftsPerBlock: tpl.shiftsPerBlock,
+    capSeconds: capArg !== undefined ? BigInt(capArg) : undefined,
   });
+  const capWarning = sizing.maxDurationSeconds * 2n < plannedSeconds * 3n
+    ? `cap ${sizing.maxDurationSeconds}s is under 1.5x the planned pace: any shortfall in hash ends the season at the cap with part of the pool unmined`
+    : null;
 
   const params: SeasonParamsJson = {
     rig,
@@ -209,7 +215,8 @@ export async function plan() {
       lpSource,
       lpSamples: lpSamples.map((s) => ({ block: s.block.toString(), timestamp: s.timestamp.toString(), rigPerLp: s.rigPerLp })),
       openTimeIso: new Date(openTime * 1000).toISOString(),
-      failSafeIso: new Date((openTime + Number(sizing.maxDurationSeconds)) * 1000).toISOString(),
+      capIso: new Date((openTime + Number(sizing.maxDurationSeconds)) * 1000).toISOString(),
+      capWarning,
       problems,
     },
   };
@@ -219,7 +226,8 @@ export async function plan() {
   writeFileSync(file, JSON.stringify(out, null, 2) + "\n");
 
   console.log(`season file: ${file}`);
-  console.log(`chain ${chain.name} (${chain.chainId})  openTime ${openTime} (${out.plan.openTimeIso})  fail-safe ${out.plan.failSafeIso}`);
+  console.log(`chain ${chain.name} (${chain.chainId})  openTime ${openTime} (${out.plan.openTimeIso})  cap ${sizing.maxDurationSeconds}s (${out.plan.capIso})`);
+  if (capWarning) console.warn(`WARNING: ${capWarning}`);
   console.log(`difficulty ${sizing.difficulty.map((d) => (d / WAD).toString()).join(" / ")} hash-seconds (total ${sizing.difficultyTotal / WAD})`);
   console.log(`planned ${plannedSeconds}s at ${expectedHash} RIG-eq; 0.5x-4x hash => ${Number(plannedSeconds) / 4}s-${Number(plannedSeconds) * 2}s`);
   console.log(`lpWeightPerToken ${lpWeightPerToken} (${lpSource}; rigPerLp ${rigPerLp}, bonus ${bonus} bps)`);

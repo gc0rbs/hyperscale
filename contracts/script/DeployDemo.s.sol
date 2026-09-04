@@ -18,14 +18,16 @@ import {AllowlistEligibility} from "../src/adapters/AllowlistEligibility.sol";
 ///         sized to run about PACE_SECONDS at DEMO_HASH total hash. Distributes RIG and LP to the
 ///         first five Anvil accounts and allowlists them. Writes addresses to `deployments/anvil.json`.
 /// @dev    Usage: forge script script/DeployDemo.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-///         Env: PACE_SECONDS (default 7200), DEMO_HASH (default 500000 = 500k RIG-eq), OPEN_DELAY (48h).
+///         Env: PACE_SECONDS (default 7200), DEMO_HASH (default 500000 = 500k RIG-eq), OPEN_DELAY (default 0:
+///         opens two minutes after deploy), MAX_DURATION (cap; default 30 days so warped demos never hit it).
 contract DeployDemo is Script {
     uint256 internal constant WAD = 1e18;
 
     function run() external {
         uint256 pace = vm.envOr("PACE_SECONDS", uint256(7200));
         uint256 demoHash = vm.envOr("DEMO_HASH", uint256(500_000));
-        uint256 openDelay = vm.envOr("OPEN_DELAY", uint256(48 hours));
+        uint256 openDelay = vm.envOr("OPEN_DELAY", uint256(0));
+        uint256 maxDuration = vm.envOr("MAX_DURATION", uint256(30 days));
         uint256 deployerKey = vm.envOr(
             "PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
@@ -62,8 +64,8 @@ contract DeployDemo is Script {
         p.rig = address(rig);
         p.lpToken = address(lp);
         p.lpWeightPerToken = 2.5e18;
-        p.openTime = uint64(block.timestamp + openDelay + 1 hours); // margin: broadcast lands after simulation
-        p.maxDurationSeconds = 30 days;
+        p.openTime = uint64(block.timestamp + openDelay + 2 minutes); // margin: broadcast lands after simulation
+        p.maxDurationSeconds = uint32(maxDuration);
         p.blocks = 4;
         p.shiftsPerBlock = 8;
         p.stocks = stocks;
@@ -91,7 +93,7 @@ contract DeployDemo is Script {
         p.ocShiftSpan = 1;
         p.redemptionDays = 30;
         p.cashOutFeeBps = 100;
-        p.pauseGraceSeconds = 6 hours;
+        p.pauseGraceSeconds = 30 minutes;
         p.treasury = deployer;
 
         (uint256 seasonId, address mine, address frags, address vault) =

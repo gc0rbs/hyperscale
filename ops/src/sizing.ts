@@ -1,6 +1,8 @@
 /**
  * Difficulty sizing (docs/04-TOKENOMICS.md §5.2).
- * D_total = expectedTotalHash × plannedSeconds; per-block by diffShareBps.
+ * D_total = expectedTotalHash × plannedSeconds; per-block by diffShareBps. The cap (maxDurationSeconds)
+ * is an explicit choice, default 2× the planned pace and never under one hour: a season ends at block 4
+ * or at the cap, whichever comes first.
  * All quantities are bigint in the contract's units (hash is 1e18-scaled).
  */
 export interface SizingInput {
@@ -8,6 +10,7 @@ export interface SizingInput {
   plannedSeconds: bigint;
   diffShareBps: readonly number[]; // must sum to 10_000, length == blocks
   shiftsPerBlock: number;
+  capSeconds?: bigint; // maxDurationSeconds; default 2 × plannedSeconds
 }
 
 export interface Sizing {
@@ -16,7 +19,7 @@ export interface Sizing {
   maxDurationSeconds: bigint;
 }
 
-const FOURTEEN_DAYS = 14n * 24n * 3600n;
+const ONE_HOUR = 3600n;
 
 export function sizeDifficulty(input: SizingInput): Sizing {
   const sum = input.diffShareBps.reduce((a, b) => a + b, 0);
@@ -30,10 +33,10 @@ export function sizeDifficulty(input: SizingInput): Sizing {
     return raw - (raw % spb);
   });
   const difficultyTotal = difficulty.reduce((a, b) => a + b, 0n);
-  const thirtyX = 30n * input.plannedSeconds;
+  const cap = input.capSeconds ?? 2n * input.plannedSeconds;
   return {
     difficultyTotal,
     difficulty,
-    maxDurationSeconds: thirtyX > FOURTEEN_DAYS ? thirtyX : FOURTEEN_DAYS,
+    maxDurationSeconds: cap > ONE_HOUR ? cap : ONE_HOUR,
   };
 }

@@ -38,7 +38,7 @@ function Board({ snap }: { snap: SeasonSnapshot }) {
   }, [q.data, ids, snap.config, g]);
   return (
     <div className="px-4 md:px-8 py-10 max-w-[1100px] mx-auto flex flex-col gap-6">
-      <div className="font-display uppercase tracking-[0.02em] text-[48px] font-medium leading-none">Top rigs</div>
+      <div className="font-display uppercase tracking-[0.02em] text-[80px] font-bold leading-none">Top rigs</div>
       <div className="bg-shell-card border border-shell-line rounded-lg overflow-x-auto">
         <table className="w-full text-[14px]">
           <thead><tr className="text-left text-shell-muted"><th className="p-4"><Label className="text-shell-muted">#</Label></th><th className="p-4"><Label className="text-shell-muted">Rig</Label></th><th className="p-4"><Label className="text-shell-muted">Owner</Label></th><th className="p-4"><Label className="text-shell-muted">Hash</Label></th><th className="p-4"><Label className="text-shell-muted">Stake</Label></th><th className="p-4"><Label className="text-shell-muted">Tiers</Label></th><th className="p-4"><Label className="text-shell-muted">Earned frag</Label></th></tr></thead>
@@ -46,7 +46,7 @@ function Board({ snap }: { snap: SeasonSnapshot }) {
             {rows.map((r, i) => (
               <tr key={String(r.id)} className={`border-t border-shell-line ${me && r.owner.toLowerCase() === me.toLowerCase() ? "bg-[var(--signal-tint)]" : ""} ${r.inactive ? "opacity-50" : ""}`}>
                 <td className="p-4"><Mono>{String(i + 1).padStart(2, "0")}</Mono></td>
-                <td className="p-4 font-display uppercase font-semibold text-[16px]">#{String(r.id).padStart(4, "0")}{me && r.owner.toLowerCase() === me.toLowerCase() && <span className="ml-2 text-[11px] text-signal-deep">YOU</span>}</td>
+                <td className="p-4 font-display leading-none uppercase font-semibold text-[36px]">#{String(r.id).padStart(4, "0")}{me && r.owner.toLowerCase() === me.toLowerCase() && <span className="ml-2 text-[11px] text-signal-deep">YOU</span>}</td>
                 <td className="p-4"><Mono>{short(r.owner)}</Mono></td>
                 <td className="p-4"><Mono>{formatHash(r.hash)}</Mono></td>
                 <td className="p-4"><Mono>{formatRig(r.weight)}</Mono></td>

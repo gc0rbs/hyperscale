@@ -15,7 +15,7 @@ import {MockPriceOracle} from "../../src/mocks/MockPriceOracle.sol";
 import {AllowlistEligibility} from "../../src/adapters/AllowlistEligibility.sol";
 
 /// @dev Deploys a full season with the docs/03 defaults (season-default.json), sized for 10M hash
-///      over 24h. Time starts 3 days before OPEN so the factory's 48h rule holds.
+///      over 24h (the docs/03 worked example). Time starts 3 days before OPEN to leave room for pre-open play.
 abstract contract SeasonTestBase is Test {
     uint256 internal constant WAD = 1e18;
     uint64 internal constant OPEN = 1_800_000_000;

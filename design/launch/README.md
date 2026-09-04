@@ -33,3 +33,15 @@ shippable layouts; several can be rebuilt one-to-one in the app.
 | `62-x-teaser-card.webp` | Teaser: collector card and RIG coin, opens Sept 12 | |
 
 Generated 2026-09-03. Repo keeps web-size versions. Dates and URLs in the images are placeholders.
+
+## Added 2026-09-04 (type, icons, art direction for the build)
+
+| File | What | Used for |
+|---|---|---|
+| `63-type-mine-opens.webp` | "THE MINE OPENS" in Humane, tickers in a card row | Display type reference; landing ticker row |
+| `64-type-logo.webp` | Pick-and-hammer mark in an ember square + wordmark | `LogoMark`, favicon, nav |
+| `65-icon-set.webp` | Six glyphs in rounded-diamond frames | `Icons.tsx` (redrawn as SVG) |
+| `66-rig-tiers.webp` | Three rig tiers, amber slats, cyan fins | Language of the SVG rig room; reference for 69 |
+| `67-rig-cooled.webp` | Cooled rig under a spotlight | Cooling sheet mood (not embedded) |
+| `68-rig-card.webp` | Rig card: gold top rule, crossed tools, tick bar | Rig card top rule; share cards |
+| `69-hero-rigs.webp` | Generated for the landing hero: composition weighted right, left third dark | `/` hero background (`app/public/art/hero-rigs.webp`) |

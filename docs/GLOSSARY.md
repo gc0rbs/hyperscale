@@ -21,9 +21,9 @@
 | Fragment | ERC-1155 unit; 1,000,000 fragments = 1 Stock Token of that block's stock. Non-transferable in v1. |
 | Stock Token | Tokenized equity/ETF on Robinhood Chain (e.g. NVDAx). May carry transfer restrictions. |
 | Redemption | Burning fragments for Stock Tokens (eligible wallets) or USDC (cash-out). |
-| Close | The instant block 4 is found (or the fail-safe fires). Staking and upgrades stop forever; withdrawals open. |
+| Close | The instant block 4 is found, or the cap is reached. Staking and upgrades stop forever; withdrawals open. |
 | Exit | Leaving mid-season for a fee; deposit returned, rig stops, earned fragments kept. |
-| Fail-safe | `maxDuration` after open at which the mine closes regardless of progress. Not a schedule. |
+| Cap | `maxDuration` after open at which the mine closes if block 4 has not been found. Shown as the latest possible end; rewards never depend on it. |
 | ETA | `remaining work / current total hash`, an estimate the app shows for next shift, block and close. |
 | Planned pace | The participation the operator sized difficulty for; used only for communication. |
 | Poke | Public function that advances the mine's boundary accounting; anyone can call it. |

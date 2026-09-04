@@ -10,6 +10,12 @@ importers:
 
   app:
     dependencies:
+      '@fontsource-variable/readex-pro':
+        specifier: 5.1.0
+        version: 5.1.0
+      '@fontsource/ibm-plex-mono':
+        specifier: 5.1.0
+        version: 5.1.0
       '@tanstack/react-query':
         specifier: 5.62.7
         version: 5.62.7(react@19.0.0)
@@ -526,6 +532,12 @@ packages:
 
   '@fastify/busboy@3.2.2':
     resolution: {integrity: sha512-yXSS27qPExaXeuLvMRMXOLtpipzfQYNjG3FkunDWKGfMYjKuhFXko9CVzqxm8jcF+lmtS9Fd89QNdh9XDjnbNg==}
+
+  '@fontsource-variable/readex-pro@5.1.0':
+    resolution: {integrity: sha512-dU2D4uaJjRcj8ofro4iZTmfNj5PsTZ+GOp3r5RuvHxA6ms2QE35WgK019ygrirUWSSluIwrYGqugFFVa+FCtiQ==}
+
+  '@fontsource/ibm-plex-mono@5.1.0':
+    resolution: {integrity: sha512-XKsZNyRCj6tz8zlatHmniSoLVephMD5GQG2sXgcaEb8DkUO+O61r28uTlIMEZuoZXtP4c4STvL+KUlJM5jZOEg==}
 
   '@graphql-tools/executor@1.5.7':
     resolution: {integrity: sha512-UcXVClkBml+qyGEsQxfEaAkboqySVGFUd9ivn7pDc9jZSckgF6zL21cNxuRH5ZA2exneV3PTtcc0I0rDOdE0Tg==}
@@ -4690,6 +4702,10 @@ snapshots:
 
   '@fastify/busboy@3.2.2': {}
 
+  '@fontsource-variable/readex-pro@5.1.0': {}
+
+  '@fontsource/ibm-plex-mono@5.1.0': {}
+
   '@graphql-tools/executor@1.5.7(graphql@16.8.2)':
     dependencies:
       '@graphql-tools/utils': 11.2.2(graphql@16.8.2)
@@ -7050,7 +7066,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 3.6.2
+      readable-stream: 4.7.0
       webextension-polyfill: 0.10.0
 
   fast-deep-equal@3.1.3: {}

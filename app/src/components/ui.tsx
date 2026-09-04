@@ -1,5 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
+import { Icon } from "./Icons";
 
 export const Label = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
   <div className={`text-[12px] tracking-[0.08em] uppercase text-mine-muted font-medium ${className}`}>{children}</div>
@@ -73,7 +74,7 @@ export function Pips({ on, total, label }: { on: number; total: number; label: s
 export function HeatGauge({ value, ghost, max = 100 }: { value: number; ghost: number; max?: number }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between"><Label>Heat</Label><Mono className="text-mine-muted text-[12px]">{value} / {max} · next overclock +{ghost}</Mono></div>
+      <div className="flex justify-between"><Label className="flex items-center gap-1.5"><Icon name="heat" size={13} /> Heat</Label><Mono className="text-mine-muted text-[12px]">{value} / {max} · next overclock +{ghost}</Mono></div>
       <div className="relative h-2 bg-mine-panel2 border border-mine-line">
         <div className="absolute left-0 top-0 bottom-0 transition-[width] duration-[400ms] motion-reduce:transition-none" style={{ width: `${(value / max) * 100}%`, background: "linear-gradient(90deg, var(--ember), var(--ember) 60%, var(--heat-hot))" }} />
         <div className="absolute top-0 bottom-0 opacity-60" style={{ left: `${(value / max) * 100}%`, width: `${(Math.min(ghost, max - value) / max) * 100}%`, background: "repeating-linear-gradient(135deg, var(--ember) 0 3px, transparent 3px 6px)" }} />

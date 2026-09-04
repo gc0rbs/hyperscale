@@ -65,7 +65,7 @@ test("pre-open: activate a rig and buy a GPU tier", async ({ page }) => {
   const rigs = await pub.readContract({ address: dep.mine, abi: mineAbi, functionName: "rigsOf", args: [DEV[1]] });
   expect(rigs.length).toBe(1);
   await expect(page.getByTestId(`rig-${rigs[0]}`)).toBeVisible({ timeout: 20_000 });
-  await page.getByTestId(`rig-${rigs[0]}`).getByRole("button", { name: /GPU → 1/ }).click();
+  await page.getByTestId(`rig-${rigs[0]}`).getByRole("button", { name: /GPU 1/ }).click();
   await expect(page.getByTestId("purchase-sheet")).toBeVisible();
   await page.getByTestId("purchase-sheet").getByRole("button", { name: /Confirm burn/ }).click();
   await expect(page.getByTestId("purchase-sheet")).toBeHidden({ timeout: 30_000 });

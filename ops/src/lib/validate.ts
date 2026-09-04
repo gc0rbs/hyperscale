@@ -36,7 +36,6 @@ export interface SeasonParamsJson {
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const UINT128_MAX = 2n ** 128n - 1n;
-const DAY = 86_400;
 
 /** Returns the factory's `InvalidParams` reasons that would fire, in factory order; empty = valid. */
 export function validateSeasonParams(p: SeasonParamsJson, now: number): string[] {
@@ -65,8 +64,8 @@ export function validateSeasonParams(p: SeasonParamsJson, now: number): string[]
   }
   if (BigInt(p.minStakeWeight) === 0n) errs.push("minStakeWeight");
   if (isZero(p.lpToken) !== (BigInt(p.lpWeightPerToken) === 0n)) errs.push("lp config");
-  if (p.maxDurationSeconds < 14 * DAY) errs.push("maxDuration >= 14 days");
-  if (p.openTime < now + 48 * 3600) errs.push("openTime >= now + 48h");
+  if (p.maxDurationSeconds < 3600) errs.push("maxDuration >= 1 hour");
+  if (p.openTime < now) errs.push("openTime in the past");
   if (isZero(p.rig) || isZero(p.treasury)) errs.push("addresses");
   if (p.activationFeeBps > 1000 || p.earlyExitFeeBps > 2000 || p.cashOutFeeBps > 1000) errs.push("fees");
   if (p.redemptionDays === 0 || p.pauseGraceSeconds === 0) errs.push("windows");

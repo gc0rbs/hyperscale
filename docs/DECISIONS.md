@@ -99,3 +99,43 @@ Open question Q20 added to docs/09.
 - **Not changed, logged as accepted**: pause does not stop the clock; cancellation forfeits unclaimed
   fragments to the treasury; `claim` of nothing reverts `AlreadyClaimed`. See `docs/AUDIT-PACKAGE.md`
   §9.
+
+## 2026-09-04 – Seasons are short; the cap is a normal ending (user decision)
+
+Direction from the user: a season should not last more than about six hours and must be able to open
+the moment it is created. Reviewed what the 48-hour minimum pre-open and the 14-day fail-safe floor
+actually protected (see the discussion recorded in `docs/AUDIT-PACKAGE.md` §9 and the PRD risk table):
+neither is load-bearing for the accounting. Changes:
+
+- **No minimum pre-open.** `SeasonFactory` rejects only an `openTime` in the past. Pre-open length is
+  an ops choice per season, zero allowed (Q13 closed). NFR-6 reworded: publish params and hash before
+  open, as early as the launch plan allows.
+- **The cap is a hard end, not a fail-safe.** `maxDuration` floor lowered from 14 days to 1 hour;
+  default per season 2× the planned pace (6h for a 3h plan). A season ended by the cap pays what was
+  mined; the unmined remainder is swept and funds the next season (ops policy, no contract change).
+  FR-S7, FR-A6 and the CLAUDE.md hard rule reworded: rewards never accrue by time, but the cap is a
+  normal ending and is shown from the start as the latest possible end (Q9 closed).
+- **Pay-per-work kept** over "distribute the whole pool by share of work when capped": the latter would
+  reintroduce dependence between rigs (dilution, last-minute whales) and a rewrite of the audited core.
+- **Defaults**: `specs/params/season-default.json` plans 3h at 10M hash (difficulty 1.08e11), cap
+  21,600 s, pause grace 1,800 s (was 6h). The docs/03 §7 worked example keeps its 24h numbers as an
+  example; tests that reproduce it pass that difficulty explicitly.
+- **LP weight reasoning corrected**: a longer gap between the reserve sample and open makes the frozen
+  weight staler, not safer; the 24h sampled average is the protection.
+- **Tooling**: `ops plan --max-duration`, `--open-time` default `+600`; demo deployer opens two minutes
+  after deploy (`OPEN_DELAY=0`), cap via `MAX_DURATION`; Playwright uses a 10-minute pre-open.
+- **App**: the cap time is shown in the mine header; the closed screen distinguishes "time's up" from
+  "block 4 found" and says the remainder rolls forward.
+- **Known consequence**: with a 2× cap and turnout uncertainty σ≈0.3, about 1–2% of seasons end at the
+  cap (sim `test_sizing_recommendation`); block 4 holds 40% of the value, so ops should keep the cap
+  ≥ 2× planned or flatten the value shares (docs/04 §5.2).
+
+## 2026-09-04 – Type and art direction for the build (user decision)
+
+- **Display face is Humane** (user-supplied, `app/src/fonts/humane/`), replacing Barlow Condensed;
+  used only from 36px up, uppercase, weights 600/700. **Body is Readex Pro** (Google Fonts build,
+  self-hosted). IBM Plex Mono stays for numbers. Tokens, brief §3 and the app updated.
+- **Boards are references, not assets.** Each component is treated on its own: icons and the logo are
+  inline SVG; the rig room draws each machine from its state in SVG; one purpose-made render was
+  generated (Higgsfield, Nano Banana Pro, with board 66 as the style reference) for the landing hero.
+- Licence check for Humane is the user's item before launch.

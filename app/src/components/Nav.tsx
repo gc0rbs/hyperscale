@@ -5,18 +5,17 @@ import { useContext } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { DevAccountContext, useActiveAddress } from "@/lib/use-account";
 import { short } from "@/lib/format";
+import { LogoMark } from "./Icons";
 
 const LINKS = [["/mine", "Mine"], ["/claim", "Claim"], ["/redeem", "Redeem"], ["/leaderboard", "Leaderboard"]] as const;
 
 export function Nav() {
   const path = usePathname();
   return (
-    <header className="h-14 flex items-center gap-8 px-4 md:px-8 bg-shell-card text-shell-fg border-b border-shell-line">
+    <header className="h-14 flex items-center gap-4 md:gap-8 px-4 md:px-8 bg-shell-card text-shell-fg border-b border-shell-line">
       <Link href="/" className="flex items-center gap-2.5">
-        <span className="w-[22px] h-[22px] bg-shell-fg rounded-[3px] inline-flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z" /></svg>
-        </span>
-        <span className="font-display uppercase tracking-[0.02em] text-[20px] font-semibold">Stock Miner</span>
+        <LogoMark size={26} />
+        <span className="font-display uppercase tracking-[0.02em] text-[34px] font-bold leading-none whitespace-nowrap translate-y-[2px]">Stock Miner</span>
       </Link>
       <nav className="hidden md:flex gap-6 text-[15px] font-medium text-shell-muted">
         {LINKS.map(([href, label]) => <Link key={href} href={href} className={path.startsWith(href) ? "text-shell-fg" : ""}>{label}</Link>)}

@@ -51,7 +51,7 @@ function Redeem({ snap }: { snap: SeasonSnapshot }) {
   return (
     <div className="px-4 md:px-8 py-10 max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1.5"><div className="font-display uppercase tracking-[0.02em] text-[48px] font-medium leading-none">Redeem fragments</div><div className="text-shell-muted text-[15px]">{closed ? "Season closed." : "Redemption opens when the mine closes."} One million fragments of a block equal one whole Stock Token of that block&apos;s stock.</div></div>
+        <div className="flex flex-col gap-1.5"><div className="font-display uppercase tracking-[0.02em] text-[80px] font-bold leading-none">Redeem fragments</div><div className="text-shell-muted text-[15px]">{closed ? "Season closed." : "Redemption opens when the mine closes."} One million fragments of a block equal one whole Stock Token of that block&apos;s stock.</div></div>
         <div className="bg-shell-card border border-shell-line rounded-lg px-6 py-2">
           {TICKERS.map((t, b) => {
             const frags = bal(b);
@@ -60,7 +60,7 @@ function Redeem({ snap }: { snap: SeasonSnapshot }) {
             const usdc = quote ? Number(quote[0]) / 1e6 : null;
             return (
               <div key={t} className="grid grid-cols-[1.2fr_1fr_1fr_auto] gap-4 items-center py-4 border-b border-shell-line last:border-0" data-testid={`redeem-row-${b}`}>
-                <div className="flex flex-col gap-0.5"><div className="font-display uppercase text-[22px] font-semibold">{t}</div><Mono className="text-[12px] text-shell-muted">{formatInt(frags)} fragments</Mono></div>
+                <div className="flex flex-col gap-0.5"><div className="font-display leading-none uppercase text-[40px] font-semibold">{t}</div><Mono className="text-[12px] text-shell-muted">{formatInt(frags)} fragments</Mono></div>
                 <div className="flex flex-col gap-0.5"><Mono className="text-[18px]">{(Number(frags) / Number(fpt)).toFixed(3)}</Mono><span className="text-[12px] text-shell-muted">{formatInt(whole)} whole available</span></div>
                 <div className="flex flex-col gap-0.5"><Mono className="text-[18px]">{usdc === null ? "–" : `$${usdc.toFixed(2)}`}</Mono><span className="text-[12px] text-shell-muted">cash-out quote · 1% fee</span></div>
                 <div className="flex gap-2">

@@ -22,7 +22,7 @@ export function BlockCard({ snap, now, myHash, compact = false }: { snap: Season
         <div className="flex flex-col gap-1">
           <Label>Block {b + 1} of {snap.params.blocks}</Label>
           <div className="flex gap-3.5 items-baseline">
-            <div className={`font-display uppercase tracking-[0.02em] font-medium ${compact ? "text-[36px]" : "text-[48px]"} leading-none`}>{TICKERS[b]}</div>
+            <div className={`font-display uppercase tracking-[0.02em] font-bold ${compact ? "text-[64px]" : "text-[80px]"} leading-none`}>{TICKERS[b]}</div>
             <Mono className="text-mine-muted text-[14px]">pool {pool} {TICKERS[b]}</Mono>
           </div>
         </div>

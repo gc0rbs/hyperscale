@@ -86,16 +86,17 @@ Two operator decisions per season, both fixed at creation, neither adjustable af
 - Split across blocks by value 15 / 20 / 25 / 40%.
 - Four liquid, recognisable underlyings; block 4 an index (SPYx/QQQx) so the finale prize is the least
   volatile.
-- Fund the vault ≥ 48h before `openTime`. The season cannot open unfunded (FR-S5).
+- Fund the vault before `openTime` (right after creation for a season that opens at once). The season
+  cannot open unfunded (FR-S5).
 - USDC reserve for cash-out ≥ 50% of pool value at funding.
 
 ### 5.2 Difficulty
 
 ```
 expectedTotalHash = expectedStakeWeight × expectedAvgMultiplier     // e.g. 7M × 1.4 = ~10M
-D_total           = expectedTotalHash × plannedSeconds              // e.g. 10M × 86,400
+D_total           = expectedTotalHash × plannedSeconds              // e.g. 10M × 10,800 (3h)
 D_b               = D_total × diffShareBps[b] / 10_000              // 20 / 25 / 25 / 30 %
-maxDuration       = max(14 days, 30 × plannedSeconds)               // fail-safe only
+maxDuration       = cap, chosen per season; default 2 × plannedSeconds, ≥ 1 hour   // e.g. 6h
 ```
 
 Inputs come from the PreOpen signal of the previous season, the public pre-commit TVL (the app shows
@@ -103,21 +104,22 @@ Inputs come from the PreOpen signal of the previous season, the public pre-commi
 
 | If actual hash turns out to be | Season lasts | Acceptable? |
 |---|---|---|
-| > 4× planned | < ¼ planned | Uncomfortable for latecomers; consider a longer PreOpen next season |
-| 0.5×–4× planned | ¼–2× planned | Fine, this is the design range |
-| 0.1×–0.5× | 2–10× planned | Fine mechanically; comms shift to "long haul"; watch early-exit rate |
-| < 0.033× | fail-safe | Season closes with block 4 partial; unmined pool swept; post-mortem |
+| > 4× planned | < ¼ planned | Over in minutes; latecomers miss it. Size up next season |
+| 0.5×–4× planned | ¼–2× planned | Fine, this is the design range (a 2× cap covers it exactly) |
+| < 0.5× | ends at the cap | Normal ending: blocks found so far paid in full, the running block paid pro rata, the rest rolls into the next season. Size down next season |
 
-Do not size difficulty to force a duration by making it small: a season that ends in 40 minutes is a
-worse outcome than one that runs for four days.
+Block 4 carries the most value (40%), so a capped season loses the richest block: either keep the cap
+at ≥ 2× the planned pace or flatten the value shares. Seasons are short and frequent, so sizing is a
+feedback loop: each season's actual hash is the next season's input.
 
 ## 6. Post-season sweep
 
 After `redemptionDays`:
 1. Unclaimed fragments remain in wallets but can no longer be redeemed from this season's vault.
    (v1.1 option: roll them into next season's vault at a discount.)
-2. Remaining Stock Tokens (including any unmined pool from a fail-safe close) and USDC are swept to the
-   treasury.
+2. Remaining Stock Tokens (including any unmined pool from a capped season) and USDC are swept to the
+   treasury. The unmined pool funds the next season (it is the same asset, so this is an ops transfer,
+   not a contract feature).
 3. Treasury sells swept assets and uses ≥ 50% of proceeds for RIG buyback-and-burn, published on-chain.
 
 ## 7. Parameters (defaults)
@@ -143,8 +145,8 @@ See `specs/params/season-default.json`. Summary:
 | `blocks` | 4 |
 | `shiftsPerBlock` | 8 |
 | `diffShareBps` | [2000, 2500, 2500, 3000] |
-| `difficultyTotal` | sized per season (example 8.64e11 hash-seconds) |
-| `maxDurationSeconds` | 2,592,000 (30 days) |
+| `difficultyTotal` | sized per season (default 1.08e11 hash-seconds: 10M hash × 3h; the docs/03 worked example uses 8.64e11 for 24h) |
+| `maxDurationSeconds` | 21,600 (6h cap; per season) |
 | `fragPerToken` | 1,000,000 |
 | `redemptionDays` | 30 |
 | `cashOutFeeBps` | 100 |
