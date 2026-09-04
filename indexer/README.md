@@ -48,8 +48,9 @@ All `uint256` values are returned as decimal strings; addresses are lowercase.
    ```
 
 Configuration is by environment (see `.env.example`): `PONDER_RPC_URL_<chainId>`, `CHAIN_ID`,
-`DEPLOYMENTS_FILE`, per-contract `*_ADDRESS` overrides, `START_BLOCK` (default 0), and
-`DATABASE_URL` for Postgres instead of PGlite. Ponder's own switches (`PONDER_LOG_LEVEL`,
+`DEPLOYMENTS_FILE`, per-contract `*_ADDRESS` overrides, `START_BLOCK` (default: the `block` recorded
+in the deployments file by CreateSeason, else 0), and `DATABASE_URL` for Postgres instead of PGlite.
+`indexer/Dockerfile` and the root `docker-compose.yml` run it with Postgres (docs/RUNBOOK.md §5). Ponder's own switches (`PONDER_LOG_LEVEL`,
 `PONDER_PORT`, ...) apply as usual.
 
 ## Scripts

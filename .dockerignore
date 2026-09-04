@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/.next
+**/test-results
+**/playwright-report
+**/.ponder
+**/generated
+contracts/out
+contracts/cache
+contracts/diff
+sim/.venv
+**/*.tsbuildinfo
+.env
+.env.*
+!.env.example

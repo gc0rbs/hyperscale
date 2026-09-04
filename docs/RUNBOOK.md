@@ -103,13 +103,26 @@ with `StalePrice`), and start the keeper and watcher.
 
 ```
 KEEPER_KEY=0x… pnpm keeper --interval 30                 # poke() when a shift boundary is due or state is >10 min stale
-pnpm watch --interval 60 --planned-seconds 86400          # alerts; wire `alert()` to the on-call channel
+ALERT_WEBHOOK_URL=https://… pnpm watch --interval 60 --planned-seconds 10800   # alerts to Slack/Discord
 ```
 
 The keeper is a convenience: shift boundaries are computed retroactively and exactly by any
 transaction, so a missed poke costs nothing but gas for the next player. Keep one keeper per season;
 it stops itself at close. The watcher pages on `Paused`, `SeasonCancelled`, warns on
-`totalHash == 0` for over an hour, ETA to close over 5× planned, and a low USDC reserve after close.
+`totalHash == 0` for over an hour, ETA to close over 5× planned, and a low USDG reserve after close.
+Alerts at `warn` and `page` level go to `ALERT_WEBHOOK_URL` (Slack or Discord incoming webhook, JSON
+`{text, content}`), the same message at most once per `ALERT_REPEAT_SECONDS` (default 15 min); every
+alert is also logged. `ALERT_MIN_LEVEL=info` forwards the per-tick status lines too.
+
+**Hosting.** `docker-compose.yml` at the repo root runs Postgres, the Ponder indexer, the keeper and
+the watcher on one small VM (docs/06 §5–6): `cp .env.example .env`, fill `CHAIN_ID`, `RPC_URL`,
+`KEEPER_KEY`, `ALERT_WEBHOOK_URL`, then `docker compose up -d --build`. The season addresses are read
+from `contracts/deployments/<chainId>.json` (mounted read-only; copy it to the host after
+CreateSeason). The indexer starts from the `block` CreateSeason records in that file. Keys come from
+the environment only. The images (`ops/Dockerfile`, `indexer/Dockerfile`) build from the repo root;
+the ops image compiles the contracts with the pinned Foundry so the ABIs match the deployed code.
+`docker compose logs -f watch` is the on-call view; `docker compose run --rm keeper guardian status`
+runs a one-off command in the same image (`sweep`, `guardian pause` with `GUARDIAN_KEY` set).
 
 What "normal" looks like: `[keeper] ok shift=N next shift in ~Ns`, and `[watch] INFO shift N hash=…`.
 `poke` gas is ~60k when one boundary is crossed and up to ~960k if all 32 are crossed at once.

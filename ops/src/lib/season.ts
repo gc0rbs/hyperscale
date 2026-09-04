@@ -27,6 +27,8 @@ export interface Deployment {
   vault: Address;
   stocks: Address[];
   openTime: number;
+  /** block the season was created in (indexer start block) */
+  block?: number;
   difficultyTotal: string;
   seasonFile?: string;
   paramsHash?: Hex;

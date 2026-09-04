@@ -305,3 +305,15 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   season. Counsel review of the terms and the Humane licence check are the user's items.
 - Known gaps: ERC-8056 `balanceOfUI` display for Stock Token balances not implemented; testnet
   explorer and faucet unconfirmed; geo-fence relies on the host's country header.
+
+## 2026-09-04 – Hosting: compose stack, alert webhook, indexer start block
+
+- `docker-compose.yml`, `.env.example`, `.dockerignore`, `ops/Dockerfile` (Foundry build stage + Node
+  runtime, entrypoint `pnpm --filter @stock-miner/ops`), `indexer/Dockerfile`.
+- `ops watch`: `ALERT_WEBHOOK_URL` / `ALERT_MIN_LEVEL` / `ALERT_REPEAT_SECONDS`; verified on Anvil
+  with a local receiver (info forwarded at `info`, suppressed at `warn`).
+- `CreateSeason.s.sol` and `deploy-demo` write `block`; `ponder.config.ts` uses it as the default
+  start block (empty `START_BLOCK` means unset).
+- RUNBOOK §5 (hosting, alerts), indexer README, DECISIONS.
+- Checks: forge build, ops 7 tests, indexer check, `docker compose config`. Image builds are not
+  verified here (no Docker daemon in the session); first `docker compose up --build` is on the host.

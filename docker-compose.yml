@@ -1,0 +1,75 @@
+# Season hosting (docs/RUNBOOK.md §5): Postgres + Ponder indexer + keeper + watcher.
+#   cp .env.example .env   # fill CHAIN_ID, RPC_URL, KEEPER_KEY, ALERT_WEBHOOK_URL
+#   docker compose up -d --build
+# Season addresses come from contracts/deployments/<CHAIN_ID>.json (written by CreateSeason), mounted
+# read-only. Keys are read from the environment only; never write them into a file in the repo.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ponder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ponder}
+      POSTGRES_DB: ponder
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ponder -d ponder"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  indexer:
+    build:
+      context: .
+      dockerfile: indexer/Dockerfile
+    environment:
+      CHAIN_ID: ${CHAIN_ID:-4663}
+      # ponder.config.ts reads PONDER_RPC_URL_<CHAIN_ID>; set all three so one RPC_URL covers every chain.
+      PONDER_RPC_URL_4663: ${RPC_URL}
+      PONDER_RPC_URL_46630: ${RPC_URL}
+      PONDER_RPC_URL_31337: ${RPC_URL}
+      DATABASE_URL: postgres://ponder:${POSTGRES_PASSWORD:-ponder}@postgres:5432/ponder
+      DEPLOYMENTS_FILE: /repo/contracts/deployments/${CHAIN_ID:-4663}.json
+      START_BLOCK: ${START_BLOCK:-}
+      PONDER_PORT: "42069"
+    volumes:
+      - ./contracts/deployments:/repo/contracts/deployments:ro
+    ports:
+      - "${INDEXER_PORT:-42069}:42069"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  keeper:
+    build:
+      context: .
+      dockerfile: ops/Dockerfile
+    command: ["keeper", "--interval", "${KEEPER_INTERVAL:-30}"]
+    environment:
+      CHAIN_ID: ${CHAIN_ID:-4663}
+      RPC_URL: ${RPC_URL}
+      KEEPER_KEY: ${KEEPER_KEY}
+    volumes:
+      - ./contracts/deployments:/repo/contracts/deployments:ro
+    # The keeper exits by itself once the mine closes; only restart it on errors.
+    restart: on-failure
+
+  watch:
+    build:
+      context: .
+      dockerfile: ops/Dockerfile
+    command: ["watch", "--interval", "${WATCH_INTERVAL:-60}", "--planned-seconds", "${PLANNED_SECONDS:-10800}"]
+    environment:
+      CHAIN_ID: ${CHAIN_ID:-4663}
+      RPC_URL: ${RPC_URL}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-warn}
+      ALERT_REPEAT_SECONDS: ${ALERT_REPEAT_SECONDS:-900}
+    volumes:
+      - ./contracts/deployments:/repo/contracts/deployments:ro
+    restart: unless-stopped
+
+volumes:
+  pgdata:

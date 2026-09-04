@@ -60,6 +60,7 @@ contract CreateSeason is Script {
         vm.serializeAddress(json, "vault", vault);
         vm.serializeAddress(json, "stocks", p.stocks);
         vm.serializeUint(json, "openTime", p.openTime);
+        vm.serializeUint(json, "block", block.number);
         vm.serializeString(json, "seasonFile", file);
         vm.serializeBytes32(json, "paramsHash", keccak256(abi.encode(p)));
         string memory out = vm.serializeUint(json, "difficultyTotal", dTotal);

@@ -207,3 +207,16 @@ neither is load-bearing for the accounting. Changes:
   `OpenEligibility` and `ChainlinkOracle` from the chain profile's stock and feed maps, checks every
   feed answers, writes `deployments/<chainId>-adapters.json`; `ops plan` falls back to that file when
   the profile leaves `oracle` / `eligibility` at zero. Run once per chain, not per season.
+
+## 2026-09-04 – Hosting the always-on services
+
+- **One compose stack per season** (`docker-compose.yml`: Postgres, Ponder indexer, keeper, watcher),
+  built from `ops/Dockerfile` and `indexer/Dockerfile`. The ops image compiles the contracts with the
+  pinned Foundry so ABIs match the deployed bytecode; season addresses are mounted from
+  `contracts/deployments/<chainId>.json`; keys come from the environment only (`.env`, git-ignored).
+- **Watcher alerts go to a webhook** (`ALERT_WEBHOOK_URL`, Slack/Discord JSON), warn and page levels by
+  default, one send per identical message per `ALERT_REPEAT_SECONDS` (15 min) so a standing pause pages
+  once per window, not every tick. Logging is unchanged.
+- **CreateSeason records the creation block** (`block` in the deployment JSON) and the indexer starts
+  there by default; indexing a mainnet season from block 0 was the alternative and is wasteful.
+  The keeper is restarted only on failure because it exits by itself at close.

@@ -42,6 +42,7 @@ export interface Deployment {
   vault: Address;
   stocks: Address[];
   openTime: number;
+  block?: number;
   difficultyTotal: string;
 }
 
@@ -130,7 +131,7 @@ export async function deployDemo(): Promise<Deployment> {
   const chainId = await pub.getChainId();
   const dep: Deployment = {
     chainId, seasonId: Number(seasonId), rig, lp, usdc, oracle, eligibility, factory, mine, fragments, vault, stocks,
-    openTime: Number(openTime), difficultyTotal: dTotal.toString(),
+    openTime: Number(openTime), block: Number(await pub.getBlockNumber()), difficultyTotal: dTotal.toString(),
   };
   const dir = join(REPO_ROOT, "contracts", "deployments");
   mkdirSync(dir, { recursive: true });
