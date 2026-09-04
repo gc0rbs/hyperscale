@@ -1,0 +1,97 @@
+{
+  "name": "dryrun",
+  "chain": "anvil",
+  "chainId": 31337,
+  "createdAt": "2026-09-04T00:56:41.000Z",
+  "paramsTemplate": "/home/user/stock-miner/specs/params/season-default.json",
+  "params": {
+    "rig": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "lpToken": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+    "lpWeightPerToken": "2500000000000000000",
+    "openTime": 1788656301,
+    "maxDurationSeconds": 18144000,
+    "blocks": 4,
+    "shiftsPerBlock": 8,
+    "stocks": [
+      "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+      "0x9A676e781A523b5d0C0e43731313A708CB607508",
+      "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+      "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+    ],
+    "poolTokens": [
+      "5000000000000000000",
+      "6000000000000000000",
+      "10000000000000000000",
+      "6000000000000000000"
+    ],
+    "difficulty": [
+      "604800000000000000000000000000",
+      "756000000000000000000000000000",
+      "756000000000000000000000000000",
+      "907200000000000000000000000000"
+    ],
+    "fragPerToken": "1000000",
+    "minStakeWeight": "100000000000000000000",
+    "activationFeeBps": 100,
+    "earlyExitFeeBps": 300,
+    "gpuMultBps": [
+      10000,
+      12000,
+      14000,
+      16000,
+      18000,
+      20000
+    ],
+    "gpuCostBps": [
+      400,
+      600,
+      900,
+      1300,
+      1800
+    ],
+    "coolCostBps": [
+      300,
+      500,
+      800
+    ],
+    "heatPerOc": [
+      40,
+      30,
+      22,
+      15
+    ],
+    "coolPerShift": [
+      10,
+      18,
+      26,
+      36
+    ],
+    "heatMax": 100,
+    "ocCostBps": 200,
+    "ocBoostBps": 5000,
+    "maxActiveOc": 3,
+    "ocShiftSpan": 1,
+    "redemptionDays": 30,
+    "cashOutFeeBps": 100,
+    "pauseGraceSeconds": 21600,
+    "treasury": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "eligibility": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+  "oracle": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+  "usdc": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+  "transfersEnabled": false,
+  "usdcReserve": "50000000000",
+  "paramsHash": "0x5566fe4588b9c425440baff3e64b3eb218a88dd02fde2c6296277eb5b4a6ee16",
+  "plan": {
+    "expectedTotalHash": "5000000",
+    "plannedSeconds": "604800",
+    "difficultyTotal": "3024000000000000000000000000000",
+    "lpBonusBps": 12500,
+    "rigPerLp": 2,
+    "lpSource": "--rig-per-lp",
+    "lpSamples": [],
+    "openTimeIso": "2026-09-06T00:58:21.000Z",
+    "failSafeIso": "2027-04-04T00:58:21.000Z",
+    "problems": []
+  }
+}

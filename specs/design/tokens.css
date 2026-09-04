@@ -1,0 +1,58 @@
+/* Stock Miner design tokens – source of truth for the app theme.
+   Two surfaces: the SHELL (navigation, claim, redeem, leaderboard: light, calm, fintech)
+   and the MINE (the game view: dark, dense, mechanical). Accents are shared.
+   Values are also listed in tokens.json for tooling. */
+
+:root {
+  /* ── Shell (light) ─────────────────────────────────────────── */
+  --shell-bg:        #FAF9F6;   /* warm off-white page */
+  --shell-card:      #FFFFFF;
+  --shell-fg:        #26241F;
+  --shell-muted:     #6F6C64;
+  --shell-line:      #E6E3DC;
+  --shell-line-strong: #CFCBC2;
+
+  /* ── Mine (dark) ───────────────────────────────────────────── */
+  --mine-bg:         #171512;   /* coal */
+  --mine-panel:      #1F1C18;
+  --mine-panel-2:    #26221D;
+  --mine-line:       #35312B;
+  --mine-fg:         #EDE9E1;
+  --mine-muted:      #9A948A;
+  --mine-dim:        #6B665D;
+
+  /* ── Accents (same chroma/lightness, different hue) ─────────── */
+  --ember:           #F2A93B;   /* energy: hashrate, overclock, burn */
+  --ember-deep:      #C9821B;
+  --ember-tint:      rgba(242, 169, 59, 0.14);
+  --signal:          #45C4DB;   /* progress: ETA, found, claimable */
+  --signal-deep:     #1E97AD;
+  --signal-tint:     rgba(69, 196, 219, 0.14);
+  --heat-hot:        #E5533D;   /* heat gauge top end and errors only */
+
+  /* ── Type ──────────────────────────────────────────────────── */
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-ui:      "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-data:    "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --weight-display:    600;   /* headings, tickers, labels in display type */
+  --weight-display-xl: 500;   /* display-lg and display-xl only (48px+) */
+
+  --text-xs: 12px; --text-sm: 13px; --text-md: 15px; --text-lg: 18px;
+  --display-sm: 22px; --display-md: 32px; --display-lg: 48px; --display-xl: 72px;
+  --leading-tight: 1.1; --leading-normal: 1.45;
+
+  /* ── Spacing / radius / borders ─────────────────────────────── */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px;   /* no pill shapes in the mine */
+  --control-h: 40px; --control-h-lg: 48px;                 /* 44px+ tap targets on mobile */
+
+  /* ── Motion ────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 400ms;
+  --hash-stream-speed: 1;   /* multiplier; app scales with rig hashrate, capped */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --hash-stream-speed: 0; }
+}

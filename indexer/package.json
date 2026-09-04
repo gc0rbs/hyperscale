@@ -1,0 +1,23 @@
+{
+  "name": "@stock-miner/indexer",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "sync-abis": "node scripts/sync-abis.mjs",
+    "codegen": "node scripts/sync-abis.mjs && ponder codegen",
+    "dev": "node scripts/sync-abis.mjs && ponder dev",
+    "start": "node scripts/sync-abis.mjs && ponder start",
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/sync-abis.mjs && ponder codegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "4.13.5",
+    "ponder": "0.17.9",
+    "viem": "2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2"
+  }
+}

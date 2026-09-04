@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
+    a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
+    .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }
+    .disp-xl { font-weight:500; }
+    .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
+    .col { display:flex; flex-direction:column; gap:12px; }
+    .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
+    .navlinks { display:flex; flex-direction:row; gap:24px; font-size:15px; font-weight:500; color:#6F6C64; }
+    .navlinks .on { color:#26241F; }
+    .wallet { margin-left:auto; height:36px; padding:0 14px; border:1px solid #CFCBC2; border-radius:999px; display:flex; align-items:center; gap:8px; font-size:13px; }
+    .mine { background:#171512; color:#EDE9E1; }
+    .panel { background:#1F1C18; border:1px solid #35312B; border-radius:6px; padding:20px; }
+    .label { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#9A948A; font-weight:500; }
+    .muted { color:#9A948A; }
+    .dim { color:#6B665D; }
+    .btn { height:40px; padding:0 16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; gap:10px; font-size:14px; font-weight:600; border:1px solid transparent; white-space:nowrap; }
+    .btn-ember { background:#F2A93B; color:#1A1408; }
+    .btn-signal { background:#45C4DB; color:#062126; }
+    .btn-ghost { background:transparent; color:#EDE9E1; border-color:#35312B; }
+    .btn-shell { background:#26241F; color:#fff; }
+    .btn-shell-ghost { background:#fff; color:#26241F; border-color:#CFCBC2; }
+    .btn .cost { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-weight:400; font-size:12px; opacity:0.8; }
+    .chip { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 7px; border:1px solid #35312B; border-radius:3px; color:#9A948A; }
+    .est { color:#45C4DB; }
+    .pips { display:flex; flex-direction:row; gap:4px; }
+    .pip { width:14px; height:6px; background:#35312B; border-radius:1px; }
+    .pip.on { background:#F2A93B; }
+    .hair { height:1px; background:#35312B; }
+    .card { background:#FFFFFF; border:1px solid #E6E3DC; border-radius:10px; padding:24px; }
+    .stream { position:relative; height:220px; overflow:hidden; font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size:12px; line-height:20px; color:#6B665D; }
+    .stream::before, .stream::after { content:""; position:absolute; left:0; right:0; height:40px; z-index:1; }
+    .stream::before { top:0; background:linear-gradient(#1F1C18, transparent); }
+    .stream::after { bottom:0; background:linear-gradient(transparent, #1F1C18); }
+    .stream-inner { animation: scroll 6s linear infinite; }
+    .stream-inner .hit { color:#F2A93B; }
+    @keyframes scroll { from { transform:translateY(0); } to { transform:translateY(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .stream-inner { animation:none; } }
+</style>
+</helmet>
+<div style="width:1440px;min-height:940px;background:#FAF9F6;" class="col">
+  <div class="nav"><div class="row" style="gap:10px;"><div style="width:22px;height:22px;background:#26241F;border-radius:3px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2A93B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div class="disp" style="font-size:20px;">Stock Miner</div></div><div class="navlinks"><div class="">Mine</div><div class="">Claim</div><div class="on">Redeem</div><div class="">Leaderboard</div></div><div class="wallet mono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F6C64" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h5"/><path d="M3 10h18"/></svg>0x8a3f…c21e</div></div>
+  <div style="padding:40px 32px;display:grid;grid-template-columns:minmax(0, 2fr) minmax(0, 1fr);gap:32px;max-width:1240px;margin:0 auto;width:100%;box-sizing:border-box;">
+    <div class="col" style="gap:24px;">
+      <div class="col" style="gap:6px;"><div class="disp disp-xl" style="font-size:48px;">Redeem fragments</div><div style="font-size:15px;color:#6F6C64;">Season 1 closed. One million fragments of a block equal one whole Stock Token of that block's stock.</div></div>
+      <div class="card col" style="gap:0;padding:8px 24px;">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #E6E3DC;">
+      <div class="col" style="gap:2px;"><div class="disp" style="font-size:22px;">NVDAx</div><div class="mono" style="font-size:12px;color:#6F6C64;">2,051,339 fragments</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">2.051</div><div style="font-size:12px;color:#6F6C64;">whole tokens available</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">$353</div><div style="font-size:12px;color:#6F6C64;">cash-out quote · 1% fee</div></div>
+      <div class="row" style="gap:8px;"><div class="btn btn-shell" style="height:38px;">Redeem</div><div class="btn btn-shell-ghost" style="height:38px;">Cash out</div></div>
+    </div><div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #E6E3DC;">
+      <div class="col" style="gap:2px;"><div class="disp" style="font-size:22px;">TSLAx</div><div class="mono" style="font-size:12px;color:#6F6C64;">2,141,338 fragments</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">2.141</div><div style="font-size:12px;color:#6F6C64;">whole tokens available</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">$749</div><div style="font-size:12px;color:#6F6C64;">cash-out quote · 1% fee</div></div>
+      <div class="row" style="gap:8px;"><div class="btn btn-shell" style="height:38px;">Redeem</div><div class="btn btn-shell-ghost" style="height:38px;">Cash out</div></div>
+    </div><div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #E6E3DC;">
+      <div class="col" style="gap:2px;"><div class="disp" style="font-size:22px;">AAPLx</div><div class="mono" style="font-size:12px;color:#6F6C64;">3,410,002 fragments</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">3.410</div><div style="font-size:12px;color:#6F6C64;">whole tokens available</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">$784</div><div style="font-size:12px;color:#6F6C64;">cash-out quote · 1% fee</div></div>
+      <div class="row" style="gap:8px;"><div class="btn btn-shell" style="height:38px;">Redeem</div><div class="btn btn-shell-ghost" style="height:38px;">Cash out</div></div>
+    </div><div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:16px;align-items:center;padding:16px 0;">
+      <div class="col" style="gap:2px;"><div class="disp" style="font-size:22px;">SPYx</div><div class="mono" style="font-size:12px;color:#6F6C64;">1,522,906 fragments</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">1.523</div><div style="font-size:12px;color:#6F6C64;">whole tokens available</div></div>
+      <div class="col" style="gap:2px;"><div class="mono" style="font-size:18px;">$1,167</div><div style="font-size:12px;color:#6F6C64;">cash-out quote · 1% fee</div></div>
+      <div class="row" style="gap:8px;"><div class="btn btn-shell" style="height:38px;">Redeem</div><div class="btn btn-shell-ghost" style="height:38px;">Cash out</div></div>
+    </div>
+      </div>
+      <div style="font-size:13px;color:#6F6C64;line-height:1.5;">Redeeming in kind sends whole Stock Tokens to this wallet. Cash out pays USDC at the oracle price minus a 1% fee, limited by the vault's reserve. Amounts under one whole token can only be cashed out.</div>
+    </div>
+    <div class="col" style="gap:20px;padding-top:70px;">
+      <div class="card col" style="gap:14px;border-color:#1E97AD;">
+        <div class="row" style="gap:10px;"><div style="width:28px;height:28px;border-radius:50%;background:rgba(69, 196, 219, 0.14);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E97AD" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg></div><div style="font-weight:600;font-size:15px;">Eligible for in-kind redemption</div></div>
+        <div style="font-size:13px;color:#6F6C64;line-height:1.5;">This wallet is on the Stock Token issuer's allowlist, so whole tokens can be sent to it directly.</div>
+        <div class="mono" style="font-size:12px;color:#6F6C64;">0x8a3f…c21e</div>
+      </div>
+      <div class="card col" style="gap:12px;">
+        <div class="row" style="justify-content:space-between;"><div style="font-weight:600;font-size:15px;">Redemption window</div><div class="mono" style="font-size:15px;">29d 23h</div></div>
+        <div style="height:6px;background:#E6E3DC;border-radius:3px;position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:#1E97AD;border-radius:3px;"></div></div>
+        <div style="font-size:13px;color:#6F6C64;line-height:1.5;">Closes 2026-10-04. Fragments left after that stay in your wallet but cannot be redeemed from this season's vault.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

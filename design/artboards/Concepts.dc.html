@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
+    a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
+    .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }
+    .disp-xl { font-weight:500; }
+    .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
+    .col { display:flex; flex-direction:column; gap:12px; }
+    .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
+    .navlinks { display:flex; flex-direction:row; gap:24px; font-size:15px; font-weight:500; color:#6F6C64; }
+    .navlinks .on { color:#26241F; }
+    .wallet { margin-left:auto; height:36px; padding:0 14px; border:1px solid #CFCBC2; border-radius:999px; display:flex; align-items:center; gap:8px; font-size:13px; }
+    .mine { background:#171512; color:#EDE9E1; }
+    .panel { background:#1F1C18; border:1px solid #35312B; border-radius:6px; padding:20px; }
+    .label { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#9A948A; font-weight:500; }
+    .muted { color:#9A948A; }
+    .dim { color:#6B665D; }
+    .btn { height:40px; padding:0 16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; gap:10px; font-size:14px; font-weight:600; border:1px solid transparent; white-space:nowrap; }
+    .btn-ember { background:#F2A93B; color:#1A1408; }
+    .btn-signal { background:#45C4DB; color:#062126; }
+    .btn-ghost { background:transparent; color:#EDE9E1; border-color:#35312B; }
+    .btn-shell { background:#26241F; color:#fff; }
+    .btn-shell-ghost { background:#fff; color:#26241F; border-color:#CFCBC2; }
+    .btn .cost { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-weight:400; font-size:12px; opacity:0.8; }
+    .chip { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 7px; border:1px solid #35312B; border-radius:3px; color:#9A948A; }
+    .est { color:#45C4DB; }
+    .pips { display:flex; flex-direction:row; gap:4px; }
+    .pip { width:14px; height:6px; background:#35312B; border-radius:1px; }
+    .pip.on { background:#F2A93B; }
+    .hair { height:1px; background:#35312B; }
+    .card { background:#FFFFFF; border:1px solid #E6E3DC; border-radius:10px; padding:24px; }
+    .stream { position:relative; height:220px; overflow:hidden; font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size:12px; line-height:20px; color:#6B665D; }
+    .stream::before, .stream::after { content:""; position:absolute; left:0; right:0; height:40px; z-index:1; }
+    .stream::before { top:0; background:linear-gradient(#1F1C18, transparent); }
+    .stream::after { bottom:0; background:linear-gradient(transparent, #1F1C18); }
+    .stream-inner { animation: scroll 6s linear infinite; }
+    .stream-inner .hit { color:#F2A93B; }
+    @keyframes scroll { from { transform:translateY(0); } to { transform:translateY(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .stream-inner { animation:none; } }
+</style>
+</helmet>
+<div style="width:1440px;min-height:3400px;padding:40px;box-sizing:border-box;" class="mine col">
+  <div class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div class="col" style="gap:6px;"><div class="label">Concepts</div><div class="disp disp-xl" style="font-size:48px;">Brand, possible UI, gameplay</div></div>
+    <div class="muted" style="font-size:13px;max-width:560px;text-align:right;line-height:1.45;">Generated concepts to react to, not assets. Notes on each in design/concepts/README.md.</div>
+  </div>
+  <div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">Brand</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;"><div class="col" style="gap:10px;">
+      <img src="01-logo-sheet.svg" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Mark + wordmark</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">bolt-and-pickaxe in a chamfered square; three lockups on coal and off-white</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="02-key-art.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Key art</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">“Four blocks. One mine. Closes forever.” The bar-with-ticks as signature device</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="03-season-card.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Season announcement</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">countdown plus four ticker tiles; close to shippable structure</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="04-merch.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">The mark as an object</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">pin, RIG coin, sticker</div>
+    </div></div>
+    </div><div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">Possible UI</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;"><div class="col" style="gap:10px;">
+      <img src="05-ui-phone-mine.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Phone: mine view</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">variant with a light block card inside the dark mine; worth a real mockup</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="06-ui-rig-room-concept.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Alternate: rig room</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">isometric rigs that visibly overclock, HUD to the side; game-y, higher build cost</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="07-ui-burn-sheet.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Purchase sheet</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">what you get, what burns, heat cost, one amber confirm</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="08-ui-block-found-notification.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Push notification</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">blocks are found on no schedule, so this is a core surface</div>
+    </div></div>
+    </div><div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">Brand applications</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;"><div class="col" style="gap:10px;">
+      <img src="13-brand-app-icon.svg" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">App icon</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">the mark at three sizes plus mono and cyan</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="14-brand-landing-hero.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Landing hero</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">one headline, one CTA, the tick bar, a phone</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="15-brand-share-card.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Share card</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">“Block 3 found”: closest to shippable</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="16-brand-season-recap.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Season recap</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">the post-season share card with four stats</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="17-brand-billboard.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Billboard</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">the identity at ten metres</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="18-brand-apparel.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Apparel</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">the tick bar as a stripe is the ownable device</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="19-brand-community-banner.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Community banner</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">Discord / X header with countdown</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="20-brand-splash.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Splash screen</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">mark, thin cyan loading line, “Reading the mine”</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="21-brand-badges.svg" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Achievement badges</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">six pictograms in chamfered squares; v1.1</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="22-brand-email-header.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Email header</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">“Block 2 found. Claim your TSLAx.”</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="23-brand-ticker-tiles.svg" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Ticker tiles</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">01–04 as a reusable pattern</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="24-brand-collector-card.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Collector card</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">season memento; v1.1</div>
+    </div></div>
+    </div><div class="col" style="gap:16px;padding-top:36px;">
+      <div class="row" style="gap:14px;"><div class="label" style="font-size:13px;">Gameplay</div><div class="hair" style="flex:1;"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:24px;align-items:start;"><div class="col" style="gap:10px;">
+      <img src="09-play-rig-overclock.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Overclocking</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">amber slots, heat gauge toward red, shards rising</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="10-play-rig-tiers.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Upgrade tiers</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">GPU = more slots, cooling = cyan fins</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="11-play-block-found.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Block found</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">the vein splits, the block rises, fragments stream to rigs</div>
+    </div><div class="col" style="gap:10px;">
+      <img src="12-play-fragments-to-token.webp" style="width:100%;height:auto;display:block;border:1px solid #35312B;">
+      <div class="disp" style="font-size:20px;">Fragments to token</div>
+      <div class="muted" style="font-size:13px;line-height:1.4;">1,000,000 fragments become one Stock Token</div>
+    </div></div>
+    </div>
+</div>
+</x-dc>
+</body>
+</html>

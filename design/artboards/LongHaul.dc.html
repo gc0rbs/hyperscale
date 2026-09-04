@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin:0; font-family:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color:#26241F; background:#FAF9F6; -webkit-font-smoothing:antialiased; }
+    a { color:#1E97AD; text-decoration:none; } a:hover { color:#C9821B; }
+    .mono { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric:tabular-nums; }
+    .disp { font-family:"Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; text-transform:uppercase; letter-spacing:0.02em; font-weight:600; line-height:1.05; }
+    .disp-xl { font-weight:500; }
+    .row { display:flex; flex-direction:row; align-items:center; gap:12px; }
+    .col { display:flex; flex-direction:column; gap:12px; }
+    .nav { height:56px; display:flex; flex-direction:row; align-items:center; gap:32px; padding:0 32px; background:#FFFFFF; color:#26241F; border-bottom:1px solid #E6E3DC; }
+    .navlinks { display:flex; flex-direction:row; gap:24px; font-size:15px; font-weight:500; color:#6F6C64; }
+    .navlinks .on { color:#26241F; }
+    .wallet { margin-left:auto; height:36px; padding:0 14px; border:1px solid #CFCBC2; border-radius:999px; display:flex; align-items:center; gap:8px; font-size:13px; }
+    .mine { background:#171512; color:#EDE9E1; }
+    .panel { background:#1F1C18; border:1px solid #35312B; border-radius:6px; padding:20px; }
+    .label { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#9A948A; font-weight:500; }
+    .muted { color:#9A948A; }
+    .dim { color:#6B665D; }
+    .btn { height:40px; padding:0 16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; gap:10px; font-size:14px; font-weight:600; border:1px solid transparent; white-space:nowrap; }
+    .btn-ember { background:#F2A93B; color:#1A1408; }
+    .btn-signal { background:#45C4DB; color:#062126; }
+    .btn-ghost { background:transparent; color:#EDE9E1; border-color:#35312B; }
+    .btn-shell { background:#26241F; color:#fff; }
+    .btn-shell-ghost { background:#fff; color:#26241F; border-color:#CFCBC2; }
+    .btn .cost { font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-weight:400; font-size:12px; opacity:0.8; }
+    .chip { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 7px; border:1px solid #35312B; border-radius:3px; color:#9A948A; }
+    .est { color:#45C4DB; }
+    .pips { display:flex; flex-direction:row; gap:4px; }
+    .pip { width:14px; height:6px; background:#35312B; border-radius:1px; }
+    .pip.on { background:#F2A93B; }
+    .hair { height:1px; background:#35312B; }
+    .card { background:#FFFFFF; border:1px solid #E6E3DC; border-radius:10px; padding:24px; }
+    .stream { position:relative; height:220px; overflow:hidden; font-family:"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size:12px; line-height:20px; color:#6B665D; }
+    .stream::before, .stream::after { content:""; position:absolute; left:0; right:0; height:40px; z-index:1; }
+    .stream::before { top:0; background:linear-gradient(#1F1C18, transparent); }
+    .stream::after { bottom:0; background:linear-gradient(transparent, #1F1C18); }
+    .stream-inner { animation: scroll 6s linear infinite; }
+    .stream-inner .hit { color:#F2A93B; }
+    @keyframes scroll { from { transform:translateY(0); } to { transform:translateY(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .stream-inner { animation:none; } }
+</style>
+</helmet>
+<div style="width:1440px;min-height:940px;" class="mine col">
+  <div class="nav"><div class="row" style="gap:10px;"><div style="width:22px;height:22px;background:#26241F;border-radius:3px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2A93B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div class="disp" style="font-size:20px;">Stock Miner</div></div><div class="navlinks"><div class="on">Mine</div><div class="">Claim</div><div class="">Redeem</div><div class="">Leaderboard</div></div><div class="wallet mono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F6C64" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h5"/><path d="M3 10h18"/></svg>0x8a3f…c21e</div></div>
+  <div style="padding:24px 32px 32px;display:grid;grid-template-columns:minmax(0, 2fr) minmax(0, 1fr);gap:24px;">
+    <div class="col" style="gap:20px;">
+      <div class="row" style="justify-content:space-between;padding:0 0 4px;">
+      <div class="row" style="gap:14px;"><div class="disp" style="font-size:22px;">Season 1</div><div class="chip" style="color:#45C4DB;border-color:#1E97AD;">Mine open · long haul</div></div>
+      <div class="mono muted" style="font-size:12px;">block 2 pays 0.0000278 frag per hash-second</div></div>
+      <div class="panel col" style="gap:24px;padding:32px;">
+        <div class="row" style="justify-content:space-between;align-items:flex-end;">
+          <div class="col" style="gap:4px;"><div class="label">Block 2 of 4</div><div class="row" style="gap:14px;align-items:baseline;"><div class="disp disp-xl" style="font-size:48px;">TSLAx</div><div class="mono muted" style="font-size:14px;">pool 6.0 TSLAx ≈ $2,100</div></div></div>
+          <div class="col" style="gap:4px;align-items:flex-end;"><div class="label">Shift</div><div class="mono" style="font-size:22px;">2<span class="muted"> / 8</span></div></div>
+        </div>
+        <div style="position:relative;height:10px;background:#26221D;border:1px solid #35312B;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:21%;background:#45C4DB;"></div><div style="position:absolute;left:12.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:25.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:37.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:50.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:62.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:75.0%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:87.5%;top:-4px;width:1px;height:18px;background:#35312B;"></div><div style="position:absolute;left:12.5%;top:-4px;width:2px;height:18px;background:#45C4DB;"></div><div style="position:absolute;left:21%;top:-6px;width:3px;height:22px;background:#EDE9E1;"></div>
+    </div>
+        <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:24px;align-items:end;">
+          <div class="col" style="gap:4px;"><div class="label">Block found</div><div class="disp disp-xl est" style="font-size:72px;">1d 14h</div><div class="muted" style="font-size:13px;">estimate at the current 1.2M H total. Anyone joining or overclocking changes it.</div></div>
+          <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px;">
+            <div class="col" style="gap:4px;">
+      <div class="label">Next shift</div>
+      <div class="mono est" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">4h 50m</div>
+      <div class="muted" style="font-size:12px;">est.</div>
+    </div>
+            <div class="col" style="gap:4px;">
+      <div class="label">Mine closes</div>
+      <div class="mono est" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">6d 2h</div>
+      <div class="muted" style="font-size:12px;">est.</div>
+    </div>
+            <div class="col" style="gap:4px;">
+      <div class="label">Total hash</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">1.2M H</div>
+      <div class="muted" style="font-size:12px;">quiet mine</div>
+    </div>
+            <div class="col" style="gap:4px;">
+      <div class="label">Your share</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">10.0%</div>
+      
+    </div>
+          </div>
+        </div>
+        <div class="hair"></div>
+        <div class="row" style="justify-content:space-between;">
+          <div class="row" style="gap:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#45C4DB" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg><div style="font-size:14px;">Get notified at each shift end and when the block is found.</div></div>
+          <div class="btn btn-ghost" style="height:36px;">Turn on notifications</div>
+        </div>
+      </div>
+      <div class="panel col" style="gap:14px;">
+        <div class="row" style="justify-content:space-between;"><div class="label">Best value now</div><div class="muted" style="font-size:12px;">a slow mine rewards permanent upgrades over overclocks</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
+          <div class="col" style="gap:6px;padding:14px;border:1px solid #F2A93B;background:rgba(242, 169, 59, 0.14);"><div class="row" style="gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2A93B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></svg><div class="label" style="color:#F2A93B;">GPU → tier 2</div></div><div class="mono" style="font-size:18px;">+20% hash</div><div class="muted" style="font-size:12px;">covers 79% of the mine · burn 6,000 RIG</div></div>
+          <div class="col" style="gap:6px;padding:14px;border:1px solid #35312B;"><div class="row" style="gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A948A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 10V4a3 3 0 0 1 3 3M14 12h6a3 3 0 0 1-3 3M12 14v6a3 3 0 0 1-3-3M10 12H4a3 3 0 0 1 3-3"/></svg><div class="label">Cooling → tier 1</div></div><div class="mono" style="font-size:18px;">more overclocks</div><div class="muted" style="font-size:12px;">30 heat each, −18 per shift · burn 3,000 RIG</div></div>
+          <div class="col" style="gap:6px;padding:14px;border:1px solid #35312B;"><div class="row" style="gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A948A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg><div class="label">Overclock</div></div><div class="mono" style="font-size:18px;">+50% for ~2 shifts</div><div class="muted" style="font-size:12px;">≈ 9h 40m at this pace · burn 2,000 RIG</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="gap:20px;padding-top:34px;">
+      <div class="panel col" style="gap:18px;width:100%;box-sizing:border-box;">
+      <div class="row" style="justify-content:space-between;">
+        <div class="row"><div class="disp" style="font-size:22px;">Rig #0031</div><div class="chip">RIG</div></div>
+        <div class="mono muted" style="font-size:12px;">stake 100,000 RIG</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:16px;">
+        <div class="col" style="gap:4px;">
+      <div class="label">Hashrate</div>
+      <div class="mono" style="font-size:32px;font-weight:500;line-height:1.1;white-space:nowrap;">120.0k<span class="muted" style="font-size:14px;"> H</span></div>
+      
+    </div>
+        <div class="col" style="gap:4px;">
+      <div class="label">Fragments / s</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">3.33</div>
+      <div class="muted" style="font-size:12px;">fixed for this block</div>
+    </div>
+        <div class="col" style="gap:4px;">
+      <div class="label">Earned this block</div>
+      <div class="mono" style="font-size:22px;font-weight:500;line-height:1.1;white-space:nowrap;">34,105</div>
+      <div class="muted" style="font-size:12px;">0.034 TSLAx</div>
+    </div>
+      </div>
+      <div class="hair"></div>
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px;">
+        <div class="col" style="gap:6px;"><div class="row" style="gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A948A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></svg><div class="label">GPU tier 1</div></div><div class="pips"><div class="pip on"></div><div class="pip "></div><div class="pip "></div><div class="pip "></div><div class="pip "></div></div></div>
+        <div class="col" style="gap:6px;"><div class="row" style="gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A948A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 10V4a3 3 0 0 1 3 3M14 12h6a3 3 0 0 1-3 3M12 14v6a3 3 0 0 1-3-3M10 12H4a3 3 0 0 1 3-3"/></svg><div class="label">Cooling tier 0</div></div><div class="pips"><div class="pip "></div><div class="pip "></div><div class="pip "></div></div></div>
+      </div>
+      <div class="col" style="gap:6px;">
+      <div class="row" style="justify-content:space-between;"><div class="label">Heat</div><div class="mono muted" style="font-size:12px;">0 / 100 · next overclock +40</div></div>
+      <div style="position:relative;height:8px;background:#26221D;border:1px solid #35312B;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#F2A93B,#F2A93B 60%,#E5533D);"></div>
+        <div style="position:absolute;left:0%;top:0;bottom:0;width:40%;background:repeating-linear-gradient(135deg,#F2A93B 0 3px,transparent 3px 6px);opacity:0.6;"></div>
+      </div>
+    </div>
+      <div class="col" style="gap:6px;"><div class="row" style="justify-content:space-between;"><div class="label">Overclocks</div><div class="mono muted" style="font-size:12px;">0 / 3 · none active</div></div><div class="row" style="gap:6px;"><div style="flex:1;height:26px;border:1px dashed #35312B;"></div><div style="flex:1;height:26px;border:1px dashed #35312B;"></div><div style="flex:1;height:26px;border:1px dashed #35312B;"></div></div></div>
+      <div class="col" style="gap:8px;">
+        <div class="btn btn-ember" style="height:44px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1408" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Overclock <span class="cost">burn 2,000 RIG</span></div>
+        <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
+          <div class="btn btn-ghost" style="padding:0 10px;">GPU → 2 <span class="cost">burn 6,000 RIG</span></div>
+          <div class="btn btn-ghost" style="padding:0 10px;">Cooling → 1 <span class="cost">burn 3,000 RIG</span></div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

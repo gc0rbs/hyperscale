@@ -1,0 +1,10 @@
+{
+  "name": "stock-miner",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "check": "pnpm -r --workspace-concurrency=1 check",
+    "build": "pnpm -r build"
+  }
+}

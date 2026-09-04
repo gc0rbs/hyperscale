@@ -1,0 +1,8 @@
+{
+  "name": "anvil",
+  "chainId": 31337,
+  "rpcUrl": "http://127.0.0.1:8545",
+  "explorerApi": null,
+  "mocks": true,
+  "notes": "Local dev chain. DeployFactory with DEPLOY_MOCKS=true fills token addresses into deployments/31337-factory.json; plan.ts reads them from there. LP composition cannot be sampled from a mock pair: pass --rig-per-lp."
+}
