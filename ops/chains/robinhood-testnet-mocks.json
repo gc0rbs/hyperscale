@@ -1,0 +1,8 @@
+{
+  "name": "robinhood-testnet-mocks",
+  "chainId": 46630,
+  "rpcUrl": "https://rpc.testnet.chain.robinhood.com/rpc",
+  "explorerApi": "https://explorer.testnet.chain.robinhood.com/api",
+  "mocks": true,
+  "notes": "Robinhood Chain testnet with the mock token set from DeployFactory DEPLOY_MOCKS=true (contracts/deployments/46630-factory.json). For rehearsals only; the real testnet profile is robinhood-testnet.json. No LP pair exists, so pass --rig-per-lp."
+}

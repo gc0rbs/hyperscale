@@ -260,3 +260,31 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   params table, 05, 06, 07, 08, 09 (Q9, Q13, Q14), GLOSSARY, README, RUNBOOK, AUDIT-PACKAGE.
 - Checks: forge 43 tests + 8 invariants, snapshot regenerated, interfaces match; sim 22 tests; ops 6;
   app check, Playwright season (pace 300), parity.
+
+## 2026-09-04 – first testnet deployment (Robinhood Chain testnet, chain 46630)
+
+Rehearsal season with the mock token set, deployed from a throwaway key. Explorer:
+https://explorer.testnet.chain.robinhood.com
+
+| Contract | Address |
+|---|---|
+| SeasonFactory | `0xF98f1De589D1fdDCAdd62500373B807B07720A2a` |
+| SeasonMine (season 0) | `0xcA24Ea657371E27B3281a1DfF5A1e8119De71D40` |
+| StockFragments | `0xdd2712C6457E15993D1d0ab30c3719F30c757621` |
+| RedemptionVault | `0x776E7993c4527EA5EB834ce1fdB61580f41497Bc` |
+| RIG (mock) | `0x6E323a6B2De8c3Df127b5FD0E253b73AEb270264` |
+| LP, USDC (mocks) | `0x0E5A6F524e8cD877B8Ae71047dE9E957500928a0`, `0x127bc68E1DfCa3f6Ea512Ed391F7CfBEB934f2f2` |
+| Oracle, eligibility (mocks) | `0xC74779bB0cC5b77BADD2B9F68D8D4Bd133D48893`, `0x14B4767E4984E8178F175e81BC7E363c54895E09` |
+| Stocks NVDAx/TSLAx/AAPLx/SPYx (mocks) | `0x50EC…ffA1`, `0xaaF1…B2e6`, `0xF9e6…278c`, `0x51e9…F387` |
+
+Season `testnet-rehearsal-1`: planned 3600s at 1,000,000 RIG-eq, cap 7200s, open 2026-09-04T21:06:35Z,
+paramsHash `0xb93674952af9d14b02e8346eeadace7e72063b9a062dd902240b88b3eff257cb`, vault funded, phase PreOpen.
+Deployer/operator/treasury are all the throwaway key (`0xa5b712ba714118CB75615AD5103E14c8F4680939`).
+
+What shipped: `ops/chains/robinhood-testnet.json` filled in, `robinhood-testnet-mocks.json` profile, the
+`robinhood_testnet` RPC alias, and `fund --mint-mocks` now works on any chain whose factory deployment
+recorded mocks. Gas for factory + season + funding was ~0.0005 ETH.
+
+Known gaps: contracts are not verified on the explorer (`--verify --verifier blockscout` not run); no LP
+pair exists so `plan` used `--rig-per-lp 2`; the deployment JSONs are gitignored and live only in this
+session, so re-run `create-season` dry-run or copy them from here before deploying the app.
