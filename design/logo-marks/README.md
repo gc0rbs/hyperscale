@@ -45,3 +45,48 @@ the tick bar and the gem are the two brand objects the direction already approve
 Next: redraw the shortlisted five by hand in the icon grid used by `Icons.tsx` (32 viewBox, 3px stroke),
 test at 16 / 24 / 48 / 256px on coal and on `--shell-bg`, then pick one and log the decision in
 `docs/DECISIONS.md`.
+
+## Round 2 – pickaxe only, gem only (21–40)
+
+Same model and palette, 2026-09-04. Ten pickaxe variations, ten gem variations. Contact sheet:
+`00-contact-sheet-round2.png`.
+
+### Pickaxe
+
+| # | Concept | Read |
+|---|---|---|
+| 21 | Blade only, no handle, cyan hairline on top | Reads as a mushroom or a sombrero. The handle is what makes a pickaxe legible. Drop. |
+| 22 | Single continuous stroke | Wandering, weak. Drop. |
+| 23 | Pickaxe knocked out of a solid cyan chamfered square | Best app-icon candidate of both rounds: one shape, one accent, bold at 16px. Cyan is the wrong accent for the tool (ember = player energy); swap to a solid ember tile with a coal pickaxe. |
+| 24 | Top-down T with cyan tick at the base | Clean, symmetric, reads as a pickaxe from any distance. The blade split into amber and off-white halves by accident; keep that, it gives it a lit edge. Shortlist. |
+| 25 | Two crossed pickaxes, cyan diamond at the joint | Heraldic, well drawn, a bit "mining guild". Works as a badge. |
+| 26 | Handle as an eight-tick progress bar | Both brand devices in one object and it still reads as a pickaxe. Ticks will need to drop to four at small sizes. Shortlist. |
+| 27 | 45-degree blocky pickaxe | Read as a bow and arrow. Drop. |
+| 28 | Blade curving into a rising chart arrow | Too fussy, reads as a swoosh. Drop. |
+| 29 | Faceted low-poly pickaxe | Interesting: the tool made of the material it mines. Too many facets for a mark; a three-facet redraw could work. |
+| 30 | Tiny pickaxe in a notched cyan ring | Pickaxe too small; the ring dominates. Drop. |
+
+### Gem
+
+| # | Concept | Read |
+|---|---|---|
+| 31 | Outline brilliant cut, cyan dot at the tip | Elegant, classic jewellery mark, not a mining product. Keep as a reward-state illustration style. |
+| 32 | Top-down hexagonal gem, cyan centre | Reads as a radiation or nuclear symbol. Drop. |
+| 33 | Gem split into four shards, cyan gaps | The strongest gem: four blocks, one token, and the split reads at any size. The kite proportion needs squaring up. Shortlist. |
+| 34 | Gem half buried in a block, cyan ground line | Tells the story of "mining a stock" in one glyph. Too illustrative for a nav mark; good for the block card. |
+| 35 | Two-facet favicon gem, cyan top | Simplest gem here; reads as a crown or a wizard hat. Drop. |
+| 36 | Gem in a chamfered cyan frame | The gem came out as a compass rose. Drop. |
+| 37 | Crystal point crossed by a tick bar | Fights itself: two devices, neither wins. Drop. |
+| 38 | Isometric chamfered cube with faceted top | Convincing 3D gem block; ties to the rig-room isometric style. Heavy for a mark. |
+| 39 | Gem melting into a pick point | Reads as a tooth or a drop. Drop. |
+| 40 | Gem cut out of a solid ember square | Bold, one shape, works as an app icon. The cut-out shape is a bit lopsided; a symmetric redraw would fix it. Shortlist. |
+
+## Shortlist after two rounds
+
+Pickaxe: **24** (top-down T), **26** (tick-bar handle), **23** (knock-out tile, recoloured ember).
+Gem: **33** (four-shard gem), **40** (gem knock-out tile).
+From round 1 still standing: **03** (tick bar), **16** (candlestick pickaxe).
+
+Recommended pair for the drawing pass: **24 + 33**. The pickaxe is the brand mark (what the player does),
+the four-shard gem is the reward object the brief already approved. 23 and 40 are the same idea in
+two materials, so the app icon can be whichever of the two the mark becomes.
