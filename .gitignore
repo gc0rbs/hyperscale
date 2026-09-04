@@ -25,3 +25,5 @@ contracts/diff/
 contracts/deployments/*.json
 ops/seasons/*.json
 !ops/seasons/*.example.json
+.playwright-cli/
+output/playwright/

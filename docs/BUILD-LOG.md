@@ -260,3 +260,31 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   params table, 05, 06, 07, 08, 09 (Q9, Q13, Q14), GLOSSARY, README, RUNBOOK, AUDIT-PACKAGE.
 - Checks: forge 43 tests + 8 invariants, snapshot regenerated, interfaces match; sim 22 tests; ops 6;
   app check, Playwright season (pace 300), parity.
+
+## 2026-09-04 – Interactive public landing page
+
+Plan: replace the chain-dependent home screen with four accessible editorial sections explaining
+activation, upgrades, reward blocks and redemption in plain language. Build original real-time 3D
+mineral, rig and token scenes inspired by the supplied palette and materials; do not embed reference
+images. Isolate the existing wallet/game routes in their own layout, preserve their URLs, and verify
+the production build plus desktop/mobile interactions, reduced motion and unavailable WebGL.
+
+The user requests a new landing-page art direction; previous static mockup/motion constraints apply
+to the game UI, not this new marketing experience. Issue tracker `bd` is unavailable on this machine;
+implementation and follow-up notes are recorded here.
+
+Shipped: four public landing chapters with original Three.js scenes, a GPU configurator, selectable
+reward blocks, token assembly, and native FAQ disclosures. Wallet/game providers now live in a route
+group; existing game URLs and page implementations are preserved. The public page renders without a
+season deployment. All section eyebrows were removed following review. A separate full-width black
+starfield extends behind the hero; the original illustration viewport remains unchanged. Core
+expansion follows scroll progress from the top of the page through the hero's exit and reverses on
+scrolling back; its former button is removed.
+
+Verification: app lint, typecheck and six unit tests pass. Production build passes (public home is
+statically rendered; 115 kB first-load JS with Three.js deferred). Desktop controls and 390 px mobile
+navigation, GPU switching, reward selection, token assembly and FAQ work. Mobile has no horizontal
+overflow; all four scenes initialize under reduced motion. Browser measurements confirm the hero
+illustration's original dimensions and position, with a viewport-wide starfield. Existing game pages
+are moved without content changes. Local preview remains on port 3010. WebGL has a vector fallback;
+real-season operations still require the existing deployment and chain services.
