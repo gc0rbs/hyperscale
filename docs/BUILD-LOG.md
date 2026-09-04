@@ -379,3 +379,17 @@ build in CI but have not been run end to end on a host from this session.
 - Root README brought up to date (Pons token, season-1 set, 3h/6h, links to gitbook/ and docs/).
 - RUNBOOK §10b: how the GitBook syncs and what to update per season.
 - To do when known: the audit report link, season contract addresses, the $RIG address.
+
+## 2026-09-04 – Audit remediation (docs/AUDIT-RESPONSE-2026-09-04.md)
+
+- Every confirmed bug (B1–B14), high-risk item (R1–R5) and integration item (I1–I6) from the
+  2026-09-04 codebase audit is resolved or was already fixed on this branch; the response document
+  maps each to its change and regression test.
+- Validation rerun on this branch: workspace checks (app 9 tests, ops 13, indexer, sim unchanged);
+  `next build` clean; Foundry 51 tests + 10 invariants; differential campaign **100,000 traces,
+  0 mismatches**; Playwright 3 scenarios incl. the failed-purchase case; `pnpm audit --prod`
+  0 critical / 0 high (7 moderate, 1 low, transitive); Solidity formatted; gas snapshot regenerated
+  under Foundry v1.5.1 (now pinned in CI). The 10.24M-call invariant campaign was started on this
+  commit; its result is recorded in the next entry.
+- Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
+  real wallet extension, refresh during confirmation, visual regression.

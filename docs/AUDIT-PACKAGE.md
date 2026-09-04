@@ -56,7 +56,7 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 |---|---|---|
 | Player | activate (RIG or LP), upgrade GPU / cooling, overclock, claim, exit (3% fee), withdraw after close, `emergencyWithdraw` when a pause outlives the grace period, redeem / cash out fragments | change anyone else's rig; claim more than the pool (`mintedFragments[b] ≤ supply[b]` enforced in `_claim`) |
 | Anyone | `poke()` (advance shift discovery), `sweep()` after the window or a cancellation | alter accounting: `poke` is a pure catch-up |
-| Guardian (= `treasury`) | `pause`, `unpause` (not after cancellation); receives fees and sweeps | set parameters, mint, move stakes, cancel directly |
+| Guardian (= `treasury`) | `pause` while the close is not yet recorded, `unpause` (not after cancellation); receives fees and sweeps | pause a closed season, block claims or withdrawals after the close is recorded, set parameters, mint, move stakes, cancel directly |
 | Operator (factory caller) | `fund` the vault once | withdraw pool or reserve (only `sweep` to the treasury after the window) |
 | Factory | deploy seasons with validated params | touch a deployed season |
 | Deployer of the deployers | `init(factory)` once | anything after init |
@@ -67,7 +67,10 @@ their deposit and, if the season was still open, cancels it: unclaimed fragments
 the vault becomes sweepable to the treasury at once. A guardian can therefore end an open season
 early and the treasury receives the unredeemed pool. This is by design (FR-S6: the cancel path must
 return stakes) and must be disclosed in the terms (docs/07 §5). A season that has already closed
-cannot be cancelled this way (Phase 4 fix, §7).
+cannot be cancelled this way (Phase 4 fix, §7), cannot be paused (`pause` reverts once `closeX` is
+recorded), and a pause that started earlier stops blocking `claim`/`claimAll`/`withdraw` the moment
+the close is recorded (2026-09-04 audit, R2). A cancelled season is frozen at the cancellation
+instant: no boundaries, work or close are discovered afterwards (audit B4, invariant 10).
 
 ## 4. The accounting argument
 
@@ -174,8 +177,12 @@ No high-severity finding. Full output: run the command above (the JSON is not co
 ## 9. Known limitations (accepted, disclosed)
 
 - **Pause does not stop the clock.** Work accrues for everyone during a pause (FR-S6 requires that
-  pausing not alter rewards). Players cannot overclock or exit while paused; the grace period bounds
-  how long that can last.
+  pausing not alter rewards). Players cannot overclock, exit or (while the season is open) claim
+  while paused; the grace period bounds how long that can last. After the close is recorded, claims
+  and withdrawals ignore the pause.
+- **The close must be recorded by a transaction.** `phase()` reports `Closed` from the simulated
+  state before any transaction has persisted `closeX`; the vault pokes before every redemption and
+  sweep, the keeper pokes once at that point, and the app offers a `poke` on the closed screen.
 - **Cancellation forfeits unclaimed fragments** and sends the pool to the treasury (§3).
 - **Contract wallets** must implement `onERC1155Received` to claim (fragments are ERC-1155).
 - **`claim` reverts with `AlreadyClaimed` whenever there is nothing to mint**, including a block that
