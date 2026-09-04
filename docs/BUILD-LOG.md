@@ -337,3 +337,31 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
 - Still to do by hand on devices: wallet connect flows (WalletConnect modal), notification permission
   prompt on iOS Safari (requires the site to be added to the home screen), colour-contrast audit of
   the muted text on the panel background.
+
+## 2026-09-04 – Launch status (current release checklist, docs/08 §4)
+
+Everything engineering can do without the real token, keys and counsel is done and pushed. This
+table supersedes the Phase 4 checklist above.
+
+| Item | Status |
+|---|---|
+| Params JSON published with hash before `openTime` | `ops plan --pool-usd … --max-duration 21600` prints the hash; `CreateSeason` records it and the creation block. No 48h minimum (short seasons) |
+| `SeasonFactory.create` executed and contracts verified | scripts + dry run; `--verify` flags in RUNBOOK §1–3. Needs the graduated $RIG address and the treasury multisig |
+| Vault funded; `phase() == PreOpen`; app shows pool | `ops fund` asserts PreOpen; app shows pool and USD value |
+| Eligibility adapter | `OpenEligibility` (Stock Tokens have no transfer hook); legal restriction is the geo-fence + terms. `ops deploy-adapters` |
+| Oracle feeds live and within staleness | `ChainlinkOracle` over the four recorded feeds, 26h cap (24h heartbeat); `deploy-adapters` checks every feed answers |
+| Difficulty sized; pace and cap published | `ops plan` from a hash estimate; cap = 2× planned (6h default) shown in the app from the start |
+| Keeper, alerting, on-call | `docker-compose.yml` (Postgres, indexer, keeper, watcher); watcher posts to `ALERT_WEBHOOK_URL`. Needs a host, a keeper hot wallet and the webhook |
+| Terms, how-rewards-work, geo-fence | `/terms` (draft for counsel), `/how-it-works`, edge middleware (US/CA/GB/CH → 451). Counsel wording pending |
+| Pause key holders; cancellation rehearsal | RUNBOOK §7; rehearsed on Anvil (scenario + e2e). Testnet rehearsal pending a funded 46630 key |
+| Post-close plan | RUNBOOK §8; `ops sweep` repeatable |
+| App hosting | `app/.env.example`, RUNBOOK §10, share card and WalletConnect need `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_WC_PROJECT_ID` |
+
+**User's items before launch**: Pons launch → $RIG address; treasury multisig; funded deployer,
+operator and keeper keys (env only); host for the compose stack and the app; WalletConnect project id;
+alert webhook; counsel review of `/terms`; Humane font licence; external audit
+(`docs/AUDIT-PACKAGE.md`); testnet rehearsal on 46630 with `DEPLOY_MOCKS`.
+
+**Known gaps**: ERC-8056 `balanceOfUI` display (no surface shows Stock Token balances yet); testnet
+explorer and faucet unconfirmed; geo-fence depends on the host's country header; Docker images
+build in CI but have not been run end to end on a host from this session.
