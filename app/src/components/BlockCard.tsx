@@ -21,16 +21,16 @@ export function BlockCard({ snap, now, myHash, compact = false }: { snap: Season
       <div className="flex justify-between items-end">
         <div className="flex flex-col gap-1">
           <Label>Block {b + 1} of {snap.params.blocks}</Label>
-          <div className="flex gap-3.5 items-baseline">
+          <div className="flex gap-3.5 items-baseline flex-wrap">
             <div className={`font-display uppercase tracking-[0.02em] font-bold ${compact ? "text-[64px]" : "text-[80px]"} leading-none`}>{TICKERS[b]}</div>
-            <Mono className="text-mine-muted text-[14px]">pool {pool} {TICKERS[b]}</Mono>
+            <Mono className="text-mine-muted text-[14px] whitespace-nowrap">pool {pool} {TICKERS[b]}</Mono>
           </div>
         </div>
-        <div className="flex flex-col gap-1 items-end"><Label>Shift</Label><Mono className="text-[22px]">{shiftInBlock}<span className="text-mine-muted"> / {spb}</span></Mono></div>
+        <div className="flex flex-col gap-1 items-end shrink-0"><Label>Shift</Label><Mono className="text-[22px] whitespace-nowrap">{shiftInBlock}<span className="text-mine-muted"> / {spb}</span></Mono></div>
       </div>
       <div className="flex flex-col gap-2.5">
         <Progress pct={pct} ticks={spb} head={!closed} />
-        <div className="flex justify-between"><Mono className="text-mine-muted text-[12px]">{pct.toFixed(0)}% of block work done</Mono><Mono className="text-mine-muted text-[12px]">total hash {formatHash(g.totalHash)}</Mono></div>
+        <div className="flex justify-between flex-wrap gap-x-3"><Mono className="text-mine-muted text-[12px] whitespace-nowrap">{pct.toFixed(0)}% of block work done</Mono><Mono className="text-mine-muted text-[12px] whitespace-nowrap">total hash {formatHash(g.totalHash)}</Mono></div>
       </div>
       <div className={`grid gap-4 ${compact ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
         <Stat label="Next shift" value={e.idle ? "paused" : formatEta(Number(e.toShiftEnd))} sub="est. at current hash" est />

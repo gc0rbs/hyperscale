@@ -18,7 +18,7 @@ export default function Terms() {
       <p>You may not use Stock Miner if you are a person or entity located in, incorporated in, or a resident of the United States of America, Canada, the United Kingdom or Switzerland, or any other jurisdiction where Robinhood Stock Tokens or this service are restricted. You are responsible for compliance with your local laws.</p>
 
       <H>2. What the game is</H>
-      <p>Stock Miner is a skill-and-attention game in which participants stake the RIG token to operate virtual rigs that earn fragments redeemable for Robinhood Stock Tokens. Rewards depend on the work your rig performs, never on the passage of time. The mechanics are described in full at <Link href="/how-it-works" className="text-signal">How rewards work</Link>, which forms part of these terms.</p>
+      <p>Stock Miner is a skill-and-attention game in which participants stake the RIG token to operate virtual rigs that earn fragments redeemable for Robinhood Stock Tokens. Rewards depend on the work your rig performs, never on the passage of time. The mechanics are described in full at <Link href="/how-it-works" className="text-signal inline-block py-2">How rewards work</Link>, which forms part of these terms.</p>
 
       <H>3. Burns are final</H>
       <p>RIG spent on upgrades is transferred to a burn address and cannot be recovered by anyone under any circumstances, including cancellation of a season.</p>
@@ -38,7 +38,7 @@ export default function Terms() {
       <H>8. No advice, no guarantee</H>
       <p>Nothing in the app is financial advice. Smart contracts are immutable once deployed and are used at your own risk. The operator does not guarantee uptime, price feeds, or the value of any token.</p>
 
-      <p className="mt-10"><Link href="/" className="text-signal">Back to the mine</Link></p>
+      <p className="mt-10"><Link href="/" className="text-signal inline-block py-2">Back to the mine</Link></p>
     </main>
   );
 }

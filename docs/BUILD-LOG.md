@@ -326,3 +326,14 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   and the long-haul card, `ShareButton` on the found banner.
 - CI `docker` job builds `ops/Dockerfile` and `indexer/Dockerfile`.
 - Checks: app check; Playwright season rerun.
+
+## 2026-09-04 – Mobile QA pass (390×844)
+
+- Scripted pass over every route (horizontal overflow, elements wider than the viewport, tap targets
+  under 32 px, unnamed buttons/links, console errors). Fixed: wallet buttons and chips wrapping,
+  season header row, block-card ticker row and captions, footer/inline links padded to tap size,
+  section links (Mine / Claim / Redeem / Leaderboard) were unreachable below `md`, now a scrolling row
+  under the header. Result: no overflow, no console errors on any route.
+- Still to do by hand on devices: wallet connect flows (WalletConnect modal), notification permission
+  prompt on iOS Safari (requires the site to be added to the home screen), colour-contrast audit of
+  the muted text on the panel background.

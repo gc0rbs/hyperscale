@@ -53,7 +53,7 @@ export default function HowItWorks() {
         <p>Robinhood Stock Tokens are not available to persons in the United States, Canada, the United Kingdom or Switzerland, and neither is Stock Miner. Stock Tokens are tokenized debt instruments that track a share price; they carry no voting or ownership rights. Nothing here is investment advice, and every duration shown in the app is an estimate.</p>
       </Sec>
 
-      <div className="flex gap-4 text-[14px]"><Link href="/terms" className="text-signal">Terms</Link><Link href="/" className="text-signal">Back to the mine</Link></div>
+      <div className="flex gap-4 text-[14px]"><Link href="/terms" className="text-signal inline-block py-2">Terms</Link><Link href="/" className="text-signal inline-block py-2">Back to the mine</Link></div>
     </main>
   );
 }
