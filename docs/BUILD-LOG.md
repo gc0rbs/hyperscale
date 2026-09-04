@@ -285,3 +285,5 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
 - Docs: PRD §10 (items 2, 4, 5 verified) and risks, 04 §5.1, 05, 07 risk register, 09 (Q1 closed),
   AUDIT-PACKAGE §1–2, RUNBOOK, chains README, DECISIONS.
 - Checks: forge 47 tests green, snapshot regenerated, interfaces match; ops 7 tests; app check green.
+- Feeds, USDG decimals and testnet RPC filled from chain and Chainlink data; vault staleness cap 26 h
+  (24 h heartbeat + margin); Vault test updated.

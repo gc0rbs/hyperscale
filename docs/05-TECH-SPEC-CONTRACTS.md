@@ -246,7 +246,7 @@ Permission: `activate` is by `msg.sender`; other rig functions require `rigs[rig
 fund(usdcReserve)           operator; pulls poolTokens[b] of stocks[b] for each b, and USDC; funded = true.
 redeem(id, fragments)       require eligibility.isEligible(msg.sender); require mine closed;
                             tokens = fragments × 1e18 / fragPerToken; burn; transfer stock.
-cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 1h); usdc = tokens × price × (1 − fee);
+cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 26h: 24h heartbeat + margin); usdc = tokens × price × (1 − fee);
                             require reserve ≥ usdc; burn; transfer USDC.
 sweep()                     after closeX + redemptionDays, or if cancelled: send all balances to treasury. Repeatable; an asset whose hook refuses the treasury stays and is retried.
 ```

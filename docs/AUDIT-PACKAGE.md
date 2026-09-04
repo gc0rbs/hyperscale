@@ -37,7 +37,8 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 4. **Stock Tokens** (Robinhood, verified 2026-09-04) are plain ERC-20s with an ERC-8056 multiplier and
    no transfer hook. The vault still treats them as opaque ERC-20s that may revert (defensive).
 5. **The oracle** (`ChainlinkOracle` over the per-token Chainlink feeds; feeds include the multiplier) is
-   trusted for `cashOut` only, with a 1 h staleness cap. In-kind redemption never depends on it. The
+   trusted for `cashOut` only, with a 26 h staleness cap (the feeds' 24 h heartbeat plus margin; a 0.5%
+   deviation triggers an update sooner). In-kind redemption never depends on it. The
    quote token is USDG; the vault reads its `decimals()` once at construction.
 6. **The eligibility adapter** decides who may receive Stock Tokens in kind. Mainnet uses
    `OpenEligibility` (the legal restriction is a front-end geo-fence); `AllowlistEligibility` remains

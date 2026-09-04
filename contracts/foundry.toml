@@ -38,4 +38,4 @@ bracket_spacing = false
 [rpc_endpoints]
 anvil = "http://127.0.0.1:8545"
 robinhood = "${ROBINHOOD_RPC}"
-robinhood_testnet = "${ROBINHOOD_TESTNET_RPC}"
+robinhood_testnet = "https://rpc.testnet.chain.robinhood.com"

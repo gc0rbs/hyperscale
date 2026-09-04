@@ -62,7 +62,7 @@ contract VaultTest is SeasonTestBase {
         vm.prank(ann);
         vm.expectRevert(IRedemptionVault.ReserveInsufficient.selector);
         vault.cashOut(1, 200 * 1_000_000);
-        vm.warp(block.timestamp + 2 hours);
+        vm.warp(block.timestamp + 27 hours); // past the 26 h cap (24 h heartbeat + margin)
         vm.prank(ann);
         vm.expectRevert(IRedemptionVault.StalePrice.selector);
         vault.cashOut(1, 1_000_000);

@@ -16,7 +16,7 @@ transferring to the dead address, and LP staking is off (`lpToken` zero, decided
 | `rig` | The $RIG ERC-20: the graduated Pons token. Any standard ERC-20 works; upgrade spend is transferred to `0x…dEaD`. `contracts/src/tokens/RIG.sol` is the test/dev token | §10.4 |
 | `lpToken`, `lpPairKind` | Leave zero: the Pons pool is Uniswap v3 (NFT positions), so LP staking is off in v1 (Q3 closed). The v2-shape sampling in `plan` stays for a future full-range wrapper token | §10.3 |
 | `usdc` | The quote token for `RedemptionVault.cashOut`: USDG on Robinhood Chain (`0x5fc5…d168`); the vault reads its `decimals()` at construction | §10.1 |
-| `oracle` | `ChainlinkOracle(stocks, feeds)` over the per-token Chainlink feeds (addresses from docs.chain.link, network robinhood; fill `feeds` first). Staleness is capped at 1h in the vault | §10.5 oracle |
+| `oracle` | `ChainlinkOracle(stocks, feeds)` over the per-token Chainlink feeds (addresses from docs.chain.link, network robinhood; fill `feeds` first). Feeds: 8 decimals, 24 h heartbeat, 0.5% deviation; the vault's staleness cap is 26 h | §10.5 oracle |
 | `eligibility` | `OpenEligibility`: Robinhood Stock Tokens have no on-chain restriction; the legal one (no U.S., CA, UK, CH persons) is a front-end geo-fence | §10.2, Q1 closed |
 | `treasury` | Receives activation and exit fees, is the pause guardian, receives sweeps. A multisig | docs/07 |
 | `stocks` | Canonical Robinhood Stock Token addresses (season 1: NVDA, MU, SNDK, QQQ, from `api.robinhood.com/rhj/assets`); `plan` orders blocks as listed in the params file | §10.2 |

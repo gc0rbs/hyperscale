@@ -18,7 +18,10 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
 
     uint256 internal constant WAD = 1e18;
     uint256 internal constant BPS = 10_000;
-    uint256 internal constant MAX_PRICE_AGE = 1 hours;
+    /// @dev Robinhood's Chainlink equity feeds update on a 0.5% deviation or a 24 h heartbeat, so a quiet
+    ///      price legitimately carries a day-old timestamp. Heartbeat plus margin; over a weekend the feed
+    ///      goes quiet and cash-out pauses until Monday's first update, in-kind redemption unaffected.
+    uint256 internal constant MAX_PRICE_AGE = 26 hours;
     /// @dev 1e18 USD → quote-token units; the quote token (USDG on Robinhood Chain, USDC elsewhere) is
     ///      read for `decimals()` once at construction.
     uint256 internal immutable USDC_SCALE;

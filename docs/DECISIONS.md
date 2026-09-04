@@ -176,3 +176,14 @@ neither is load-bearing for the accounting. Changes:
   under the NVDA name.
 - Still to fill before the testnet season: the four Chainlink feed addresses, USDG decimals check,
   testnet (46630) RPC and faucet.
+
+## 2026-09-04 – Feed facts and the cash-out staleness cap
+
+- Chainlink feeds for NVDA, MU, SNDK, QQQ (and SPY, ETH/USD, USDG/USD) on chain 4663 recorded in
+  `ops/chains/robinhood.json` from Chainlink's reference data; NVDA verified live. They are 8-decimal,
+  24 h heartbeat, 0.5% deviation feeds.
+- **Vault staleness cap raised from 1 h to 26 h.** With a 24 h heartbeat a stable price legitimately
+  carries a day-old timestamp; a 1 h cap would have refused most cash-outs. 26 h = heartbeat + margin;
+  the 0.5% deviation trigger bounds the price error a stale-but-fresh timestamp can hide. Over a
+  weekend the feed goes quiet, cash-out pauses, in-kind redemption is unaffected.
+- USDG confirmed 6 decimals on chain; testnet RPC confirmed at chain id 46630.
