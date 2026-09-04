@@ -27,3 +27,16 @@ export function formatEta(seconds: number): string {
   if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
   return `${m} min`;
 }
+
+export function formatRig(wei: bigint, digits = 0): string {
+  const whole = Number(wei / WAD);
+  return whole.toLocaleString("en-US", { maximumFractionDigits: digits });
+}
+
+export function formatInt(n: bigint | number): string {
+  return Number(n).toLocaleString("en-US");
+}
+
+export function short(addr: string): string {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
