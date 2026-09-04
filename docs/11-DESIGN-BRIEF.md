@@ -4,15 +4,18 @@ Companion to docs/06 (app spec) and docs/03 §8 (UX beats). Tokens live in `spec
 and `tokens.json`; the app imports them and never hard-codes a colour, font or radius. Mockups of the
 key states live in `design/artboards/` and on the design canvas linked from `design/README.md`.
 
-## 1. Direction: a clean fintech shell with an industrial mine inside
+## 1. Direction: one mineral-black world, a calm shell around a dense mine
 
-Two surfaces, deliberately different, sharing one accent pair and one type system.
+> **Revised 2026-09-04** (docs/DECISIONS.md): the shell moved from light to dark so the app continues the
+> landing page. The two-surface structure below stands; only the shell's tone changed.
+
+Two surfaces, deliberately different in density, sharing one ground, one accent pair and one type system.
 
 | | Shell | Mine |
 |---|---|---|
 | Where | navigation, activate flow, claim, redeem, leaderboard, seasons | the `/mine` game view |
-| Feel | calm, trustworthy, light. The stock-token prize has to feel legitimate. | dark, dense, mechanical. Coal-black panels, thin hairlines, amber energy. |
-| Background | warm off-white `--shell-bg` | coal `--mine-bg`, panels one step lighter |
+| Feel | calm, trustworthy, spacious. The stock-token prize has to feel legitimate. | dense, mechanical. Coal-black panels, thin hairlines, gold energy. |
+| Background | mineral black lifted one step, `--shell-bg` | the landing's mineral black `--mine-bg`, panels one step lighter |
 | Motion | almost none; state changes only | the only place the product moves: hash stream, progress bar, counters, heat |
 | Type | Readex Pro | Humane (ultra-condensed) for display headings, 36px and up; Readex Pro for everything else; IBM Plex Mono for every number |
 
@@ -68,8 +71,8 @@ visibly overclock (06) as an alternative to the dashboard mockups.
    and offers notifications. Same components, different arrangement.
 7. **Cosmetic means labelled.** The hash stream carries a persistent, quiet caption: "Cosmetic. Your
    rewards depend on hashrate, not on this." No exceptions.
-8. **Nothing on the mine page is rounder than 10px.** Rectangles, hairlines, chamfers. Pills belong
-   to the shell only (wallet chip, filters).
+8. **Nothing in the app is rounder than 10px.** Rectangles, hairlines, chamfers. No pills; the wallet
+   chip and filters use the 4px radius like every other control.
 
 ## 3. Type
 

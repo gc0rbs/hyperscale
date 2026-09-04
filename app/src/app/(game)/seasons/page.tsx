@@ -14,7 +14,7 @@ export default function SeasonsPage() {
   const n = Number((count.data?.[0]?.result as bigint | undefined) ?? 0n);
   const q = useReads(Array.from({ length: n }, (_, i) => ({ address: dep.factory, abi: factoryAbi, functionName: "season", args: [BigInt(i)] })), { enabled: n > 0 });
   return (
-    <main className="min-h-[calc(100vh-56px)] bg-shell-bg text-shell-fg px-4 md:px-8 py-10 max-w-[1100px] mx-auto flex flex-col gap-6">
+    <main className="min-h-[calc(100vh-var(--lp-header-height))] bg-shell-bg text-shell-fg px-4 md:px-8 py-10 max-w-[1100px] mx-auto flex flex-col gap-6">
       <div className="font-display uppercase tracking-[0.02em] text-[80px] font-bold leading-none">Seasons</div>
       <div className="bg-shell-card border border-shell-line rounded-lg">
         {(q.data ?? []).map((r, i) => {

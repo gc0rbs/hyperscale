@@ -1,4 +1,17 @@
 /* Marketing art direction: mineral black, parchment, amber energy and cyan signals. */
+:root, .lp-chrome { --lp-header-height: 100px; --lp-gold: #ffb33e; --lp-cyan: #45dce4; --lp-line: var(--shell-line, #392e27); --lp-muted: var(--shell-muted, #b5a89c); --lp-fg: var(--shell-fg, #f4ecdf); --lp-bg: var(--shell-bg, #100d0c); }
+/* App chrome: the landing header reused above the game (components/Nav.tsx). */
+.lp-chrome { color: var(--lp-fg); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; border-bottom: 1px solid var(--lp-line); }
+.lp-chrome .lp-header { position: relative; }
+.lp-desktop-nav a[aria-current="page"], .lp-mobile-nav a[aria-current="page"] { color: var(--lp-gold); }
+.lp-nav-cta:disabled { opacity: .5; cursor: default; }
+/* In the app chrome the CTA is a plain, smaller gold button: no metal gradient, no sheen. */
+.lp-chrome .lp-nav-cta { padding: 9px 14px; gap: 14px; font-size: 12px; background: var(--lp-gold); border-color: transparent; box-shadow: none; color: #1a1408; }
+.lp-chrome .lp-nav-cta::before, .lp-chrome .lp-nav-cta::after { display: none; }
+.lp-chrome .lp-nav-cta:hover { transform: none; background: #ffd187; box-shadow: none; }
+.lp-chrome .lp-nav-cta svg { width: 16px; height: 16px; }
+.lp-account-select { height: 40px; padding: 0 10px; font: 400 12px var(--font-data); color: var(--lp-fg); background: transparent; border: 1px solid var(--lp-line); border-radius: 0; }
+.lp-account-select:focus-visible { outline: 2px solid var(--lp-cyan); outline-offset: 2px; }
 .stock-landing { --lp-bg: #100d0c; --lp-panel: #1c1511; --lp-fg: #f4ecdf; --lp-muted: #b5a89c; --lp-line: #392e27; --lp-gold: #ffb33e; --lp-cyan: #45dce4; --lp-paper: #f1e7d6; --lp-header-height: 100px; color: var(--lp-fg); background: var(--lp-bg); overflow: clip; font-family: var(--font-ui); -webkit-font-smoothing: antialiased; }
 html.landing-active { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .stock-landing ::selection { background: var(--lp-gold); color: var(--lp-bg); }
@@ -180,7 +193,7 @@ html.lp-motion-ready .lp-reveal.is-visible > :where(h1,h2,p,.lp-feature,.lp-smal
 @keyframes lp-state-in { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: blur(0); } }
 @media (min-width: 1600px) { .stock-landing { max-width: 1900px; margin: 0 auto; } .lp-hero { min-height: max(850px, 100svh); } }
 @media (max-width: 1100px) {
- .stock-landing { --lp-header-height: 85px; } .lp-desktop-nav { gap: 24px; }
+ .stock-landing, .lp-chrome { --lp-header-height: 85px; } .lp-desktop-nav { gap: 24px; }
  .lp-hero { height: 100svh; min-height: max(735px, 100svh); } .lp-hero h1 { font-size: 16vw; }
  .lp-hero-art { right: -13%; width: 76%; } .lp-core-callout { right: 13%; } .lp-art-coordinate { right: 19%; font-size: 7px; } .lp-art-coordinate > span:last-child { display: none; }
  .lp-hero-copy > p { font-size: 13px; } .lp-hero-note { font-size: 7px; } .lp-hero-actions { gap: 22px; } .lp-button { gap: 34px; }
@@ -190,10 +203,10 @@ html.lp-motion-ready .lp-reveal.is-visible > :where(h1,h2,p,.lp-feature,.lp-smal
  .lp-mine-layout { gap: 5%; } .lp-mine-footnote > span:last-child { display: none; } .lp-collect-copy h2 { font-size: 115px; } .lp-token-art { min-height: 550px; }
 }
 @media (max-width: 760px) {
- .stock-landing { --lp-header-height: 78px; } .lp-header { margin: 0 6%; gap: 16px; } .lp-logo { gap: 8px; } .lp-logo > span { font-size: 34px; } .lp-logo svg { width: 27px; height: 27px; } .lp-header .lp-logo svg { width: 34px; height: 34px; }
+ .stock-landing, .lp-chrome { --lp-header-height: 78px; } .lp-header { margin: 0 6%; gap: 16px; } .lp-logo { gap: 8px; } .lp-logo > span { font-size: 34px; } .lp-logo svg { width: 27px; height: 27px; } .lp-header .lp-logo svg { width: 29px; height: 29px; }
  .lp-desktop-nav { display: none; } .lp-header-actions { margin-left: auto; gap: 20px; } .lp-buy-token { font-size: 11px; } .lp-nav-cta { padding: 9px 11px; gap: 10px; font-size: 9px; } .lp-nav-cta svg { width: 14px; height: 14px; }
  .lp-menu-toggle { display: block; width: 27px; height: 44px; font-size: 23px; font-weight: 300; }
- .lp-mobile-nav { position: absolute; display: flex; flex-direction: column; gap: 0; top: 77px; left: -7%; right: -7%; border-bottom: 1px solid var(--lp-line); background: #1b1410; padding: 10px 6%; z-index: 20; } .lp-mobile-nav a, .lp-mobile-nav .lp-buy-token { padding: 18px 4px; font-size: 13px; text-align: left; }
+ .lp-mobile-nav { position: absolute; display: flex; flex-direction: column; gap: 0; top: 77px; left: -7%; right: -7%; border-bottom: 1px solid var(--lp-line); background: var(--lp-bg); padding: 10px 6%; z-index: 20; } .lp-mobile-nav a, .lp-mobile-nav .lp-buy-token { padding: 18px 4px; font-size: 13px; text-align: left; }
  .lp-hero { margin: 0 6%; height: auto; min-height: 100svh; padding-top: 41px; padding-bottom: 85px; }
  .lp-hero-eyebrow { font-size: 8px; gap: 10px; margin-bottom: 29px; }
  .lp-hero h1 { font-size: clamp(130px, 28vw, 195px); line-height: .8; margin-bottom: 26px; } .lp-hero-copy > p { font-size: 12px; line-height: 1.85; }

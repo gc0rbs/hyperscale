@@ -1,33 +1,34 @@
 /* Stock Miner design tokens – source of truth for the app theme.
-   Two surfaces: the SHELL (navigation, claim, redeem, leaderboard: light, calm, fintech)
-   and the MINE (the game view: dark, dense, mechanical). Accents are shared.
-   Values are also listed in tokens.json for tooling. */
+   One world, two densities, both on the landing page's mineral black (docs/DECISIONS.md 2026-09-04):
+   the SHELL (navigation, claim, redeem, leaderboard: calm, spacious) and the MINE (the game view:
+   dense, mechanical). The shell is one step lighter than the mine so the seam still reads.
+   Accents are shared. Values are also listed in tokens.json for tooling. */
 
 :root {
-  /* ── Shell (light) ─────────────────────────────────────────── */
-  --shell-bg:        #FAF9F6;   /* warm off-white page */
-  --shell-card:      #FFFFFF;
-  --shell-fg:        #26241F;
-  --shell-muted:     #6F6C64;
-  --shell-line:      #E6E3DC;
-  --shell-line-strong: #CFCBC2;
+  /* ── Shell (dark, one step lighter than the mine) ──────────── */
+  --shell-bg:        #0D0E11;   /* blue-black, lifted one step */
+  --shell-card:      #131417;   /* near-black panel */
+  --shell-fg:        #F4ECDF;   /* = landing parchment */
+  --shell-muted:     #ADA9A3;
+  --shell-line:      #25262B;
+  --shell-line-strong: #34363D;
 
   /* ── Mine (dark) ───────────────────────────────────────────── */
-  --mine-bg:         #171512;   /* coal */
-  --mine-panel:      #1F1C18;
-  --mine-panel-2:    #26221D;
-  --mine-line:       #35312B;
-  --mine-fg:         #EDE9E1;
-  --mine-muted:      #9A948A;
-  --mine-dim:        #6B665D;
+  --mine-bg:         #0A0B0D;   /* blue-black ground (user: slightly bluish, not brown) */
+  --mine-panel:      #131417;
+  --mine-panel-2:    #191A1E;
+  --mine-line:       #25262B;
+  --mine-fg:         #F4ECDF;
+  --mine-muted:      #ADA9A3;
+  --mine-dim:        #6A6C74;
 
-  /* ── Accents (same chroma/lightness, different hue) ─────────── */
-  --ember:           #F2A93B;   /* energy: hashrate, overclock, burn */
+  /* ── Accents (landing gold and cyan) ────────────────────────── */
+  --ember:           #FFB33E;   /* energy: hashrate, overclock, burn */
   --ember-deep:      #C9821B;
-  --ember-tint:      rgba(242, 169, 59, 0.14);
-  --signal:          #45C4DB;   /* progress: ETA, found, claimable */
+  --ember-tint:      rgba(255, 179, 62, 0.14);
+  --signal:          #45DCE4;   /* progress: ETA, found, claimable */
   --signal-deep:     #1E97AD;
-  --signal-tint:     rgba(69, 196, 219, 0.14);
+  --signal-tint:     rgba(69, 220, 228, 0.14);
   --heat-hot:        #E5533D;   /* heat gauge top end and errors only */
 
   /* ── Type ──────────────────────────────────────────────────── */
@@ -46,7 +47,7 @@
   /* ── Spacing / radius / borders ─────────────────────────────── */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
-  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px;   /* no pill shapes in the mine */
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px;   /* no pill shapes anywhere in the app */
   --control-h: 40px; --control-h-lg: 48px;                 /* 44px+ tap targets on mobile */
 
   /* ── Motion ────────────────────────────────────────────────── */
