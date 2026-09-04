@@ -369,3 +369,13 @@ alert webhook; counsel review of `/terms`; external audit
 **Known gaps**: ERC-8056 `balanceOfUI` display (no surface shows Stock Token balances yet); testnet
 explorer and faucet unconfirmed; geo-fence depends on the host's country header; Docker images
 build in CI but have not been run end to end on a host from this session.
+
+## 2026-09-04 – Public docs (GitBook)
+
+- `gitbook/` with `.gitbook.yaml` root: welcome, getting started (3), playing (8), safety (9),
+  reference (6: parameters, formulas, addresses incl. Stock Tokens and Chainlink feeds, FAQ, glossary,
+  terms summary). Written from docs/03, 04, 05 §5.3, 07, AUDIT-PACKAGE §2/§3/§9 and the params
+  template; every number is the season default and labelled as such.
+- Root README brought up to date (Pons token, season-1 set, 3h/6h, links to gitbook/ and docs/).
+- RUNBOOK §10b: how the GitBook syncs and what to update per season.
+- To do when known: the audit report link, season contract addresses, the $RIG address.

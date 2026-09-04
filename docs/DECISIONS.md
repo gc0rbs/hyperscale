@@ -253,3 +253,12 @@ neither is load-bearing for the accounting. Changes:
   and keeper keys. A compromised treasury key can pause a season; if the pause outlives the grace
   period, players cancel it and recover deposits, so the blast radius is one season, not funds. Q17
   closed.
+
+## 2026-09-04 – Public docs are a GitBook synced from the repo
+
+- Player docs live in `gitbook/` and sync through GitBook Git Sync, so they version with the code
+  and a parameter change and its doc change land in one commit. Internal specs stay in `docs/`.
+- The safety section states which guarantees are enforced by code and which depend on people
+  (operator sizing, the pause key, Chainlink, Robinhood, the geo-fence), and reproduces the known
+  limitations from the audit package verbatim in plain language. Nothing is promised that the
+  contracts do not enforce.

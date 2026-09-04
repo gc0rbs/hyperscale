@@ -1,13 +1,16 @@
 # Stock Miner
 
-A progress-based "virtual mining" game on Robinhood Chain. Players stake **$RIG** or RIG/USDC LP
-tokens to activate virtual rigs, burn $RIG on GPU / cooling / overclock upgrades to raise their
-hashrate, and mine **Stock Token fragments** across four reward blocks. A block is *found* when the
-mine has accumulated its difficulty in hash-work; how long that takes depends only on how much hashrate
-is pointed at it. A busy mine finishes in a day, a quiet one runs for weeks. When the fourth block is
-found the mine closes permanently; stakes are returned and fragments are redeemed for tokenized stocks.
+A progress-based "virtual mining" game on Robinhood Chain. Players stake **$RIG** (a Pons-launched
+ERC-20) to activate virtual rigs, burn $RIG on GPU / cooling / overclock upgrades to raise their
+hashrate, and mine **Stock Token fragments** (NVDA, MU, SNDK, QQQ) across four reward blocks. A block
+is *found* when the mine has accumulated its difficulty in hash-work; how long that takes depends only
+on how much hashrate is pointed at it. Seasons are sized for about three hours with a six-hour cap.
+When the fourth block is found (or the cap is reached) the mine closes permanently; stakes are
+returned and fragments are redeemed for Stock Tokens or USDG.
 
-This repository currently holds the product and engineering specifications. No code yet.
+- **Public docs (players, safety):** `gitbook/` (GitBook Git Sync via `.gitbook.yaml`).
+- **Internal specs:** `docs/` (PRD, game design, tech specs, runbook, audit package, decisions).
+- **Contracts:** `contracts/`; **app:** `app/`; **indexer:** `indexer/`; **ops:** `ops/`; **simulation:** `sim/`.
 
 ## Developing
 

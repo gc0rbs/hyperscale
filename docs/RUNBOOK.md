@@ -210,6 +210,14 @@ rendered from live season state) and the WalletConnect metadata. `/how-it-works`
 and `/terms` carry the disclosures docs/07 §5 requires; counsel replaces the terms wording before
 launch.
 
+## 10b. Public docs (GitBook)
+
+The player-facing docs live in `gitbook/` and sync to GitBook through `.gitbook.yaml` at the repo
+root (GitBook → Space → Integrations → Git Sync, pick this repository and the default branch). Update
+them in the same commit as any player-visible change: parameters in `reference/season-parameters.md`,
+addresses in `reference/contracts-and-addresses.md`, and the audit link in `safety/testing-and-audits.md`
+once the report exists.
+
 ## 11. Release checklist
 
 See the last entry of `docs/BUILD-LOG.md` for the docs/08 §4 checklist with the current status of
