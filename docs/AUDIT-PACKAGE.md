@@ -197,7 +197,7 @@ FOUNDRY_PROFILE=campaign forge test --match-path 'test/invariant/*'          # 1
 DIFF_OUT=diff/traces.jsonl forge test --match-contract DiffTrace --fuzz-runs 100000
 cd ../sim && uv run python -m sim.diff ../contracts/diff/traces.jsonl       # 0 mismatches expected
 uv run --extra dev pytest                                # reference: 22 tests incl. the diff fixture
-cd ../contracts && forge snapshot --check                # gas regressions
+cd ../contracts && forge snapshot --check --no-match-test 'testFuzz|invariant_'   # gas regressions
 forge coverage --report summary --ir-minimum             # coverage (via-IR needs --ir-minimum)
 uv tool install slither-analyzer && slither . --filter-paths "lib/|test/|script/|mocks/"
 ```

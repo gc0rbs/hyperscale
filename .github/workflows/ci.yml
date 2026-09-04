@@ -25,7 +25,8 @@ jobs:
       - name: Test
         run: cd contracts && FOUNDRY_PROFILE=ci forge test -vv
       - name: Gas snapshot
-        run: cd contracts && forge snapshot --check || (echo "::warning::gas snapshot changed; run forge snapshot" && exit 1)
+        # fuzz/invariant gas varies with the seed; the snapshot covers deterministic tests only
+        run: cd contracts && forge snapshot --check --no-match-test 'testFuzz|invariant_' || (echo "::warning::gas snapshot changed; run forge snapshot --no-match-test 'testFuzz|invariant_'" && exit 1)
 
   slither:
     runs-on: ubuntu-latest

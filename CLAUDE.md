@@ -56,7 +56,7 @@ pnpm workspaces at the root; `pnpm -r check` runs every package's lint + typeche
 foundryup                                   # install/update Foundry (contracts)
 cd contracts && forge build && forge test   # unit + fuzz + invariant
 forge test --match-path 'test/scenario/*'   # scenarios incl. pace-replay
-forge snapshot --check                      # gas regressions
+forge snapshot --check --no-match-test 'testFuzz|invariant_'   # gas regressions (deterministic tests)
 FOUNDRY_PROFILE=campaign forge test --match-path 'test/invariant/*'   # 10M-call invariant campaign
 DIFF_OUT=diff/t.jsonl forge test --match-contract DiffTrace --fuzz-runs 100000 && cd ../sim && uv run python -m sim.diff ../contracts/diff/t.jsonl
 cd sim && uv run pytest && uv run python -m sim.run --params ../specs/params/season-default.json
