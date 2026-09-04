@@ -194,7 +194,8 @@ generate, 32 s to replay.
 **Invariant campaign**: handler widened with pause cycles, cancellation and emergency withdrawals;
 invariants 5 (found block pays its pool minus dust) and 9 (frozen after close) added, so all nine
 §5.3 invariants are now in the handler suite. Campaign profile 5,000 runs × depth 256 × 8 functions =
-10.24 M handler calls: CAMPAIGN_RESULT.
+10.24 M handler calls: **8 of 8 passed**, 2,660 s wall (13,927 s CPU), ~2% of calls reverted as
+expected (guards on paused or closed seasons).
 
 **Deployment**: `script/DeployFactory.s.sol`, `script/CreateSeason.s.sol` (reads the resolved season
 JSON; dry run without `--broadcast`); `ops plan` (24 h sampled LP weight, difficulty sizing, factory

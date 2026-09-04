@@ -112,7 +112,7 @@ upgrades, overclocks, claims, exits, withdrawals, time warps up to 2 days, guard
 
 Campaign config: `FOUNDRY_PROFILE=campaign forge test --match-path 'test/invariant/*'` =
 5,000 runs × depth 256 = 1,280,000 handler calls per invariant, 9 invariants in 8 functions,
-10.24 M calls. Result recorded in `docs/BUILD-LOG.md` (Phase 4 entry). Default profile: 256 × 64;
+10.24 M calls. Result 2026-09-04: 8 of 8 passed, 2,660 s wall time (13,927 s CPU). Default profile: 256 × 64;
 CI: 1,024 × 128.
 
 ## 6. Differential testing against the reference
