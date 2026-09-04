@@ -150,3 +150,28 @@ current without a poke; stored `shift`/`closeX` are only used by the estimator a
 - No Lighthouse / accessibility pass; mobile layout is responsive but only checked in Chromium.
 
 **Next**: Phase 4 (hardening) starts now on the same branch.
+
+## 2026-09-04 – Phase 4: hardening (plan)
+
+Inputs read: CLAUDE.md, docs/05 §9, docs/07, docs/08 §3–4, DECISIONS, the last three BUILD-LOG entries.
+No `security-review` skill is available in this account; the review is done by hand plus slither
+(installed via `uv tool install slither-analyzer`). `forge script --broadcast` works in the remote
+sandbox when `NO_PROXY=127.0.0.1,localhost` is set (the earlier "hang" was the agent proxy swallowing
+localhost RPC), so forge scripts are the canonical deploy path and ops scripts wrap them.
+
+Plan, in order:
+1. Manual review of `SeasonMine`, `RedemptionVault`, `SeasonFactory`, `StockFragments`, deployers;
+   slither triage. Fix what is real, log the rest in `docs/AUDIT-PACKAGE.md`.
+2. Differential fuzz: a Foundry fuzz test builds random action traces, runs them against
+   `SeasonMine`, and appends trace + outcome as JSONL; `python -m sim.diff` replays every line through
+   the Python reference and diffs state, action results and revert names. Target ≥ 100k traces.
+3. Invariant campaign: widen the handler (pause/unpause cycles, emergency withdraw, cancellation),
+   add invariants #5 (found block pays its pool minus dust) and #9 (nothing changes after close),
+   add a `campaign` profile and run ≥ 10M handler calls.
+4. Deployment: `DeployFactory.s.sol`, `CreateSeason.s.sol` (params from a resolved season JSON),
+   chain profiles (`anvil`, `robinhood-testnet` placeholders), `ops/plan.ts` (24h sampled RIG-per-LP,
+   difficulty sizing, factory-rule validation), `ops/fund.ts`, `ops/sweep.ts`.
+5. Dry run: Anvil "long" season (~1 week planned pace) driven by the scripts and keeper only, warped
+   to close, swept. Written up as `docs/RUNBOOK.md`.
+6. `docs/AUDIT-PACKAGE.md`, docs sync, DECISIONS entries, final BUILD-LOG entry with the docs/08 §4
+   release checklist.

@@ -22,6 +22,10 @@ contract MineHandler is Test {
     uint256 public ghostLpDeposits;
     uint256 public calls;
     bool public monotonic = true;
+    bool public frozenAfterClose = true;
+    bool internal wasClosed;
+    uint256 public pauses;
+    uint256 public emergencyWithdrawals;
 
     constructor(SeasonMine mine_, RIG rig_, MockERC20 lp_, uint64 openTime_) {
         mine = mine_;
@@ -141,6 +145,44 @@ contract MineHandler is Test {
         else ghostLpDeposits -= r.amount;
     }
 
+    /// @dev Guardian pauses, time passes, then either an emergency withdrawal (rarely, and only once
+    ///      the grace period has elapsed, which cancels an open season) or an unpause.
+    function pauseCycle(uint32 dt, uint256 which, uint8 mode) external track {
+        if (mine.paused()) return;
+        address guardian = mine.params().treasury;
+        vm.prank(guardian);
+        mine.pause();
+        pauses++;
+        dt = uint32(bound(dt, 1 hours, 12 hours));
+        vm.warp(block.timestamp + dt);
+        mine.poke();
+        if (mode % 32 == 0 && dt > 6 hours) {
+            _emergencyWithdraw(which);
+            return; // stays paused; cancelled if it was open
+        }
+        vm.prank(guardian);
+        mine.unpause();
+    }
+
+    /// @dev Only meaningful while paused past the grace period (after a cancelling pauseCycle).
+    function emergencyWithdraw(uint256 which) external track {
+        if (!mine.paused()) return;
+        _emergencyWithdraw(which);
+    }
+
+    function _emergencyWithdraw(uint256 which) internal {
+        (uint256 id, address o) = _pick(which);
+        if (o == address(0)) return;
+        ISeasonMine.Rig memory r = mine.rigs(id);
+        if (r.inactive) return;
+        vm.prank(o);
+        try mine.emergencyWithdraw(id) {
+            emergencyWithdrawals++;
+            if (r.asset == ISeasonMine.Asset.RIG) ghostRigDeposits -= r.amount;
+            else ghostLpDeposits -= r.amount;
+        } catch {}
+    }
+
     function rigCount() external view returns (uint256) {
         return rigIds.length;
     }
@@ -151,14 +193,18 @@ contract MineHandler is Test {
         owner = mine.rigs(id).owner;
     }
 
+    /// @dev Invariant 4 (monotone earnings) on every call; invariant 9 (nothing changes after close)
+    ///      once closeX is set: pending may only drop to 0 through a claim, which the claim path records.
     function _checkMonotone() internal {
         for (uint256 i; i < rigIds.length; ++i) {
             uint256 id = rigIds[i];
             for (uint8 b; b < 4; ++b) {
                 uint256 p = mine.pending(id, b);
                 if (p < lastPending[id][b]) monotonic = false;
+                if (wasClosed && p != lastPending[id][b]) frozenAfterClose = false;
                 lastPending[id][b] = p;
             }
         }
+        wasClosed = mine.closeX() != 0;
     }
 }

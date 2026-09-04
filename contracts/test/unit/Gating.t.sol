@@ -98,6 +98,9 @@ contract GatingTest is SeasonTestBase {
     function test_unfunded_season_cannot_open_and_lp_can_be_disabled() public {
         ISeasonMine.SeasonParams memory p = defaultParams();
         p.lpToken = address(0);
+        vm.expectRevert(abi.encodeWithSelector(ISeasonFactory.InvalidParams.selector, "lp config"));
+        factory.create(p, address(elig), address(oracle), address(usdc), false);
+        p.lpWeightPerToken = 0;
         (, address m,,) = factory.create(p, address(elig), address(oracle), address(usdc), false);
         SeasonMine m2 = SeasonMine(m);
         assertEq(uint8(m2.phase()), uint8(ISeasonMine.Phase.Funding));

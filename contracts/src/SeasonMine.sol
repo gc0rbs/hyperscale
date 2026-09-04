@@ -105,6 +105,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
             uint256 supplyWei = p.poolTokens[b] * p.fragPerToken; // fragment-wei (1e18-scaled fragments)
             _supplyWhole[b] = supplyWei / WAD;
             _rate[b] = Math.mulDiv(supplyWei, WAD, d);
+            if (_rate[b] == 0) revert InvalidParams("rate");
         }
         lastX = _openX;
     }
@@ -169,7 +170,6 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         uint8 tier = r.gpuTier;
         if (tier >= 5) revert MaxTier();
         uint256 cost = (uint256(r.weight) * _p.gpuCostBps[tier]) / BPS;
-        _burn(cost);
         uint8 newTier = tier + 1;
         uint256 newBase = (uint256(r.weight) * _p.gpuMultBps[newTier]) / BPS;
         uint256 delta = newBase - r.baseHash;
@@ -182,6 +182,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         r.gpuTier = newTier;
         r.baseHash = newBase.toUint128();
         totalHash += delta;
+        _burn(cost);
         emit GpuUpgraded(rigId, newTier, cost);
     }
 
@@ -196,8 +197,8 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         uint8 tier = r.coolingTier;
         if (tier >= 3) revert MaxTier();
         uint256 cost = (uint256(r.weight) * _p.coolCostBps[tier]) / BPS;
-        _burn(cost);
         r.coolingTier = tier + 1;
+        _burn(cost);
         emit CoolingUpgraded(rigId, tier + 1, cost);
     }
 
@@ -213,8 +214,6 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         uint256 heatAfter = uint256(r.heat) + _p.heatPerOc[r.coolingTier];
         if (heatAfter > _p.heatMax) revert HeatTooHigh();
         uint256 cost = (uint256(r.weight) * _p.ocCostBps) / BPS;
-        _burn(cost);
-
         r.heat = uint8(heatAfter);
         r.activeOc += 1;
         uint256 newOc = (uint256(r.baseHash) * _p.ocBoostBps * r.activeOc) / BPS;
@@ -224,6 +223,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
         ocExpiring[expiry] += newOc;
         totalHash = totalHash - r.ocHash + newOc;
         r.ocHash = newOc.toUint128();
+        _burn(cost);
         emit Overclocked(rigId, shift, r.activeOc, expiry, r.heat, cost);
     }
 
@@ -281,17 +281,21 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc ISeasonMine
-    /// @dev FR-S6: only after a pause has lasted longer than the grace period. Cancels the season.
-    ///      Unclaimed fragments are forfeited; the vault sweeps to treasury.
+    /// @dev FR-S6: only after a pause has lasted longer than the grace period. Cancels a season that
+    ///      is still open: unclaimed fragments are forfeited and the vault sweeps to treasury. A season
+    ///      that already closed is not cancelled; this then only returns the deposit (as `withdraw`
+    ///      would, but the pause blocks it) and earned fragments stay claimable after an unpause.
     function emergencyWithdraw(uint256 rigId) external nonReentrant {
         if (!paused() || block.timestamp <= uint256(pausedAt) + _p.pauseGraceSeconds) {
             revert PauseGraceNotElapsed();
         }
+        _updateGlobal();
         Rig storage r = _ownedActive(rigId);
-        if (!cancelled) {
+        if (!cancelled && closeX == 0) {
             cancelled = true;
             emit SeasonCancelled(uint64(block.timestamp));
         }
+        _settleRig(r);
         _removeHash(r);
         r.inactive = true;
         IERC20 token = r.asset == Asset.RIG ? _rig : _lp;

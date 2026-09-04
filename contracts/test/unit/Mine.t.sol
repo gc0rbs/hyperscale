@@ -162,4 +162,30 @@ contract MineUnitTest is SeasonTestBase {
         assertEq(rig.balanceOf(ann) - before, 1_000_000e18, "deposit back; activation fee not refunded");
         assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Cancelled));
     }
+
+    /// FR-S6 boundary: a pause that outlives the grace period after the season has already closed
+    /// must not cancel it. Deposits come back; earned fragments survive an unpause.
+    function test_FR_S6_emergency_withdraw_after_close_does_not_cancel() public {
+        fundPlayer(ann, 1_000_000e18, 0);
+        uint256 id = activateRig(ann, 1_000_000e18);
+        open();
+        warpToClose();
+        uint256 earned = mine.pending(id, 3);
+        assertGt(earned, 0);
+        vm.prank(treasury);
+        mine.pause();
+        vm.warp(block.timestamp + 6 hours + 1);
+        uint256 before = rig.balanceOf(ann);
+        vm.prank(ann);
+        mine.emergencyWithdraw(id);
+        assertEq(rig.balanceOf(ann) - before, 1_000_000e18);
+        assertFalse(mine.cancelled(), "closed season is not cancelled");
+        assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Closed));
+        assertEq(mine.pending(id, 3), earned, "earned fragments preserved");
+        vm.prank(treasury);
+        mine.unpause();
+        vm.prank(ann);
+        mine.claimAll(id);
+        assertEq(frags.balanceOf(ann, 3), earned);
+    }
 }

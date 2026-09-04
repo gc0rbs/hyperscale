@@ -102,6 +102,7 @@ contract SeasonFactory is ISeasonFactory {
             revert InvalidParams("array lengths");
         }
         if (p.shiftsPerBlock == 0 || p.shiftsPerBlock > 64) revert InvalidParams("shiftsPerBlock");
+        if (p.fragPerToken == 0) revert InvalidParams("fragPerToken");
         if (p.gpuMultBps[0] != BPS) revert InvalidParams("gpuMultBps[0]");
         for (uint256 i = 1; i < 6; ++i) {
             if (p.gpuMultBps[i] <= p.gpuMultBps[i - 1]) revert InvalidParams("gpuMultBps increasing");
@@ -116,10 +117,13 @@ contract SeasonFactory is ISeasonFactory {
                 revert InvalidParams("difficulty divisible by shiftsPerBlock");
             }
             if (p.poolTokens[b] == 0 || p.stocks[b] == address(0)) revert InvalidParams("pool");
+            // Rig.earned is uint128 fragment-wei; a block's whole pool must fit in one rig.
+            if (p.poolTokens[b] > type(uint128).max / p.fragPerToken) revert InvalidParams("pool too large");
         }
+        if (p.minStakeWeight == 0) revert InvalidParams("minStakeWeight");
+        if ((p.lpToken == address(0)) != (p.lpWeightPerToken == 0)) revert InvalidParams("lp config");
         if (p.maxDurationSeconds < 14 days) revert InvalidParams("maxDuration >= 14 days");
         if (p.openTime < block.timestamp + 48 hours) revert InvalidParams("openTime >= now + 48h");
-        if (p.fragPerToken == 0) revert InvalidParams("fragPerToken");
         if (p.rig == address(0) || p.treasury == address(0)) revert InvalidParams("addresses");
         if (p.activationFeeBps > 1000 || p.earlyExitFeeBps > 2000 || p.cashOutFeeBps > 1000) {
             revert InvalidParams("fees");

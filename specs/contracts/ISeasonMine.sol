@@ -123,8 +123,8 @@ interface ISeasonMine {
     function upgradeGpu(uint256 rigId) external;
     function upgradeCooling(uint256 rigId) external;
     function overclock(uint256 rigId) external;
-    function claim(uint256 rigId, uint8 blockIdx) external returns (uint256 fragments);
-    function claimAll(uint256 rigId) external returns (uint256[4] memory fragments);
+    function claim(uint256 rigId, uint8 blockIdx) external returns (uint256 minted);
+    function claimAll(uint256 rigId) external returns (uint256[4] memory minted);
     /// @notice Leave while the mine is open: deposit minus earlyExitFee returned, earned fragments kept.
     function exit(uint256 rigId) external;
     function withdraw(uint256 rigId) external;

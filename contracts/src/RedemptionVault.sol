@@ -103,8 +103,9 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
     }
 
     /// @inheritdoc IRedemptionVault
+    /// @dev Repeatable: a Stock Token whose transfer hook refuses the treasury (or returns false)
+    ///      keeps its balance here and is retried on the next call, so one asset never strands the rest.
     function sweep() external nonReentrant {
-        if (swept) revert WindowClosed();
         ISeasonMine m = ISeasonMine(mine);
         bool cancelled = m.phase() == ISeasonMine.Phase.Cancelled;
         if (!cancelled) {
@@ -118,7 +119,8 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
             uint256 bal = s.balanceOf(address(this));
             if (bal == 0) continue;
             // A stock token's transfer hook may refuse the treasury; do not let one asset block the rest.
-            try s.transfer(treasury, bal) {} catch {}
+            // slither-disable-next-line unchecked-transfer
+            try s.transfer(treasury, bal) returns (bool) {} catch {}
         }
         uint256 u = IERC20(usdc).balanceOf(address(this));
         if (u > 0) IERC20(usdc).safeTransfer(treasury, u);

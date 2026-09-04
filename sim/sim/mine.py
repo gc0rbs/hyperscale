@@ -472,7 +472,20 @@ class Mine:
     def _claimable(self, b: int) -> bool:
         return self.close_x != 0 or self.block_found(b)
 
+    def _claim_inner(self, r: Rig, b: int) -> int:
+        """Contract `_claim` without the pool check: whole fragments mintable for block b now."""
+        if not self._claimable(b):
+            raise NotFound(b)
+        return r.earned[b] // WAD
+
+    def _apply_claim(self, r: Rig, b: int, frag: int) -> None:
+        self.minted[b] += frag
+        r.earned[b] -= frag * WAD
+        r.claimed[b] += frag
+        r.claimed_mask |= 1 << b
+
     def claim(self, now_x: int, rig_id: int, b: int, owner: str | None = None) -> int:
+        """Mirror of `SeasonMine.claim`: settle, then mint block b or revert if nothing to mint."""
         p = self.p
         self._touch(now_x)
         self._update_global(now_x)
@@ -481,28 +494,38 @@ class Mine:
             raise NotOwner()
         if not r.inactive:
             self._settle_rig(r, now_x)
-        if not self._claimable(b):
-            raise NotFound(b)
-        if r.claimed_mask & (1 << b):
+        frag = self._claim_inner(r, b)
+        if frag == 0:
+            # The contract's `claim` reverts when there is nothing to mint (its error is AlreadyClaimed).
             raise AlreadyClaimed(b)
-        frag = r.earned[b] // WAD
         if self.minted[b] + frag > p.supply(b):
             raise PoolExhausted(b)
-        self.minted[b] += frag
-        r.earned[b] = 0
-        r.claimed[b] += frag
-        r.claimed_mask |= 1 << b
+        self._apply_claim(r, b, frag)
         return frag
 
     def claim_all(self, now_x: int, rig_id: int, owner: str | None = None) -> list[int]:
-        out = [0] * self.p.blocks
-        for b in range(self.p.blocks):
-            r = self.rigs[rig_id]
-            if self._claimable(b) and not (r.claimed_mask & (1 << b)):
-                out[b] = self.claim(now_x, rig_id, b, owner)
-            else:
-                self._touch(now_x)
-                self._update_global(now_x)
+        """Mirror of `SeasonMine.claimAll`: one settlement, every found block, all-or-nothing."""
+        p = self.p
+        self._touch(now_x)
+        self._update_global(now_x)
+        r = self.rigs[rig_id]
+        if owner is not None and r.owner != owner:
+            raise NotOwner()
+        if not r.inactive:
+            self._settle_rig(r, now_x)
+        out = [0] * p.blocks
+        for b in range(p.blocks):
+            if not self._claimable(b):
+                continue
+            frag = r.earned[b] // WAD
+            if frag == 0:
+                continue
+            if self.minted[b] + frag > p.supply(b):
+                raise PoolExhausted(b)  # the whole transaction reverts; nothing below is applied
+            out[b] = frag
+        for b in range(p.blocks):
+            if out[b]:
+                self._apply_claim(r, b, out[b])
         return out
 
     def exit(self, now_x: int, rig_id: int, owner: str | None = None) -> tuple[int, int]:

@@ -5,7 +5,7 @@ import {SeasonTestBase} from "../base/SeasonTestBase.sol";
 import {MineHandler} from "./MineHandler.sol";
 import {ISeasonMine} from "../../src/interfaces/ISeasonMine.sol";
 
-/// @dev docs/05 §5.3 invariants 1, 2, 3, 4, 7, 8 under random play with time warps.
+/// @dev docs/05 §5.3 invariants 1–9 under random play with time warps, pauses and cancellations.
 contract MineInvariantTest is SeasonTestBase {
     MineHandler internal h;
 
@@ -14,7 +14,7 @@ contract MineInvariantTest is SeasonTestBase {
         h = new MineHandler(mine, rig, lp, OPEN);
         rig.transfer(address(h), 400_000_000e18);
         targetContract(address(h));
-        bytes4[] memory sel = new bytes4[](7);
+        bytes4[] memory sel = new bytes4[](9);
         sel[0] = h.warp.selector;
         sel[1] = h.activate.selector;
         sel[2] = h.upgradeGpu.selector;
@@ -22,6 +22,8 @@ contract MineInvariantTest is SeasonTestBase {
         sel[4] = h.overclock.selector;
         sel[5] = h.claimAll.selector;
         sel[6] = h.exitRig.selector;
+        sel[7] = h.pauseCycle.selector;
+        sel[8] = h.emergencyWithdraw.selector;
         targetSelector(FuzzSelector({addr: address(h), selectors: sel}));
     }
 
@@ -62,6 +64,28 @@ contract MineInvariantTest is SeasonTestBase {
     /// Invariant 4: earnings are monotone regardless of when settlement happens.
     function invariant_4_earned_monotone() public view {
         assertTrue(h.monotonic());
+    }
+
+    /// Invariant 5: a found block has paid out its whole pool, minus at most one fragment of rounding
+    /// per rig (claims floor to whole fragments) and one for the rate floor. Exited, withdrawn and
+    /// emergency-withdrawn rigs keep their earned balance, so every rig counts.
+    function invariant_5_found_block_pays_its_pool() public view {
+        uint256 n = h.rigCount();
+        for (uint8 b; b < 4; ++b) {
+            if (mine.blockEndX(b) == 0) continue;
+            uint256 sum = mine.mintedFragments(b);
+            for (uint256 i; i < n; ++i) {
+                sum += mine.pending(h.rigIds(i), b);
+            }
+            uint256 supply = mine.fragmentSupply(b);
+            assertLe(sum, supply, "block over-paid");
+            assertGe(sum + n + 2, supply, "block under-paid beyond dust");
+        }
+    }
+
+    /// Invariant 9: after close, nothing accrues and nothing changes except through claims.
+    function invariant_9_frozen_after_close() public view {
+        assertTrue(h.frozenAfterClose());
     }
 
     /// Invariant 7: heat and overclock bounds.

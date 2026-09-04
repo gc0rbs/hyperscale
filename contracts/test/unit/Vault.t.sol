@@ -85,8 +85,11 @@ contract VaultTest is SeasonTestBase {
         assertEq(stocks[0].balanceOf(treasury), 5e18);
         assertEq(stocks[1].balanceOf(address(vault)), 6e18, "hook refused: stays, does not block");
         assertEq(usdc.balanceOf(treasury), 50_000e6);
-        vm.expectRevert(IRedemptionVault.WindowClosed.selector);
+        // Repeatable: once the issuer allowlists the treasury, the next sweep moves the rest.
+        stocks[1].setAllowed(treasury, true);
         vault.sweep();
+        assertEq(stocks[1].balanceOf(treasury), 6e18);
+        assertEq(stocks[1].balanceOf(address(vault)), 0);
     }
 
     function test_fund_once() public {

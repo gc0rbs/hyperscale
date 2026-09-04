@@ -23,10 +23,11 @@ interface IRedemptionVault {
     function redeem(uint256 id, uint256 fragments) external returns (uint256 tokens);
 
     /// @notice Burn fragments and receive USDC at oracle price minus cashOutFeeBps.
-    function cashOut(uint256 id, uint256 fragments) external returns (uint256 usdc);
+    function cashOut(uint256 id, uint256 fragments) external returns (uint256 usdcOut);
 
     /// @notice After closeX + redemptionDays (or cancellation), move all balances to treasury,
-    ///         including any pool left unmined by a fail-safe close.
+    ///         including any pool left unmined by a fail-safe close. Repeatable: an asset whose
+    ///         transfer hook refuses the treasury stays and is retried on the next call.
     function sweep() external;
 
     function funded() external view returns (bool);
@@ -35,7 +36,7 @@ interface IRedemptionVault {
     function oracle() external view returns (address);
     function usdc() external view returns (address);
     function reserve() external view returns (uint256);
-    function quoteCashOut(uint256 id, uint256 fragments) external view returns (uint256 usdc, uint256 fee);
+    function quoteCashOut(uint256 id, uint256 fragments) external view returns (uint256 usdcOut, uint256 fee);
 }
 
 /// @title IEligibility – who may receive Stock Tokens in kind
