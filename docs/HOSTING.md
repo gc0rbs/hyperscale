@@ -23,3 +23,8 @@ Using the installed here-now skill:
 For an update, append `--slug <existing-slug>`. The publisher uses local credentials if configured;
 otherwise anonymous hosting lasts 24 hours and the returned claim link can preserve the site.
 `.herenow/` contains private publishing state and is ignored by Git. Do not publish or commit it.
+
+The installed publisher version 1.6.4 replaces the saved entry on updates, although update responses
+omit the original claim credentials. Preserve the previous state in memory and merge its fields with
+the newly written entry after publishing, giving new fields precedence. Keep the file mode `0600`.
+This prevents losing anonymous update access. Do not expose the claim token in logs or commands.

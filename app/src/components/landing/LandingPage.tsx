@@ -33,7 +33,7 @@ const HERO_STARS = Array.from({ length: 240 }, (_, index) => {
 });
 
 export function LandingPage() {
-  const { hero, rig, mine, coreProgress, rigPower, reward } = useScrollChapters();
+  const { hero, rig, mine, coreProgress, rigPower, reward, rewardPose } = useScrollChapters();
   const [assembled, setAssembled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -94,7 +94,7 @@ export function LandingPage() {
         <section ref={mine} id="the-mine" className="lp-mine-section lp-section lp-scroll-story" aria-labelledby="mine-title">
           <div className="lp-story-stage"><div className="lp-mine-heading lp-reveal"><h2 id="mine-title">THE DEEPER YOU GO.<br /><span>THE MORE YOU DISCOVER.</span></h2><p>Everyone works through the same four blocks. Each one holds a different stock-token reward. Your rig’s work earns you little pieces of it. We call them fragments.</p></div>
           <div className="lp-mine-layout">
-            <div className="lp-block-art"><div key={reward} className="lp-block-index" aria-hidden="true">0{reward + 1}</div><MineralScene kind="reward" value={reward} label={`A luminous, faceted amber crystal representing the ${REWARDS[reward].ticker} reward block.`} /></div>
+            <div className="lp-block-art"><div key={reward} className="lp-block-index" aria-hidden="true">0{reward + 1}</div><MineralScene kind="reward" value={rewardPose} label={`A luminous, faceted amber crystal representing the ${REWARDS[reward].ticker} reward block.`} /></div>
             <div className="lp-block-list lp-reveal"><div className="lp-block-list-label">FOUR BLOCKS. ONE SHARED MINE.<span>01 — 04</span></div>{REWARDS.map((item, index) => <div key={item.ticker} className={`lp-block-option ${reward === index ? "is-selected" : ""}`} aria-current={reward === index ? "step" : undefined}><span className="lp-block-number">0{index + 1}</span><span className="lp-block-name"><strong>{item.ticker}</strong><small>{item.category}</small></span><span className="lp-block-arrow">{reward === index ? "↗" : "·"}</span></div>)}<p key={reward} className="lp-reward-detail">{REWARDS[reward].detail}</p></div>
           </div>
           <div className="lp-mine-footnote lp-reveal"><span className="lp-small-gem">◇</span><p><strong>Progress sets the pace.</strong> Blocks open through the mine’s combined work. The season ends after block four, or when its maximum duration is reached.</p><span>EVERY MOVE MATTERS.</span></div></div>

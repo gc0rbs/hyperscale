@@ -357,3 +357,25 @@ Updated https://witty-breeze-ggxj.here.now/ successfully on 2026-09-04 (anonymou
 Known gaps: gameplay still requires a live season/backend. Next 15's existing development hot-reload
 manifest issue recurred during edits; restarting the local preview restored normal rendering. The
 production export and hosted version are unaffected. No remaining work in this visual scope.
+
+### Continuous section scrolling
+
+Plan: remove sticky positioning and extra scroll distance from the rig/reward chapters. Map their
+animation progress directly from section entry at the viewport bottom to section exit at the top,
+retain each chapter's viewport-height minimum, and verify forward/reverse scrolling before updating
+the existing publish. Keep the hero's already unpinned entrance/exit behavior.
+Also vertically center the hero's copy and illustration within its available area. The rig/reward
+stage contents and redemption columns retain their middle alignment; tall mobile content flows
+naturally without clipping or forced centering beyond the viewport.
+
+Shipped: rig and reward sections now flow directly with the page. Removed sticky positioning,
+extra section travel and the rig's held animation intervals. Progress spans first section entry
+through complete exit; reward rotation is continuous while the active token advances through four
+states. The hero copy and illustration are centered on the same vertical axis within the usable
+section area. Full-viewport minimum heights, text entrances and reduced-motion support remain.
+
+Verification: full app check (lint, types, six tests) and production static export pass. At 1440×1000
+the rig/reward sections are each 1000 px, and a 200 px scroll moves the content exactly 200 px. At
+390×844 they are each 844 px, with a matching 180 px movement and no horizontal overflow. The four
+rewards advance and reverse correctly; browser errors are empty. Hero copy and art centers both
+measure 564 px in a usable area centered at 564 px. No remaining work in this refinement.
