@@ -73,6 +73,7 @@ fragments per unit of work, so a rig's income per second depends only on its own
 
 The mine has **no fixed duration**. Each block has a difficulty in hash-seconds and is found when the
 mine's total work reaches it. More total hashrate means blocks are found sooner, so the season's length
-is set by participation, not by a calendar. A fail-safe maximum duration exists only so stakes can never
-be locked forever, and players can leave early for a small fee. See
+is set by participation, not by a calendar. Seasons are sized to last a few hours and carry a hard cap
+(default 6h): if block 4 is not found by then the season ends, what was mined is paid and the rest rolls
+into the next season. Players can leave early for a small fee. See
 [docs/02-MINING-MODEL.md](docs/02-MINING-MODEL.md).

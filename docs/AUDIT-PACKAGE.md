@@ -55,7 +55,7 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 | Deployer of the deployers | `init(factory)` once | anything after init |
 
 **The one real power: pause.** A pause blocks every player action but not the clock. If it lasts
-longer than `pauseGraceSeconds` (default 6 h), any player may `emergencyWithdraw`, which returns
+longer than `pauseGraceSeconds` (default 30 min), any player may `emergencyWithdraw`, which returns
 their deposit and, if the season was still open, cancels it: unclaimed fragments are forfeited and
 the vault becomes sweepable to the treasury at once. A guardian can therefore end an open season
 early and the treasury receives the unredeemed pool. This is by design (FR-S6: the cancel path must
@@ -180,10 +180,14 @@ No high-severity finding. Full output: run the command above (the JSON is not co
 - **Gas.** `activate` ≈ 265k (first rig ≈ 285k), `claimAll` ≈ 440–480k, worst-case `poke` ≈ 960k when
   all 32 shifts are crossed in one call (the keeper keeps it short). Fine for an Arbitrum-family chain.
 - **`rigsOf(owner)`** is unbounded; only a view.
-- **LP weight is fixed at creation** from sampled reserves; a large post-creation change in pool
-  composition changes the RIG-equivalence of new LP rigs. `openTime ≥ creation + 48 h` limits the gap.
-- **Difficulty is never adjusted.** A badly sized season runs short or long (docs/04 §5.2 table); the
-  fail-safe closes it at `maxDurationSeconds`.
+- **LP weight is fixed at creation** from a 24 h sampled average of the pool; a large post-creation
+  change in pool composition changes the RIG-equivalence of new LP rigs. Seasons open soon after
+  creation, which keeps the gap short.
+- **Difficulty is never adjusted.** A badly sized season runs short, or ends at the cap
+  (`maxDurationSeconds`, default 2× the planned pace) with part of the pool unmined; that remainder is
+  swept and funds the next season. Rewards never depend on the cap.
+- **No minimum pre-open.** `openTime` may equal the creation time. Params are published at creation;
+  anyone can verify the hash before staking. The factory floor for `maxDuration` is 1 hour.
 
 ## 10. Tests, coverage, gas: how to run everything
 
@@ -225,7 +229,9 @@ instrumented build is not the audited build.
 Scenario tests encode the spec's worked example to the fragment (`WorkedExample`), replay the same
 progress-expressed season at 4×, 1× and 1/16× hash (`PaceReplay`, identical distributions), overclock
 one second before a boundary and retroactive-vs-incremental equality (`BoundaryExactness`),
-fail-safe close mid-block (`FailSafe`), and claim-then-silence (`ClaimThenSilence`).
+close at the cap mid-block (`FailSafe`, `CappedSeason`: a 6h season opening at creation, closed by the
+cap, partial pool redeemed, remainder swept and funding the next season), and claim-then-silence
+(`ClaimThenSilence`).
 
 ## 11. Questions we would like the auditor to focus on
 

@@ -112,9 +112,11 @@ Two things are still needed because participation is unknown in advance:
 1. **Difficulty sizing.** The operator sets `D_total` from expected hashrate and a target pace
    (doc 04 §5). Under- or over-shooting changes duration, not fairness. **No in-season difficulty
    adjustment**: it would reintroduce the calendar and give the operator a lever over a live game.
-2. **A fail-safe, not a schedule.** `maxDuration` (default 30× the planned pace, at least 14 days)
-   closes the mine so stakes can never be locked forever if participation collapses. Players can also
-   `exit` early for a small fee at any time. The UI never shows the fail-safe as an end date.
+2. **A cap, not a schedule.** `maxDuration` (default 2× the planned pace, at least 1 hour) ends the
+   season at that time if block 4 has not been found; what was mined is paid, the rest rolls into the
+   next season's pool. Rewards never depend on the cap: nothing is distributed "because time ran out",
+   so a whale arriving in the last minute is paid for one minute of work like anyone else. Players can
+   also `exit` early for a small fee at any time. The UI shows the cap as the latest possible end.
 
 ### Shifts
 

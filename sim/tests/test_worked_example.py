@@ -9,10 +9,12 @@ from fractions import Fraction
 from sim.mine import LP, RIG, WAD, ContractParams, Mine, advance_to_progress
 
 RIG_T = 10**18
+# docs/03 §7 sizes the example for 10M hash over 24h; the default params now plan 3h seasons.
+EXAMPLE_DIFF = [172_800_000_000, 216_000_000_000, 216_000_000_000, 259_200_000_000]
 
 
 def build_example(default_json, *, whole_seconds: bool):
-    cp = ContractParams.from_json(default_json, open_time=1_000_000)
+    cp = ContractParams.from_json(default_json, open_time=1_000_000, difficulty=EXAMPLE_DIFF)
     m = Mine(cp)
     t0 = Mine.sec(cp.open_time - 3600)
     ann = m.activate(t0, "ann", RIG, 5_000_000 * RIG_T)
@@ -70,7 +72,7 @@ def test_worked_example_whole_seconds_is_within_one_second_of_dust(default_json)
 
 def test_fragments_per_second_ui_number(default_json):
     """Ann sees r_1 × H = 202.6 fragments/s regardless of what Bo does."""
-    cp = ContractParams.from_json(default_json)
+    cp = ContractParams.from_json(default_json, difficulty=EXAMPLE_DIFF)
     rate = cp.pool_fragwei(0) * WAD // cp.difficulty[0]
     per_sec = Fraction(7_000_000 * RIG_T * rate, WAD * WAD)
     assert abs(float(per_sec) - 202.6) < 0.1  # doc rounds 202.546

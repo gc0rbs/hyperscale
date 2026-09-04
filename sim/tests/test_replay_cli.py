@@ -12,6 +12,7 @@ def trace():
     return {
         "params": DEFAULT,
         "openTime": 100,
+        "difficulty": [172_800_000_000, 216_000_000_000, 216_000_000_000, 259_200_000_000],  # 24h sizing
         "actions": [
             {"t": 0, "action": "activate", "args": {"owner": "ann", "asset": "RIG", "amount": str(5_000_000 * w), "label": "ann"}},
             {"t": 0, "action": "upgradeGpu", "args": {"rig": "ann"}},

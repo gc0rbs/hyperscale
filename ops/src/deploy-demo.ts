@@ -3,7 +3,9 @@
  * writes contracts/deployments/<chainId>.json. Used by the app's dev setup and Playwright.
  *
  *   pnpm --filter @stock-miner/ops deploy-demo            # defaults: pace 7200 s at 500k hash
- *   PACE_SECONDS=600 DEMO_HASH=500000 OPEN_DELAY=172800 pnpm --filter @stock-miner/ops deploy-demo
+ *   PACE_SECONDS=600 DEMO_HASH=500000 OPEN_DELAY=0 MAX_DURATION=2592000 pnpm --filter @stock-miner/ops deploy-demo
+ * Opens OPEN_DELAY + 120 s after deploy (default: two minutes). MAX_DURATION defaults to 30 days so time-warped
+ * demos never hit the cap; real seasons set it to a few hours (docs/04 §5.2).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -15,7 +17,8 @@ import { artifact, REPO_ROOT } from "./lib/artifacts.js";
 const RPC = process.env.RPC_URL ?? "http://127.0.0.1:8545";
 const PACE = BigInt(process.env.PACE_SECONDS ?? "7200");
 const DEMO_HASH = BigInt(process.env.DEMO_HASH ?? "500000");
-const OPEN_DELAY = BigInt(process.env.OPEN_DELAY ?? String(48 * 3600));
+const OPEN_DELAY = BigInt(process.env.OPEN_DELAY ?? "0");
+const MAX_DURATION = Number(process.env.MAX_DURATION ?? String(30 * 86400));
 const KEYS: Hex[] = [
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
   "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
@@ -93,15 +96,15 @@ export async function deployDemo(): Promise<Deployment> {
     const raw = (dTotal * bps) / 10_000n;
     return raw - (raw % 8n);
   });
-  const openTime = now + OPEN_DELAY + 3600n;
+  const openTime = now + OPEN_DELAY + 120n;
   const params = {
-    rig, lpToken: lp, lpWeightPerToken: 25n * 10n ** 17n, openTime, maxDurationSeconds: 30 * 86400,
+    rig, lpToken: lp, lpWeightPerToken: 25n * 10n ** 17n, openTime, maxDurationSeconds: MAX_DURATION,
     blocks: 4, shiftsPerBlock: 8, stocks, poolTokens: pool, difficulty, fragPerToken: 1_000_000n,
     minStakeWeight: 100n * WAD, activationFeeBps: 100, earlyExitFeeBps: 300,
     gpuMultBps: [10000, 12000, 14000, 16000, 18000, 20000], gpuCostBps: [400, 600, 900, 1300, 1800],
     coolCostBps: [300, 500, 800], heatPerOc: [40, 30, 22, 15], coolPerShift: [10, 18, 26, 36], heatMax: 100,
     ocCostBps: 200, ocBoostBps: 5000, maxActiveOc: 3, ocShiftSpan: 1, redemptionDays: 30, cashOutFeeBps: 100,
-    pauseGraceSeconds: 6 * 3600, treasury: account.address,
+    pauseGraceSeconds: 1800, treasury: account.address,
   };
   const fabi = artifact("SeasonFactory.sol", "SeasonFactory").abi;
   const { result } = await pub.simulateContract({ abi: fabi, address: factory, functionName: "create", args: [params, eligibility, oracle, usdc, false], account });

@@ -37,25 +37,27 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
-## 2. Plan the season (≥ 48 h before open)
+## 2. Plan the season
 
 ```
 pnpm plan --chain robinhood-testnet --name season-1 \
-     --expected-hash 10000000 --planned-seconds 86400 --open-time +176400 \
+     --expected-hash 10000000 --planned-seconds 10800 --max-duration 21600 --open-time +600 \
      [--lp-bonus-bps 12500] [--treasury 0x…] [--usdc-reserve 50000]
 ```
 
 - `--expected-hash` is expected total hash in RIG-equivalent units (stake weight × average
   multiplier; docs/04 §5.2). `--planned-seconds` is the pace you would like at that hash; duration is
-  an outcome, not a schedule.
+  an outcome. `--max-duration` is the cap (default 2× planned, ≥ 1h): the season ends there if block 4
+  is not found first. `--open-time +0` opens the season the moment it is created; the default `+600`
+  leaves ten minutes between planning and creation.
 - `lpWeightPerToken` comes from 24 hourly samples of the pair's reserves and supply
   (`2 × RIG reserve / LP supply`, times the bonus). Needs an archive RPC; `--allow-spot` accepts the
   latest block only, `--rig-per-lp <x>` overrides (Anvil).
 - The result is validated against the factory rules and written to `ops/seasons/<name>.json` with its
   `paramsHash` (keccak256 of the ABI-encoded `SeasonParams`, the same value `SeasonCreated` emits).
-  **Publish the file and the hash** (docs/08 §4 item 1).
+  **Publish the file and the hash** before open (docs/08 §4 item 1).
 
-Anvil dry run used: `pnpm plan --chain anvil --name dryrun --expected-hash 5000000 --planned-seconds 604800 --open-time +172900 --rig-per-lp 2`.
+Anvil dry run used a deliberately long season so warps could be exercised: `pnpm plan --chain anvil --name dryrun --expected-hash 5000000 --planned-seconds 604800 --max-duration 2592000 --open-time +172900 --rig-per-lp 2`.
 
 ## 3. Create the season
 
@@ -102,12 +104,12 @@ What "normal" looks like: `[keeper] ok shift=N next shift in ~Ns`, and `[watch] 
 
 | Alert | Meaning | Response |
 |---|---|---|
-| `est. Nh to close, > 5x planned` | hash far below expectation; season is a long haul | No contract action exists or should. Comms: "long haul" mode (app shows it). Watch early-exit rate. Fail-safe date is `openTime + maxDurationSeconds` (in the season file, `plan.failSafeIso`) |
-| `totalHash == 0 for over an hour` | everyone exited or nobody joined | Nothing accrues; the fail-safe will close the season. Comms |
-| `mine is PAUSED` | a guardian paused | Confirm it was intentional. The clock keeps running (work still accrues for everyone by timestamp; FR-S6 says pausing must not alter rewards); players cannot act until unpause. **Unpause within `pauseGraceSeconds` (default 6 h)** or any player may cancel the season |
+| `est. Nh to close, > 5x planned` | hash far below expectation; the cap will end the season | No contract action exists or should. Comms: say which blocks will pay. The cap is `openTime + maxDurationSeconds` (season file, `plan.capIso`) |
+| `totalHash == 0 for over an hour` | everyone exited or nobody joined | Nothing accrues; the cap will close the season. Comms |
+| `mine is PAUSED` | a guardian paused | Confirm it was intentional. The clock keeps running (work still accrues for everyone by timestamp; FR-S6 says pausing must not alter rewards); players cannot act until unpause. **Unpause within `pauseGraceSeconds` (default 30 min)** or any player may cancel the season |
 | `season CANCELLED` | a pause outlived the grace period and a player called `emergencyWithdraw` | Irreversible. Every player recovers their deposit with `emergencyWithdraw`; unclaimed fragments are forfeited; run `sweep` (works immediately) and publish the incident |
 | `USDC reserve below 1,000` | cash-out reserve nearly spent | In-kind redemption is unaffected. Top-ups are not possible (the vault is one-shot funded); update comms |
-| `ClosedByFailSafe` event | block 4 not found by the deadline | Expected behaviour for a dead season. Unmined pool is swept after the window. Post-mortem on sizing |
+| `ClosedByFailSafe` event | block 4 not found by the cap | A normal ending. Unmined pool is swept after the window and funds the next season. Size the next season from this one's hash |
 | keeper `error` lines | RPC or key problem | Restart with a healthy RPC; nothing on chain depends on it |
 
 ## 7. Pause and cancel procedure
@@ -130,7 +132,7 @@ grace period; their fragments stay claimable after an unpause).
 
 ## 8. Close, redemption, sweep
 
-- Close happens on its own when block 4 is found (or at the fail-safe). The keeper exits; the watcher
+- Close happens on its own when block 4 is found (or at the cap). The keeper exits; the watcher
   reports the reserve. Players `claimAll` and `withdraw`; the app guides them. Redemption
   (`redeem` in kind, `cashOut` to USDC) is open for `redemptionDays` after `closeX`.
 - Comms cadence (docs/08 §4): withdraw reminder at close, redemption reminders at day 1, 7, 25.
@@ -144,7 +146,7 @@ grace period; their fragments stay claimable after an unpause).
 anvil --block-time 1 &
 cd ops
 DEPLOY_MOCKS=true pnpm deploy-factory --broadcast
-pnpm plan --chain anvil --name dryrun --expected-hash 5000000 --planned-seconds 604800 --open-time +172900 --rig-per-lp 2
+pnpm plan --chain anvil --name dryrun --expected-hash 5000000 --planned-seconds 604800 --max-duration 2592000 --open-time +172900 --rig-per-lp 2
 SEASON_FILE=../ops/seasons/dryrun.json pnpm create-season --broadcast
 OPERATOR_KEY=<anvil #0> pnpm fund --mint-mocks
 pnpm play fund-players

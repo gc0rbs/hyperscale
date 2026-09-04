@@ -13,7 +13,7 @@ interface ISeasonFactory {
 
     /// @dev Validates: array lengths == blocks == 4; gpuMultBps strictly increasing from 10000;
     ///      ocBoostBps * maxActiveOc <= 30000; heatPerOc[c] <= heatMax; difficulty[b] > 0 and
-    ///      divisible by shiftsPerBlock; maxDurationSeconds >= 14 days; openTime >= block.timestamp + 48h.
+    ///      divisible by shiftsPerBlock; maxDurationSeconds >= 1 hour; openTime >= block.timestamp.
     function create(
         ISeasonMine.SeasonParams calldata params,
         address eligibility,

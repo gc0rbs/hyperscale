@@ -41,7 +41,7 @@ that only allow movement between allowlisted addresses. Consequences for this pr
 
 - Permanent close is prominent and repeated before every burn ("Upgrades are non-refundable; this mine
   closes when block 4 is found"). Duration is always shown as an estimate.
-- Early exit and its fee are explained at activation; the fail-safe close is disclosed as a fail-safe.
+- Early exit and its fee are explained at activation; the cap is disclosed as the latest possible end, with what happens to the unmined pool.
 - Break-even hints are labelled as estimates and never as returns.
 - Redemption window (30 days) and sweep behaviour are shown at claim time.
 - Pause/cancel path returns stakes; burned RIG is never refundable, which must be stated in terms.
@@ -59,8 +59,8 @@ that only allow movement between allowlisted addresses. Consequences for this pr
 | 7 | Whale dominates a season | Medium | Poor retention | Linear rewards mean no one is *excluded*; escalating block value; communicate share live | Product |
 | 8 | Front-end geo-fence bypass | High | Regulatory | Accept as residual; contracts permissionless by design | Legal |
 | 9 | Unclaimed prizes | Medium | Ops overhead | 30-day window, reminders, sweep policy | Ops |
-| 10 | Difficulty badly mis-sized | Medium | Season far shorter or longer than planned | Sizing rules (doc 04 §5.2), PreOpen TVL preview, early exit, fail-safe close; no in-season adjustment by design | Product |
-| 11 | Participation collapses mid-season | Low | Stakes idle for weeks | `exit` any time; fail-safe close returns stakes; comms | Ops |
+| 10 | Difficulty badly mis-sized | Medium | Season over in minutes, or ended by the cap with part of the pool unmined | Sizing rules (doc 04 §5.2), early exit, the cap; short frequent seasons make sizing a fast feedback loop; no in-season adjustment by design | Product |
+| 11 | Participation collapses mid-season | Low | Pool partly unmined | `exit` any time; the cap ends the season within hours; remainder rolls forward; comms | Ops |
 
 ## 7. Data and privacy
 

@@ -20,8 +20,9 @@ commit, and add a dated entry to `docs/DECISIONS.md` saying what changed and why
 ## Hard rules (never relax without an explicit user decision)
 - Season contracts are immutable: no proxies, no parameter setters, no difficulty adjustment, no
   admin power beyond `pause`.
-- No mechanic may depend on wall-clock intervals. Everything is work / shifts. `maxDuration` is a
-  fail-safe only.
+- No reward may accrue by wall-clock time. Everything is work / shifts. `maxDuration` is a hard cap that
+  ends a season early (a normal ending for a short season; the unmined pool rolls forward), never a
+  schedule that rewards depend on.
 - Rewards are `rigHash × seconds × ratePerWork[b]`, independent of other rigs. Do not reintroduce a
   reward-per-share accumulator.
 - `Σ minted fragments for block b ≤ poolTokens[b] × fragPerToken`, enforced in `claim`.

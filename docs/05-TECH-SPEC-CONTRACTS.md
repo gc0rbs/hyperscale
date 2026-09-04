@@ -56,7 +56,7 @@ struct SeasonParams {
     address lpToken;              // address(0) disables LP staking
     uint256 lpWeightPerToken;     // 1e18-scaled RIG-equivalent per LP token, bonus included
     uint64  openTime;
-    uint32  maxDurationSeconds;   // fail-safe close after openTime
+    uint32  maxDurationSeconds;   // cap: close after openTime if block 4 is not found first
     uint8   blocks;               // 4
     uint8   shiftsPerBlock;       // 8
     address[] stocks;             // stocks[b]
@@ -265,13 +265,13 @@ Eligibility adapters (doc 07): `OpenEligibility`, `MerkleEligibility`, `TokenHoo
 | Rounding | Boundaries floor to 1e-18 s; claims floor to whole fragments; `mintedFragments ≤ supply` enforced. |
 | Overflow | Hash is bounded by 1B RIG × 5x = 5e27; over the 30-day fail-safe that is ≤ 1.3e34 work, and × 1e18 rate scaling ≤ 1.3e52, far below `uint256`. `uint128` for per-rig hash; `mulDiv` for every three-factor product. |
 | Admin risk during a live season | Only `pause`; paused > grace → cancellation path. No parameter setters, no difficulty setter. |
-| LP weight manipulation | Fixed at deployment from a 24h TWAP; deployment ≥ 48h before `openTime`. |
+| LP weight manipulation | Fixed at creation from a 24h sampled average of the pool; a flash move at one block cannot skew it. A short gap between creation and open keeps it fresh. |
 | Sybil / many rigs | No benefit: pay is linear in hash; upgrades are percent-of-weight. |
 | Boundary timing games | Boundaries are computed retroactively from work; no transaction "finds" a block. Overclocking one second before a shift ends is allowed and merely wasteful; the UI warns. |
 | Exit/re-enter churn | Exit fee 3%; upgrades lost; nothing gained. |
-| Idle mine with stuck stakes | `exit` any time; fail-safe close. |
+| Idle mine with stuck stakes | `exit` any time; the cap closes the mine. |
 | Stock Token transfer hooks failing at redemption | `redeem` reverts cleanly; `cashOut` alternative; `sweep` uses `try/catch` per asset. |
-| Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `poolTokens[b] × fragPerToken ≤ uint128 max`; `minStakeWeight > 0`; `lpToken` and `lpWeightPerToken` both zero or both set; `maxDurationSeconds ≥ 14 days`; `openTime ≥ now + 48h`; fees capped. The mine constructor also rejects `ratePerWork == 0`. |
+| Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `poolTokens[b] × fragPerToken ≤ uint128 max`; `minStakeWeight > 0`; `lpToken` and `lpWeightPerToken` both zero or both set; `maxDurationSeconds ≥ 1 hour`; `openTime ≥ now`; fees capped. The mine constructor also rejects `ratePerWork == 0`. |
 | Reentrancy ordering | Burns and transfers are the last effect of every player action (checks-effects-interactions) on top of `nonReentrant`. |
 | Post-close pause | `emergencyWithdraw` never cancels a closed season; redemption stays open. |
 

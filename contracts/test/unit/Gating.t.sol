@@ -121,9 +121,14 @@ contract GatingTest is SeasonTestBase {
         );
         factory.create(p, address(elig), address(oracle), address(usdc), false);
         p = defaultParams();
-        p.openTime = uint64(block.timestamp + 1 hours);
+        p.openTime = uint64(block.timestamp - 1); // an open time now or in the future is fine; the past is not
+        vm.expectRevert(abi.encodeWithSelector(ISeasonFactory.InvalidParams.selector, "openTime in the past"));
+        factory.create(p, address(elig), address(oracle), address(usdc), false);
+        p = defaultParams();
+        p.openTime = uint64(block.timestamp);
+        p.maxDurationSeconds = 30 minutes;
         vm.expectRevert(
-            abi.encodeWithSelector(ISeasonFactory.InvalidParams.selector, "openTime >= now + 48h")
+            abi.encodeWithSelector(ISeasonFactory.InvalidParams.selector, "maxDuration >= 1 hour")
         );
         factory.create(p, address(elig), address(oracle), address(usdc), false);
         p = defaultParams();

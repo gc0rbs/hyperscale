@@ -64,7 +64,9 @@ Rules:
   anyone joining, leaving or overclocking changes it.
 - If a shift boundary was crossed between polls, the client shows the on-chain number after the next
   poll rather than extrapolating across the boundary.
-- The fail-safe date is shown only on a details page as "fail-safe close (not a schedule)".
+- The cap (`openTime + maxDuration`) is shown on the mine page from the start as the latest possible
+  end ("ends at block 4 or HH:MM, whichever first"); the closed screen says whether the cap or block 4
+  ended the season and what rolls forward.
 - The hashrate visualiser is a seeded PRNG producing hex strings at a speed proportional to `H`. It
   carries a persistent tooltip: *"Cosmetic. Rewards depend on your hashrate, not on this animation."*
 

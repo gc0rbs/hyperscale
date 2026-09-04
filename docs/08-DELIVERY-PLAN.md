@@ -9,7 +9,7 @@
 | M2 | App + indexer (parallel with M1 from week 2) | 5 weeks | All screens; Anvil time-warp e2e passes a full season; parity test green |
 | M3 | Audit + fixes | 3–4 weeks | External audit report, all high/medium fixed and re-reviewed; bug bounty live |
 | M4 | Testnet seasons | 2 weeks + 1 week analysis | Two public seasons on Robinhood Chain testnet with test stock tokens: one sized to run ~1 day, one sized to run ~1 week; ≥ 200 wallets; no invariant violations; retro doc |
-| M5 | Mainnet season 1 | 1 week | Funded, published 48h ahead, run, redeemed; metrics in PRD §12 reported |
+| M5 | Mainnet season 1 | 1 week | Funded, params published, run (≤ 6h), redeemed; metrics in PRD §12 reported |
 
 Total ≈ 14–16 weeks to season 1.
 
@@ -46,12 +46,12 @@ Total ≈ 14–16 weeks to season 1.
 
 ## 4. Launch checklist (season 1)
 
-- [ ] Params JSON published with hash, ≥ 48h before `openTime`
+- [ ] Params JSON published with hash before `openTime` (at creation for a season that opens at once)
 - [ ] `SeasonFactory.create` executed and contracts verified on explorer
 - [ ] Vault funded; `phase() == PreOpen`; app shows pool and USD value
 - [ ] Eligibility adapter tested with at least one known-eligible and one ineligible wallet
 - [ ] Oracle feeds live and within staleness bounds
-- [ ] Difficulty sized from PreOpen TVL preview and simulation; planned pace and fail-safe published
+- [ ] Difficulty sized from the previous season's hash and the simulation; planned pace and cap published
 - [ ] Keeper running (`keeper.ts`); alerting running (`watch.ts`); on-call rota sized to the estimated duration, extendable
 - [ ] Terms, "how rewards work" page, and geo-fence live
 - [ ] Pause key holders and procedure documented; cancellation rehearsal done on testnet

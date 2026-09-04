@@ -108,23 +108,24 @@ def test_runner_is_fast_and_reports(capsys):
     assert out["runs"] == 2 and len(out["results"]) == 2
 
 
-def test_fail_safe_when_turnout_collapses():
-    """A season sized for 10M hash with 40 tiny players ends at maxDuration with block 4 partial."""
+def test_fail_safe_when_turnout_collapses(default_json):
+    """A season sized for 10M hash with 40 tiny players ends at the cap (maxDuration) with block 4 partial."""
     res = simulate_season(scenario(players=40, stake_median=100, stake_sigma=0.1,
                                    mix={"passive": 1.0}), 1)
     assert res["fail_safe"] and res["shifts_completed"] < 32
     assert res["unminted_pct"] > 0.5
-    assert abs(res["duration_h"] - 720) < 1e-6
+    assert abs(res["duration_h"] - default_json["sizing"]["maxDurationSeconds"] / 3600) < 1e-6
 
 
 def test_sizing_recommendation(default_json):
     out = size(default_json, 7_000_000, turnout_sigma=0.3, samples=2000)
     rec = out["recommended"]
-    assert rec["difficultyTotal"] == int(out["hash_rig"]["p50"] * 86400)
+    assert rec["difficultyTotal"] == int(out["hash_rig"]["p50"] * out["plannedSeconds"])
     assert sum(rec["difficultyPerBlock"]) == rec["difficultyTotal"]
-    assert abs(rec["duration_h"]["p50"] - 24) < 0.5
-    assert rec["p_fail_safe"] == 0 and not out["flags"]
+    assert abs(rec["duration_h"]["p50"] - out["plannedSeconds"] / 3600) < 0.1
+    # a 2x cap leaves ~1-2% of turnout draws (sigma 0.3) ending at the cap: expected, not a flag-worthy risk
+    assert rec["p_fail_safe"] < 0.05
     tiny = size(default_json, 30_000, turnout_sigma=1.0, samples=2000)
     assert tiny["current"]["p_fail_safe"] > 0.5
-    assert any("FAIL-SAFE" in f or "THIN" in f for f in tiny["flags"]) or tiny["recommended"]["p_fail_safe"] > 0
+    assert any("CAP" in f or "THIN" in f for f in tiny["flags"]) or tiny["recommended"]["p_fail_safe"] > 0
     assert np.isfinite(tiny["current"]["duration_h"]["p95"])

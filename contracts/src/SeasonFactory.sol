@@ -122,8 +122,8 @@ contract SeasonFactory is ISeasonFactory {
         }
         if (p.minStakeWeight == 0) revert InvalidParams("minStakeWeight");
         if ((p.lpToken == address(0)) != (p.lpWeightPerToken == 0)) revert InvalidParams("lp config");
-        if (p.maxDurationSeconds < 14 days) revert InvalidParams("maxDuration >= 14 days");
-        if (p.openTime < block.timestamp + 48 hours) revert InvalidParams("openTime >= now + 48h");
+        if (p.maxDurationSeconds < 1 hours) revert InvalidParams("maxDuration >= 1 hour");
+        if (p.openTime < block.timestamp) revert InvalidParams("openTime in the past");
         if (p.rig == address(0) || p.treasury == address(0)) revert InvalidParams("addresses");
         if (p.activationFeeBps > 1000 || p.earlyExitFeeBps > 2000 || p.cashOutFeeBps > 1000) {
             revert InvalidParams("fees");

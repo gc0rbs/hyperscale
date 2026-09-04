@@ -10,7 +10,7 @@ export default async function globalSetup() {
   execSync("pnpm --filter @stock-miner/ops deploy-demo", {
     cwd: root,
     stdio: "inherit",
-    env: { ...process.env, PACE_SECONDS: process.env.E2E_PACE ?? "600", DEMO_HASH: "500000", OPEN_DELAY: String(48 * 3600) },
+    env: { ...process.env, PACE_SECONDS: process.env.E2E_PACE ?? "600", DEMO_HASH: "500000", OPEN_DELAY: "600" },
   });
   return async () => {
     anvil.kill();

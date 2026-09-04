@@ -23,11 +23,13 @@ season for. Doc 02 §5 explains why.
 Each block is divided into **8 shifts** of equal work (`D_b / 8`). Shifts are the heartbeat:
 overclocks expire and heat decays at shift ends. A season is 32 shifts.
 
-`openTime`, stocks, pools and difficulties are fixed at deployment and shown in the app at least 48h
-ahead, together with the planned pace ("sized for ~24h at 10M hash").
+`openTime`, stocks, pools and difficulties are fixed at creation and shown in the app from that moment,
+together with the planned pace ("sized for ~3h at 10M hash"). A season may open the second it is
+created; a pre-open lobby is optional.
 
-**Fail-safe.** `maxDuration` (default 30 days) closes the mine regardless of progress so stakes are
-never locked indefinitely. It is not part of the game and the app never shows it as an end date.
+**Cap.** `maxDuration` (default 2× the planned pace, so ~6h) ends the season if block 4 has not been
+found by then. It is shown from the start as the latest possible end. Fragments earned so far are
+claimable; the unmined remainder rolls into the next season's pool.
 
 ## 2. Rigs
 
@@ -152,11 +154,10 @@ D_1..4  = 20% / 25% / 25% / 30% of D_total
 |---|---|
 | 40M (4× planned) | ~6 hours |
 | 20M (2×) | ~12 hours |
-| 10M (planned) | ~24 hours |
-| 5M (½) | ~2 days |
-| 2M (⅕) | ~5 days |
-| 1M (⅒) | ~10 days |
-| 0.33M (below fail-safe threshold) | closes at the 30-day fail-safe with block 4 partly mined |
+| 10M (planned) | ~24 hours (this example) / ~3h with the default sizing |
+| 5M (½) | 2× planned, i.e. right at a 2× cap |
+| 2M (⅕) | the cap ends it with ~40% of the work done: blocks 1–2 paid, the rest rolls forward |
+| 1M (⅒) | the cap ends it with ~20% of the work done |
 
 The game is identical in every row; only the ETA differs.
 
@@ -203,9 +204,9 @@ the game. The app shows the break-even for every upgrade in RIG terms at the cur
    moment is not on a schedule.
 5. **Final shift of block 4**: "last overclocks" banner with pool value in USD.
 6. **Close**: mine sealed animation; withdraw + claim; redemption instructions with eligibility state.
-7. **Slow mine**: if ETA to the next block exceeds ~12h the UI switches to a calmer "long haul" layout
-   that emphasises GPU/cooling over overclocks and offers notifications instead of asking players to
-   watch.
+7. **Slow mine**: if the estimate says the cap will land before block 4, the block card says so
+   ("on current hash the cap ends this season after block 2") and the closed screen explains what was
+   paid and what rolls forward. The calmer "long haul" layout remains for the rare multi-day season.
 
 ## 9. Anti-patterns considered and rejected
 

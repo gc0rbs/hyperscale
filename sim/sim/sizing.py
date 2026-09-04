@@ -1,9 +1,9 @@
-"""Difficulty sizing tool (docs/04 §5.2) with a duration distribution and fail-safe check.
+"""Difficulty sizing tool (docs/04 §5.2) with a duration distribution and cap check.
 
     python -m sim.sizing --params ../specs/params/season-default.json
         [--stake-total 7e6 | --players 1000 --stake-median 3000 --stake-sigma 1.2]
         [--turnout-sigma 0.5] [--mults 1.0:0.45,1.4:0.25,2.0:0.2,3.5:0.1]
-        [--planned-seconds 86400] [--samples 4000] [--from-sim RUNS]
+        [--planned-seconds 10800] [--samples 4000] [--from-sim RUNS]
 
 The model: total stake weight is lognormal around the expectation (``--turnout-sigma`` is the
 log-sd of turnout uncertainty), and the season-average multiplier is a Dirichlet-perturbed mixture
@@ -12,7 +12,7 @@ lasts ``D_total / hash``. ``--from-sim`` instead measures the realised average m
 the agent model RUNS times (slower, more faithful).
 
 Recommendation: ``D_total = median(hash) × plannedSeconds``, then the duration percentiles at that
-difficulty, the hash floor below which the fail-safe fires, and the docs/04 §5.2 guidance bands.
+difficulty, the hash floor below which the cap ends the season early, and the docs/04 §5.2 guidance bands.
 """
 
 from __future__ import annotations
@@ -67,8 +67,8 @@ def size(
     realized_mults: np.ndarray | None = None,
 ) -> dict:
     sizing = data.get("sizing", {})
-    planned = int(planned_seconds or sizing.get("plannedSeconds", 86400))
-    max_duration = int(sizing.get("maxDurationSeconds", max(14 * 86400, 30 * planned)))
+    planned = int(planned_seconds or sizing.get("plannedSeconds", 10800))
+    max_duration = int(sizing.get("maxDurationSeconds", 2 * planned))
     mults = mults or DEFAULT_MULTS
     if realized_mults is not None:
         rng = np.random.default_rng(seed)
@@ -112,9 +112,9 @@ def size(
     recommended = stats(rec_d)
     flags = []
     if recommended["p_fail_safe"] > 0.01:
-        flags.append("FAIL-SAFE RISK: >1% of turnout draws close by maxDuration")
+        flags.append("CAP RISK: >1% of turnout draws end at maxDuration with part of the pool unmined")
     if recommended["hash_floor_vs_p5"] < 3:
-        flags.append("THIN MARGIN: p5 hash is < 3× the fail-safe floor; widen maxDuration or size down")
+        flags.append("THIN MARGIN: p5 hash is < 3× the cap floor; widen maxDuration or size down")
     if recommended["p_too_fast"] > 0.1:
         flags.append("TOO FAST: >10% of draws finish in < ¼ planned; consider a longer PreOpen")
     return {
@@ -136,7 +136,7 @@ def size(
             "expectedTotalHash": int(rec_hash),
             "difficultyTotal": rec_d,
             "difficultyPerBlock": per_block,
-            "maxDurationSeconds": max(14 * 86400, 30 * planned),
+            "maxDurationSeconds": 2 * planned,
             **recommended,
         },
         "current": current,

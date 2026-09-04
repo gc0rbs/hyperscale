@@ -55,7 +55,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
         <div className="flex flex-col gap-5">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3.5"><div className="font-display uppercase tracking-[0.02em] text-[22px] font-semibold">Season {dep.seasonId + 1}</div>{phaseChip}</div>
-            <Mono className="text-mine-muted text-[12px] hidden md:block">{closed ? `closed · redemption open` : `block ${curBlock + 1} pays ${(Number(snap.config.ratePerWork[curBlock]) / 1e18).toExponential(3)} frag per hash-second`}</Mono>
+            <Mono className="text-mine-muted text-[12px] hidden md:block">{closed ? `closed · redemption open` : `block ${curBlock + 1} pays ${(Number(snap.config.ratePerWork[curBlock]) / 1e18).toExponential(3)} frag per hash-second · ends at block 4 or ${capClock(snap)} at the latest`}</Mono>
           </div>
 
           {snap.phase === 1 && <PreOpenCard snap={snap} now={now} />}
@@ -148,19 +148,27 @@ function LongHaulCard({ snap, now, myHash }: { snap: SeasonSnapshot; now: bigint
   );
 }
 
+/** Wall-clock time of the season's cap (openTime + maxDuration), local HH:MM. */
+function capClock(snap: SeasonSnapshot) {
+  const t = Number(snap.params.openTime + snap.params.maxDurationSeconds) * 1000;
+  return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 function ClosedCard({ snap, now, closeX, shift }: { snap: SeasonSnapshot; now: bigint; closeX: bigint; shift: number }) {
   const closeSec = closeX / 10n ** 18n;
   const ran = Number(closeSec - snap.params.openTime);
+  const blocksFound = Math.min(Math.floor(shift / snap.params.shiftsPerBlock), 4);
+  const byCap = blocksFound < 4;
   return (
     <Panel className="flex flex-col gap-6 p-8 border-mine-dim">
-      <div className="flex items-center gap-4"><span aria-hidden>🔒</span><div className="font-display uppercase text-[36px] md:text-[48px] font-medium leading-none text-mine-muted">This mine has closed permanently</div></div>
+      <div className="flex items-center gap-4"><span aria-hidden>🔒</span><div className="font-display uppercase text-[36px] md:text-[48px] font-medium leading-none text-mine-muted">{byCap ? "Time's up: this mine has closed" : "This mine has closed permanently"}</div></div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat label="Season ran" value={formatEta(ran)} />
         <Stat label="Closed at" value={new Date(Number(closeSec) * 1000).toISOString().slice(0, 16).replace("T", " ")} />
-        <Stat label="Blocks found" value={`${Math.min(Math.floor(shift / snap.params.shiftsPerBlock), 4)} / 4`} />
+        <Stat label="Blocks found" value={`${blocksFound} / 4`} />
         <Stat label="Redemption" value={formatEta(Number(closeSec) + 30 * 86400 - Number(now))} sub="window remaining" />
       </div>
-      <div className="text-mine-muted text-[13px]">Withdraw your deposits from each rig below, claim block 4, then redeem fragments.</div>
+      <div className="text-mine-muted text-[13px]">{byCap ? `The cap ended the season with block ${blocksFound + 1} part-mined. Everything earned so far is claimable; the unmined remainder rolls into the next season's pool. Withdraw your deposits below, claim, then redeem.` : "Withdraw your deposits from each rig below, claim block 4, then redeem fragments."}</div>
     </Panel>
   );
 }

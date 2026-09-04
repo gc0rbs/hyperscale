@@ -242,3 +242,21 @@ season at pace 300, parity vs Anvil; indexer codegen + tsc; ops 6 tests.
 
 **Next**: decide Q1, Q3 (and Q20), fill `ops/chains/robinhood-testnet.json`, run RUNBOOK §1–§8 on
 the testnet, hand `docs/AUDIT-PACKAGE.md` to the auditor.
+
+## 2026-09-04 – Short seasons: no minimum pre-open, cap as a normal ending
+
+User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
+- `SeasonFactory`: `openTime ≥ now` (was ≥ now + 48h), `maxDuration ≥ 1h` (was 14 days). Spec NatSpec,
+  `ops/plan` validation and tests updated; new scenario `CappedSeason.t.sol` (6h season opening at
+  creation, 1M hash instead of 5M, closed by the cap after block 1 + 4/5 of block 2, fragments claimed
+  and redeemed, remainder swept and funding season 2). Note for test authors: via-IR may reuse a
+  `TIMESTAMP` read across `vm.warp` within one function; use `vm.getBlockTimestamp()`.
+- Defaults: 3h plan / 6h cap / 30 min pause grace. Sim sizing defaults and tests follow; the docs/03
+  worked example keeps 24h numbers via explicit difficulty.
+- Ops: `plan --max-duration`, `--open-time +600` default; demo deployer `OPEN_DELAY=0` +2 min,
+  `MAX_DURATION` env; e2e uses a 10-minute pre-open. Dry-run commands in the runbook updated.
+- App: cap time in the mine header; closed screen for capped seasons.
+- Docs: CLAUDE.md hard rule, PRD (FR-S2, FR-S7, FR-A6, NFR-6, risks, metrics), 02, 03, 04 §5.1–5.2, §6,
+  params table, 05, 06, 07, 08, 09 (Q9, Q13, Q14), GLOSSARY, README, RUNBOOK, AUDIT-PACKAGE.
+- Checks: forge 43 tests + 8 invariants, snapshot regenerated, interfaces match; sim 22 tests; ops 6;
+  app check, Playwright season (pace 300), parity.

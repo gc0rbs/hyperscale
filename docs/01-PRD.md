@@ -103,12 +103,12 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 
 ### 7.1 Season lifecycle
 - **FR-S1** A season MUST be a separately deployed, immutable mine with fixed parameters (`specs/params`).
-- **FR-S2** A season MUST have the phases `Funding` → `PreOpen` → `Open` → `Closed`. `Open` starts at `openTime`. `Closed` starts when block 4 is found, or at `openTime + maxDuration` (fail-safe), whichever is first. No admin action may move a phase.
+- **FR-S2** A season MUST have the phases `Funding` → `PreOpen` → `Open` → `Closed`. `Open` starts at `openTime`. `Closed` starts when block 4 is found, or at `openTime + maxDuration` (the cap), whichever is first. `PreOpen` may be empty (`openTime` = creation time). No admin action may move a phase.
 - **FR-S3** Block *b* is found at the exact instant cumulative work in block *b* reaches `difficulty[b]`. The contract MUST compute this instant deterministically from the piecewise-constant total hashrate, even if no transaction happened at that instant.
 - **FR-S4** The mine MUST refuse `activate`, `upgrade`, `overclock` after close. It MUST refuse fee-free `withdraw` before close.
 - **FR-S5** The mine MUST NOT open unless the redemption vault holds the full advertised Stock Token pool for all four blocks. If funding fails, all pre-open stakes MUST be withdrawable fee-free and activation fees refundable.
 - **FR-S6** Admin powers during `Open` MUST be limited to `pause` (emergency stop). Pausing MUST NOT alter rewards or difficulty; if paused for longer than a fixed grace period, `emergencyWithdraw` MUST return stakes and cancel the season.
-- **FR-S7** The fail-safe `maxDuration` MUST be long relative to the planned pace (default 30× the planned duration, minimum 14 days) and MUST be disclosed as a fail-safe, not a schedule.
+- **FR-S7** `maxDuration` is a hard cap chosen per season (default 2× the planned pace, minimum 1 hour; seasons are meant to last a few hours). It MUST be shown from the start as the latest possible end ("ends at block 4 or HH:MM, whichever first"); rewards never depend on it. A season ended by the cap is a normal ending: fragments earned so far are claimable and the unmined pool is swept to the treasury, which funds the next season with it.
 
 ### 7.2 Rigs and staking
 - **FR-R1** A player MAY own any number of rigs. Each rig is a single deposit of exactly one asset (RIG or the season's LP token).
@@ -147,7 +147,7 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 - **FR-A3** Every transaction preview MUST show RIG to be burned, the resulting hashrate, and the mine progress the purchase covers.
 - **FR-A4** Clear phase UX: pre-open, open, closed, redemption; and an explicit "this mine has closed permanently" state.
 - **FR-A5** Eligibility check for Stock Token redemption is shown before the user attempts to redeem.
-- **FR-A6** Duration messaging MUST be "estimated" everywhere; the app MUST never present the fail-safe date as an end date.
+- **FR-A6** Duration messaging MUST be "estimated" everywhere, with the cap shown as the latest possible end, never as the expected one.
 
 ## 8. Non-functional requirements
 
@@ -158,7 +158,7 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 | NFR-3 | External audit of contracts before mainnet; public bug bounty. |
 | NFR-4 | App works with no indexer (degraded: no leaderboard) – all critical reads go straight to the RPC. |
 | NFR-5 | No mechanic depends on wall-clock intervals shorter than one second; boundary timestamps are stored as 1e18 fixed-point so work is exact. |
-| NFR-6 | Parameters published at least 48h before a season opens; the app reads them from chain, not config. |
+| NFR-6 | Parameters and their hash published before a season opens, as early as the launch plan allows (a season may open the moment it is created); the app reads them from chain, not config. |
 | NFR-7 | Mobile-first UI; no client compute beyond animation. |
 
 ## 9. Dependencies and risks (summary)
@@ -167,10 +167,10 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 |---|---|---|
 | Stock Tokens on Robinhood Chain have transfer restrictions (KYC allowlist) | Vault cannot hold/transfer them; redemption impossible | Partnership + allowlisting of the vault; or use a permissionless issuer (e.g. xStocks) for season 1; cash-out fallback. Doc 07. |
 | Fragments could be characterised as securities/derivatives | Legal exposure | Non-transferable fragments in v1; counsel review; geo-fence the front-end. Doc 07. |
-| Difficulty set far too high for actual participation | Season drags for weeks; players disengage | Difficulty sizing rules (doc 04 §5), pre-open TVL visibility, early exit, fail-safe close. Doc 02 §5. |
-| Difficulty set far too low | Season over in an hour; latecomers miss it | Same sizing rules; PreOpen window gives everyone the same start. |
+| Difficulty set far too high for actual participation | Season ends at the cap with part of the pool unmined | Difficulty sizing rules (doc 04 §5), early exit, the cap; the remainder rolls into the next season. Doc 02 §5. |
+| Difficulty set far too low | Season over in minutes; latecomers miss it | Same sizing rules; short seasons run often, so the next one is never far away. |
 | Prize pool must be pre-funded with real assets | Cash cost per season | Treasury funding model, activation fee, pool sizing rules. Doc 04. |
-| LP weight manipulation before season | Unfair LP multiplier | Weight fixed from TWAP at season creation, ≥ 48h before open. |
+| LP weight manipulation before season | Unfair LP multiplier | Weight fixed at creation from a 24h sampled average of the pool (a flash move at one block cannot skew it); the shorter the gap to open, the less stale it is. |
 | Chain immaturity (RPC, explorer, DEX availability) | Delivery slip | Verify assumptions in §10 in the discovery milestone. |
 
 ## 10. Assumptions to verify (discovery milestone)
@@ -198,5 +198,5 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 | Median rigs per wallet | 1–2 |
 | Prize pool redeemed within window | ≥ 60% |
 | Early exits as share of rigs | ≤ 10% |
-| Fail-safe close triggered | never |
+| Seasons ended by the cap | ≤ 25% (sizing feedback loop working) |
 | Critical incidents | 0 |
