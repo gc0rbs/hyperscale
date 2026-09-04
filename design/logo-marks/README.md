@@ -90,3 +90,36 @@ From round 1 still standing: **03** (tick bar), **16** (candlestick pickaxe).
 Recommended pair for the drawing pass: **24 + 33**. The pickaxe is the brand mark (what the player does),
 the four-shard gem is the reward object the brief already approved. 23 and 40 are the same idea in
 two materials, so the app icon can be whichever of the two the mark becomes.
+
+## Round 3 – wide and fresh, via /adhd (41–52)
+
+Rounds 1 and 2 were rejected: too literal. Round 3 came from a divergent ideation pass (five isolated
+frames: 10-year-old, inversion, markets, remove-the-assumption, biology; 30 ideas scored on novelty,
+viability, fit; top three deepened). The full ideation record is in the session summary below the table.
+Twelve marks were generated from the shortlist. Contact sheet: `00-contact-sheet-round3.png`.
+
+| # | Concept | Origin | Read |
+|---|---|---|---|
+| 41 | Array literal `[•••○]`: chamfered brackets, three cyan cells, one hollow | remove-the-assumption | The mark is the game's state counter. Reads at a glance, no mining cliché, the hollow cell carries "one to go". Brackets came out heavy; thin them. |
+| 42 | Same array with an amber input token outside the brackets | 41 deepened | Ember outside, signal inside: the accent rule drawn as a diagram. The per-cell bracket shapes are noise; keep one pair of brackets. |
+| 43 | 2×2 cells, three cyan, one hollow, no brackets | 41 favicon | Works at 16px, but alone it reads as a generic app grid or Microsoft. Needs the brackets or the wordmark nearby. |
+| 44 | Four-arc progress dial, amber notch at 12 | inversion (sealed shaft) | The model dropped the dark-on-dark square and hole, leaving only the ring. What survived is still good: a broken cyan ring with an amber hand. |
+| 45 | Sealed forever: closed ring with a bolted bar, no amber | 44 deepened | The end state. Calm and final. Only a variant, not the primary mark. |
+| 46 | Shaft in section: cyan seal line, amber lamp | 44 deepened | Too little survived the render; the shaft itself is invisible. Would need to be drawn by hand to judge. |
+| 47 | Amber nodule with a cyan up-tick inclusion | biology (amber inclusion) | Strongest single object of all three rounds: the palette name, the stock tick, and "energy preserves a fragment" in one flat shape. The nodule's chamfers read as a folded ribbon; square it up. |
+| 48 | Split nodule with the up-tick straddling the cut | 47 deepened | The "block 4 found" state of 47. The tick across the seam is a nice detail. |
+| 49 | SM monogram cut out of an amber hexagon | 47 deepened | Reads as a gaming-clan badge. Drop. |
+| 50 | Pit-trader hand, four fingers, one counted | markets | Most human idea in the set; the horse silhouette the model added is a hallucination. As a pure four-finger pictogram it could be a campaign device, not the mark. |
+| 51 | Certificate torn in four, one piece amber | markets | The story is right, the drawing is a jigsaw puzzle. Drop as a mark. |
+| 52 | Geode split into a lowercase m | biology | Elegant, unexpected, and it says "miner" typographically. Reads as the letter first and a split second, which is the right order. |
+
+### Shortlist after three rounds
+
+1. **47 amber inclusion** with 48 as its end state. One object, both accents, meaning built in.
+2. **41 array literal** with 43 as the favicon. The mechanic as notation; live state in-app.
+3. **44 broken dial** with 45 as its end state. Almost nothing, and still says progress and seal.
+4. **52 geode m** as a typographic alternative if a letterform is preferred.
+
+Recommended: **47**. Draw it by hand on the 32-unit grid with a squarer nodule, test the up-tick at 16px,
+and pair it with the Humane wordmark. Keep 41 as the in-app block counter regardless of the logo choice;
+it is the tick bar the brief already approved, restated as an array.
