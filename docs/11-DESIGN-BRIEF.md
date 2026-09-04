@@ -14,7 +14,7 @@ Two surfaces, deliberately different, sharing one accent pair and one type syste
 | Feel | calm, trustworthy, light. The stock-token prize has to feel legitimate. | dark, dense, mechanical. Coal-black panels, thin hairlines, amber energy. |
 | Background | warm off-white `--shell-bg` | coal `--mine-bg`, panels one step lighter |
 | Motion | almost none; state changes only | the only place the product moves: hash stream, progress bar, counters, heat |
-| Type | IBM Plex Sans | Barlow Condensed 600 for headings, IBM Plex Mono for every number |
+| Type | Readex Pro | Humane (ultra-condensed) for display headings, 36px and up; Readex Pro for everything else; IBM Plex Mono for every number |
 
 The seam is intentional: leaving the mine for the claim page should feel like walking out of the pit
 into the office.
@@ -73,11 +73,29 @@ visibly overclock (06) as an alternative to the dashboard mockups.
 
 ## 3. Type
 
-| Role | Face | Sizes | Notes |
-|---|---|---|---|
-| Display (mine headings, block names, the big ETA) | Barlow Condensed 600, uppercase, tracking +0.02em; 500 at 48px and above | 32 / 48 / 72 | Never 700: the condensed face gets heavy fast. Fallback Arial Narrow |
-| UI | IBM Plex Sans 400/500/600 | 13 / 15 / 18 | Fallback Helvetica |
-| Data (every number, address, hash) | IBM Plex Mono 400/500, tabular figures | 12 / 13 / 15 / 22 / 32 | Never proportional digits for anything that ticks |
+Three faces, each with one job (tokens: `--font-display`, `--font-ui`, `--font-data`).
+
+- **Humane** (display; `app/src/fonts/humane/`, loaded with `next/font/local`). The poster voice of the
+  approved boards (`design/launch/63-type-mine-opens.webp`, `64-type-logo.webp`). Ultra-condensed and
+  tall, so it is always uppercase, tracked +0.02em, and never used below 36px: card titles 40px,
+  page titles 64–80px, block ticker 80px, hero 96–150px. Weight 600 for titles, 700 for 56px and up.
+  Below 36px a heading becomes a Readex Pro label instead.
+- **Readex Pro** (UI; Google Fonts build self-hosted via `@fontsource-variable/readex-pro`). Body,
+  buttons, labels (uppercase, tracked +0.08em, 12px).
+- **IBM Plex Mono** (data). Every number, address and unit, tabular.
+
+Logo: the crossed pick-and-hammer mark in an ember square (`LogoMark` in `app/src/components/Icons.tsx`,
+also `app/src/app/icon.svg`) next to the wordmark in Humane 700.
+
+Icon set (`design/launch/65-icon-set.webp`): six stroke glyphs in a rounded-diamond frame; rig,
+overclock, cooling, fragment, heat, lock. Ember for what the player owns or burns, signal for what
+moves and for the sealed mine. Implemented as inline SVG in `Icons.tsx`; bitmaps are never used for
+icons.
+
+Art policy: reference boards are references. Each surface gets its own treatment: SVG or CSS when
+the visual is data-driven (the rig room draws every machine from its state), a purpose-made render
+when a photograph-like image earns its place (the landing hero, `design/launch/69-hero-rigs.webp`,
+generated for that composition with the left third left dark for the headline).
 
 ## 4. Colour
 

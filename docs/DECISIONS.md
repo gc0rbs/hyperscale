@@ -129,3 +129,13 @@ neither is load-bearing for the accounting. Changes:
 - **Known consequence**: with a 2× cap and turnout uncertainty σ≈0.3, about 1–2% of seasons end at the
   cap (sim `test_sizing_recommendation`); block 4 holds 40% of the value, so ops should keep the cap
   ≥ 2× planned or flatten the value shares (docs/04 §5.2).
+
+## 2026-09-04 – Type and art direction for the build (user decision)
+
+- **Display face is Humane** (user-supplied, `app/src/fonts/humane/`), replacing Barlow Condensed;
+  used only from 36px up, uppercase, weights 600/700. **Body is Readex Pro** (Google Fonts build,
+  self-hosted). IBM Plex Mono stays for numbers. Tokens, brief §3 and the app updated.
+- **Boards are references, not assets.** Each component is treated on its own: icons and the logo are
+  inline SVG; the rig room draws each machine from its state in SVG; one purpose-made render was
+  generated (Higgsfield, Nano Banana Pro, with board 66 as the style reference) for the landing hero.
+- Licence check for Humane is the user's item before launch.

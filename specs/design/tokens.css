@@ -31,14 +31,16 @@
   --heat-hot:        #E5533D;   /* heat gauge top end and errors only */
 
   /* ── Type ──────────────────────────────────────────────────── */
-  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
-  --font-ui:      "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  /* Humane is ultra-condensed and tall: use it one to two steps larger than Barlow would be, always
+     uppercase, tracking 0.02em; never below 20px. The app loads it with next/font (app/src/fonts.ts). */
+  --font-display: "Humane", "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  --font-ui:      "Readex Pro Variable", "Readex Pro", "Helvetica Neue", Arial, sans-serif;
   --font-data:    "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
-  --weight-display:    600;   /* headings, tickers, labels in display type */
-  --weight-display-xl: 500;   /* display-lg and display-xl only (48px+) */
+  --weight-display:    600;   /* headings, tickers, card titles */
+  --weight-display-xl: 700;   /* display-lg and display-xl (56px+): the poster weight of the mockups */
 
   --text-xs: 12px; --text-sm: 13px; --text-md: 15px; --text-lg: 18px;
-  --display-sm: 22px; --display-md: 32px; --display-lg: 48px; --display-xl: 72px;
+  --display-sm: 28px; --display-md: 40px; --display-lg: 64px; --display-xl: 112px;
   --leading-tight: 1.1; --leading-normal: 1.45;
 
   /* ── Spacing / radius / borders ─────────────────────────────── */

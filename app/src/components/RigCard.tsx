@@ -5,6 +5,7 @@ import { formatHash, formatInt, formatRig } from "@/lib/format";
 import { advance, fragmentsPerSecond, settle } from "@/lib/mine-math";
 import type { RigSnapshot, SeasonSnapshot } from "@/lib/season-model";
 import { Btn, Chip, Cost, HeatGauge, Label, Mono, OcSlots, Pips, Stat } from "./ui";
+import { Icon } from "./Icons";
 
 export type RigAction = { kind: "overclock" | "gpu" | "cooling" | "exit"; rig: RigSnapshot };
 
@@ -24,9 +25,9 @@ export function RigCard({ rig, snap, now, onAction, disabled }: { rig: RigSnapsh
   const ocCost = (rig.weight * BigInt(p.ocCostBps)) / 10_000n;
   const canOc = open && !live.inactive && live.activeOc < p.maxActiveOc && live.heat + p.heatPerOc[live.coolingTier] <= p.heatMax;
   return (
-    <div className={`bg-mine-panel border border-mine-line rounded-md p-5 flex flex-col gap-[18px] ${live.inactive ? "opacity-60" : ""}`} data-testid={`rig-${rig.id}`}>
+    <div className={`bg-mine-panel border border-mine-line border-t-2 border-t-ember rounded-md p-5 flex flex-col gap-[18px] ${live.inactive ? "opacity-60" : ""}`} data-testid={`rig-${rig.id}`}>
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3"><div className="font-display uppercase tracking-[0.02em] text-[22px] font-semibold">Rig #{String(rig.id).padStart(4, "0")}</div><Chip>{rig.asset === 0 ? "RIG" : "LP"}</Chip>{live.inactive && <Chip>Stopped</Chip>}</div>
+        <div className="flex items-center gap-3"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold">Rig #{String(rig.id).padStart(4, "0")}</div><Chip>{rig.asset === 0 ? "RIG" : "LP"}</Chip>{live.inactive && <Chip>Stopped</Chip>}</div>
         <Mono className="text-mine-muted text-[12px]">stake {formatRig(rig.amount)} {rig.asset === 0 ? "RIG" : "LP"}</Mono>
       </div>
       <div className="grid grid-cols-3 gap-4">
@@ -41,11 +42,11 @@ export function RigCard({ rig, snap, now, onAction, disabled }: { rig: RigSnapsh
       {!live.inactive && (
         <div className="flex flex-col gap-2">
           <Btn tone="ember" className="h-11" disabled={disabled || !canOc} onClick={() => onAction({ kind: "overclock", rig })} title={!open ? "Overclocks unlock when the mine opens" : undefined}>
-            ⚡ Overclock <Cost>burn {formatRig(ocCost)} RIG</Cost>
+            <Icon name="overclock" size={16} tone="currentColor" /> Overclock <Cost>burn {formatRig(ocCost)} RIG</Cost>
           </Btn>
           <div className="grid grid-cols-2 gap-2">
-            <Btn className="px-2.5" disabled={disabled || rig.gpuTier >= 5 || !(snap.phase === 1 || open)} onClick={() => onAction({ kind: "gpu", rig })}>GPU → {rig.gpuTier + 1} <Cost>burn {formatRig(gpuCost)}</Cost></Btn>
-            <Btn className="px-2.5" disabled={disabled || rig.coolingTier >= 3 || !(snap.phase === 1 || open)} onClick={() => onAction({ kind: "cooling", rig })}>Cooling → {rig.coolingTier + 1} <Cost>burn {formatRig(coolCost)}</Cost></Btn>
+            <Btn className="px-2.5" disabled={disabled || rig.gpuTier >= 5 || !(snap.phase === 1 || open)} onClick={() => onAction({ kind: "gpu", rig })}><Icon name="rig" size={16} /> GPU {rig.gpuTier + 1} <Cost>burn {formatRig(gpuCost)}</Cost></Btn>
+            <Btn className="px-2.5" disabled={disabled || rig.coolingTier >= 3 || !(snap.phase === 1 || open)} onClick={() => onAction({ kind: "cooling", rig })}><Icon name="cooling" size={16} /> Cooling {rig.coolingTier + 1} <Cost>burn {formatRig(coolCost)}</Cost></Btn>
           </div>
           {(snap.phase === 1 || open) && <button className="text-[12px] text-signal self-end" onClick={() => onAction({ kind: "exit", rig })}>Exit rig · deposit back minus {p.earlyExitFeeBps / 100}%</button>}
         </div>

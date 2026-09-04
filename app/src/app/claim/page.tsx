@@ -37,7 +37,7 @@ function Claim({ snap }: { snap: SeasonSnapshot }) {
 
   return (
     <div className="p-4 md:px-8 md:py-6 max-w-[1100px] mx-auto flex flex-col gap-5">
-      <div className="flex items-center gap-3"><div className="font-display uppercase tracking-[0.02em] text-[36px] font-medium">Claim</div>{closed && <Chip>Mine sealed</Chip>}</div>
+      <div className="flex items-center gap-3"><div className="font-display leading-none uppercase tracking-[0.02em] text-[64px] font-medium">Claim</div>{closed && <Chip>Mine sealed</Chip>}</div>
       {!account && <Panel className="text-mine-muted text-[14px]">Connect a wallet to see claimable fragments.</Panel>}
       {rigs.map((r) => {
         const s = settle(snap.config, r.state, g);
@@ -45,11 +45,11 @@ function Claim({ snap }: { snap: SeasonSnapshot }) {
         const claimable = rows.filter((x) => x.found && x.frags > 0n).reduce((a, x) => a + x.frags, 0n);
         return (
           <Panel key={String(r.id)} className="flex flex-col gap-4" data-testid={`claim-rig-${r.id}`}>
-            <div className="flex justify-between items-center"><div className="font-display uppercase text-[22px] font-semibold">Rig #{String(r.id).padStart(4, "0")}</div>{s.inactive && <Chip>Stopped</Chip>}</div>
+            <div className="flex justify-between items-center"><div className="font-display leading-none uppercase text-[40px] font-semibold">Rig #{String(r.id).padStart(4, "0")}</div>{s.inactive && <Chip>Stopped</Chip>}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {rows.map((x) => (
                 <div key={x.b} className={`border border-mine-line rounded-sm p-3 flex flex-col gap-1 ${!x.found ? "opacity-60" : ""}`}>
-                  <div className="flex justify-between"><div className="font-display uppercase text-[18px] font-semibold">{TICKERS[x.b]}</div><Chip tone={x.found ? "signal" : "muted"}>{x.found ? "found" : "mining"}</Chip></div>
+                  <div className="flex justify-between"><div className="font-display leading-none uppercase text-[36px] font-semibold">{TICKERS[x.b]}</div><Chip tone={x.found ? "signal" : "muted"}>{x.found ? "found" : "mining"}</Chip></div>
                   <Mono className="text-[15px]">{formatInt(x.frags)} frag</Mono>
                   <Mono className="text-mine-muted text-[12px]">{(Number(x.frags) / Number(p.fragPerToken)).toFixed(3)} {TICKERS[x.b]}{x.found ? "" : " · est. so far"}</Mono>
                 </div>

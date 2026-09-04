@@ -10,6 +10,7 @@ import type { SeasonSnapshot } from "@/lib/season-model";
 import { useActiveAddress } from "@/lib/use-account";
 import type { RigAction } from "./RigCard";
 import { Btn, Label, Mono } from "./ui";
+import { FramedIcon } from "./Icons";
 
 /** Brief §5 purchase sheet: what you get, what burns (permanently), coverage, one confirm. */
 export function PurchaseSheet({ action, snap, now, onClose, onDone }: { action: RigAction; snap: SeasonSnapshot; now: bigint; onClose: () => void; onDone: () => void }) {
@@ -80,7 +81,10 @@ export function PurchaseSheet({ action, snap, now, onClose, onDone }: { action: 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60" role="dialog" aria-modal>
       <div className="w-full md:w-[440px] bg-mine-panel border border-mine-line rounded-t-lg md:rounded-lg p-6 flex flex-col gap-5 text-mine-fg" data-testid="purchase-sheet">
-        <div className="font-display uppercase tracking-[0.02em] text-[28px] font-semibold">{title}</div>
+        <div className="flex items-center gap-4">
+          <FramedIcon name={action.kind === "gpu" ? "rig" : action.kind === "cooling" ? "cooling" : action.kind === "overclock" ? "overclock" : "lock"} size={52} />
+          <div className="font-display uppercase tracking-[0.02em] text-[64px] font-semibold leading-none">{title}</div>
+        </div>
         <div className="flex flex-col gap-3">
           <Row k="You get" v={effect} />
           <Row k="Detail" v={detail} />

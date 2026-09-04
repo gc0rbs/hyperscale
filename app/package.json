@@ -14,6 +14,8 @@
     "parity": "vitest run --config vitest.parity.config.ts"
   },
   "dependencies": {
+    "@fontsource-variable/readex-pro": "5.1.0",
+    "@fontsource/ibm-plex-mono": "5.1.0",
     "@tanstack/react-query": "5.62.7",
     "next": "15.1.2",
     "react": "19.0.0",
