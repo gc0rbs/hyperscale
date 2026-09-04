@@ -233,3 +233,13 @@ neither is load-bearing for the accounting. Changes:
   Web push stays a v1.1 item if seasons ever run for days again.
 - Block-found banner gets a Share button (Web Share on mobile, clipboard elsewhere).
 - CI builds both Docker images (no push) so a broken Dockerfile fails the PR, not the launch night.
+
+## 2026-09-04 – Humane font licence (user provided the EULA)
+
+- Humane V.2.0 is freeware, free for personal and commercial use; the files may not be modified
+  without the designer's written permission; only the right to use is granted. Transcribed in
+  `app/src/fonts/humane/LICENSE.md`.
+- Consequences: the `.ttf` files are served unmodified (no WOFF2 conversion, no subsetting; both
+  `next/font/local` and the share card use the raw files), the designer is credited in the landing
+  footer, and the repository must stay private while the files are committed (or the files move to a
+  private asset bucket before the repo goes public). The "Humane licence check" launch item is closed.

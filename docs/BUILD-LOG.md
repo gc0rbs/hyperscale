@@ -359,8 +359,11 @@ table supersedes the Phase 4 checklist above.
 
 **User's items before launch**: Pons launch → $RIG address; treasury multisig; funded deployer,
 operator and keeper keys (env only); host for the compose stack and the app; WalletConnect project id;
-alert webhook; counsel review of `/terms`; Humane font licence; external audit
+alert webhook; counsel review of `/terms`; external audit
 (`docs/AUDIT-PACKAGE.md`); testnet rehearsal on 46630 with `DEPLOY_MOCKS`.
+
+**Resolved after this table**: Humane licence (freeware, commercial use allowed, files unmodified; see
+`app/src/fonts/humane/LICENSE.md`; keep the repo private while the TTFs are committed).
 
 **Known gaps**: ERC-8056 `balanceOfUI` display (no surface shows Stock Token balances yet); testnet
 explorer and faucet unconfirmed; geo-fence depends on the host's country header; Docker images
