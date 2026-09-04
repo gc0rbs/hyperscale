@@ -243,3 +243,13 @@ neither is load-bearing for the accounting. Changes:
   `next/font/local` and the share card use the raw files), the designer is credited in the landing
   footer, and the repository must stay private while the files are committed (or the files move to a
   private asset bucket before the repo goes public). The "Humane licence check" launch item is closed.
+
+## 2026-09-04 – Launch responsibilities (user decision)
+
+- **The client launches $RIG on Pons**, runs the treasury as a **single operator key (no multisig)**,
+  and **commissions the audit themselves**. `docs/AUDIT-PACKAGE.md` is the hand-off to their auditor.
+- Consequence of a single-key treasury: that key holds the only live admin power (pause) and receives
+  fees and sweeps. The runbook now says to keep it on a hardware wallet distinct from the deployer
+  and keeper keys. A compromised treasury key can pause a season; if the pause outlives the grace
+  period, players cancel it and recover deposits, so the blast radius is one season, not funds. Q17
+  closed.

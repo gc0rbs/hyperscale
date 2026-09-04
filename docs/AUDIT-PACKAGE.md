@@ -1,6 +1,7 @@
 # Stock Miner – audit package
 
-Prepared 2026-09-04 for an external review of the season contracts. Everything referenced is in this
+Prepared 2026-09-04 for the external review the client commissions (they run the audit; this
+package is the hand-off). Everything referenced is in this
 repository at the commit tagged in `docs/BUILD-LOG.md` (Phase 4 entry).
 
 ## 1. Scope

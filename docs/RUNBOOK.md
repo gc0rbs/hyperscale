@@ -23,7 +23,9 @@ Claude sessions.
 - `bash .claude/hooks/session-start.sh` (Foundry, pnpm, uv) and `cd contracts && forge build`.
 - Chain profile in `ops/chains/<name>.json` with every address filled (`ops/chains/README.md`).
 - The decisions in `docs/09-OPEN-QUESTIONS.md` Q1 (stock tokens / eligibility) and Q3 (DEX / LP) made.
-- A treasury multisig, the four Stock Token pool amounts in the operator's wallet, and the USDC reserve.
+- A treasury wallet (the client runs a single operator key, not a multisig: use a hardware wallet that is
+  never the deployer or keeper key; it receives fees and sweeps and holds the pause power), the four
+  Stock Token pool amounts in the operator's wallet, and the USDG reserve.
 
 ## 1. Deploy the factory (once per chain)
 
@@ -152,7 +154,7 @@ pnpm guardian status                          # shows grace deadline
 GUARDIAN_KEY=0x… pnpm guardian unpause        # before the grace deadline
 ```
 
-Rules: the guardian key is the treasury multisig; two signers; pause only for a suspected accounting
+Rules: the guardian key is the treasury wallet (one signer, by the client's decision); pause only for a suspected accounting
 bug or a Stock Token / oracle incident that would make claims or redemptions wrong. A pause after
 close does not cancel anything (players use `emergencyWithdraw` to recover deposits if it outlives the
 grace period; their fragments stay claimable after an unpause).

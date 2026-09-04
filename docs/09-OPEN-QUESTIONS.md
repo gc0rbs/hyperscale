@@ -20,7 +20,7 @@ Decisions needed before or during M0. Each has a recommended default so the buil
 | Q14 | Pause grace period | 30 min / 2h / 6h | 30 min (seasons last hours) | M1 |
 | Q15 | Unclaimed fragments after window | worthless / roll to next season at discount | worthless in v1; announce roll-over policy for v1.1 | M3 |
 | Q16 | "Browser boost" mini-game | never / v1.1 experiment | v1.1 experiment, capped at 5% | post season 1 |
-| Q17 | Governance of season params and treasury | multisig / token vote | 3-of-5 multisig for seasons 1–3 | M0 |
+| Q17 | Governance of season params and treasury | multisig / token vote | **Closed 2026-09-04**: single operator key (the client's decision, no multisig); season params are immutable per season anyway, so the key's only live powers are pause and receiving fees/sweeps | M0 |
 | Q18 | Oracle provider on Robinhood Chain | Pyth / Chainlink / issuer NAV feed | Whichever publishes the underlyings; Pyth likely on an Orbit chain | M0 |
 | Q19 | Who runs the `poke()` keeper and what if it stops? | ops cron / anyone / none | Ops cron; correctness never depends on it; app also triggers it | M2 |
 | Q20 | Adopt the simulation's parameter changes? (pool sized to ρ≈0.4, cheaper GPU/cooling tiers, LP bonus review; docs/SIM-REPORT.md §7) | adopt all / adopt costs only / keep defaults | Adopt all before season 1; re-run the sim after | M3 |

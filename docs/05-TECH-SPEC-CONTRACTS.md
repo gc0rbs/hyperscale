@@ -16,7 +16,7 @@ immutable; a new season is a new deployment.
                         ▼                                      ▼
 ┌──────────┐     ┌──────────────┐                     ┌────────────────────┐
 │ RIG      │◀────│ Treasury     │──fund──────────────▶│ RedemptionVault    │◀── players
-│ (ERC-20) │burn │ (multisig)   │  Stock Tokens, USDC │  redeem / cashOut  │
+│ (ERC-20) │burn │ (op. key)    │  Stock Tokens, USDC │  redeem / cashOut  │
 └──────────┘     └──────────────┘                     └───────┬────────────┘
                                                               │ burn on redeem
                                                               ▼

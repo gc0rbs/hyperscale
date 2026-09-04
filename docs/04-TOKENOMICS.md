@@ -10,18 +10,14 @@
 | Chain | Robinhood Chain (native). No bridge in v1. |
 | Deflation | All upgrade spend is sent to `0x…dEaD`: unrecoverable, visible on chain. Nominal supply stays 1B; circulating supply only goes down. |
 
-### Genesis allocation (proposal, to be finalised)
+### Genesis allocation
 
-| Bucket | % | Vesting | Purpose |
-|---|---|---|---|
-| Public launch (LBP or fair launch) | 30% | none | price discovery, distribution |
-| Protocol-owned liquidity | 10% | permanent | seeds RIG/USDC pool |
-| Season prize treasury | 30% | released per season by multisig | sold or paired to buy Stock Tokens for prize pools |
-| Team & contributors | 15% | 12-month cliff, 36-month linear | |
-| Ecosystem / partners / airdrops | 15% | multisig-controlled | Robinhood Chain ecosystem, integrations |
-
-Team allocation and public sale structure require legal input (doc 07). Nothing in the game contracts
-depends on these numbers.
+$RIG is launched on **Pons** by the client (DECISIONS 2026-09-04). Distribution follows Pons'
+mechanics: the full 1B supply is sold on the bonding curve and the graduated liquidity is a locked
+Uniswap v3 RIG/WETH position. There is no team, treasury or ecosystem allocation controlled by this
+project, and no multisig. Season prize pools are bought by the operator with treasury income
+(activation and exit fees, swept remainders) and outside funding, not from a token allocation.
+Nothing in the game contracts depends on the distribution.
 
 ## 2. Value flows in a season
 

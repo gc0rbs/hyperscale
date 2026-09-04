@@ -301,7 +301,7 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   and eligibility (zero addresses skipped).
 - Docs: RUNBOOK §1b (adapters), §10 (app deployment), §11 (release checklist); DECISIONS.
 - What's next: hosting for app, Ponder indexer and keeper/watcher; share cards; mobile/a11y QA;
-  testnet season on 46630 with mocks; external audit; Pons launch → treasury multisig → adapters →
+  testnet season on 46630 with mocks; audit (client's); Pons launch (client's) → treasury wallet → adapters →
   season. Counsel review of the terms and the Humane licence check are the user's items.
 - Known gaps: ERC-8056 `balanceOfUI` display for Stock Token balances not implemented; testnet
   explorer and faucet unconfirmed; geo-fence relies on the host's country header.
@@ -346,7 +346,7 @@ table supersedes the Phase 4 checklist above.
 | Item | Status |
 |---|---|
 | Params JSON published with hash before `openTime` | `ops plan --pool-usd … --max-duration 21600` prints the hash; `CreateSeason` records it and the creation block. No 48h minimum (short seasons) |
-| `SeasonFactory.create` executed and contracts verified | scripts + dry run; `--verify` flags in RUNBOOK §1–3. Needs the graduated $RIG address and the treasury multisig |
+| `SeasonFactory.create` executed and contracts verified | scripts + dry run; `--verify` flags in RUNBOOK §1–3. Needs the graduated $RIG address (Pons launch, client's) and the treasury wallet address |
 | Vault funded; `phase() == PreOpen`; app shows pool | `ops fund` asserts PreOpen; app shows pool and USD value |
 | Eligibility adapter | `OpenEligibility` (Stock Tokens have no transfer hook); legal restriction is the geo-fence + terms. `ops deploy-adapters` |
 | Oracle feeds live and within staleness | `ChainlinkOracle` over the four recorded feeds, 26h cap (24h heartbeat); `deploy-adapters` checks every feed answers |
@@ -357,7 +357,8 @@ table supersedes the Phase 4 checklist above.
 | Post-close plan | RUNBOOK §8; `ops sweep` repeatable |
 | App hosting | `app/.env.example`, RUNBOOK §10, share card and WalletConnect need `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_WC_PROJECT_ID` |
 
-**User's items before launch**: Pons launch → $RIG address; treasury multisig; funded deployer,
+**Client's items before launch** (2026-09-04: Pons launch, treasury and audit are the client's; no
+multisig): Pons launch → $RIG address; treasury wallet (hardware, single key); funded deployer,
 operator and keeper keys (env only); host for the compose stack and the app; WalletConnect project id;
 alert webhook; counsel review of `/terms`; external audit
 (`docs/AUDIT-PACKAGE.md`); testnet rehearsal on 46630 with `DEPLOY_MOCKS`.
