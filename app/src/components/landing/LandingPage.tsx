@@ -59,10 +59,10 @@ export function LandingPage() {
       <a className="lp-skip" href="#main-content">Skip to content</a>
       <header className="lp-header">
         <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={40} /></Link>
-        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a></nav>
-        <div className="lp-header-actions"><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
+        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button></nav>
+        <div className="lp-header-actions"><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
-        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a></nav>}
+        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button></nav>}
       </header>
       <dialog ref={purchaseDialog} className="lp-purchase-dialog" aria-labelledby="purchase-title" aria-describedby="purchase-description" onClick={(event) => { if (event.target === event.currentTarget) purchaseDialog.current?.close(); }}>
         <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>$RIG.</span></h2><p id="purchase-description">Coming soon. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-gold">Got it <Arrow /></button></form></div>

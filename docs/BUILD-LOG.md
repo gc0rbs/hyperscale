@@ -408,3 +408,15 @@ range, and rewards advance/reverse correctly. At 390×844 header controls fit wi
 overflow. At 375×667 the taller reward stage uses a -61 px sticky offset so its bottom remains
 reachable. Browser errors are empty. The existing beads database remains unavailable (`bd sync`);
 this log records the work. Remaining dependency: wire the official purchase URL once it is live.
+
+### 2026-09-04 — Buy token navigation placement
+
+Plan: move the orange Buy token action to fourth position in the central navigation and mobile
+menu. Keep the mine button separate on the right and retain the existing Coming soon dialog.
+Verify both menu layouts, run the app checks/export, and update the same public preview.
+
+Shipped: Buy token is fourth in the central desktop navigation and the mobile menu, with its
+orange styling and Coming soon dialog preserved. The mine button remains separate on the right.
+Desktop menu text shares the same vertical center; mobile has no horizontal overflow, and dialog
+Escape dismissal restores focus to Buy token. App lint, types, six tests and static export pass.
+No additional work in this placement change; the purchase URL dependency remains as noted above.
