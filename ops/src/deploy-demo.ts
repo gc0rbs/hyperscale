@@ -47,8 +47,8 @@ export interface Deployment {
 
 export async function deployDemo(): Promise<Deployment> {
   const account = privateKeyToAccount(KEYS[0]);
-  const pub = createPublicClient({ chain: foundry, transport: http(RPC) });
-  const wallet = createWalletClient({ account, chain: foundry, transport: http(RPC) });
+  const pub = createPublicClient({ chain: foundry, transport: http(RPC), pollingInterval: 250 });
+  const wallet = createWalletClient({ account, chain: foundry, transport: http(RPC), pollingInterval: 250 });
   const accounts = KEYS.map((k) => privateKeyToAccount(k).address);
 
   async function deploy(file: string, name: string, args: unknown[] = []): Promise<Address> {
