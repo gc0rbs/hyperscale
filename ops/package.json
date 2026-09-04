@@ -15,7 +15,8 @@
     "play": "tsx src/dev/play.ts",
     "sync-abi": "tsx src/sync-abi.ts",
     "deploy-demo": "tsx src/deploy-demo.ts",
-    "guardian": "tsx src/guardian.ts"
+    "guardian": "tsx src/guardian.ts",
+    "deploy-adapters": "tsx src/deploy-adapters.ts"
   },
   "dependencies": {
     "viem": "2.21.55"

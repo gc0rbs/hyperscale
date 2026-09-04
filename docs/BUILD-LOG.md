@@ -287,3 +287,21 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
 - Checks: forge 47 tests green, snapshot regenerated, interfaces match; ops 7 tests; app check green.
 - Feeds, USDG decimals and testnet RPC filled from chain and Chainlink data; vault staleness cap 26 h
   (24 h heartbeat + margin); Vault test updated.
+
+## 2026-09-04 – Launch wiring: chains, wallets, geo-fence, adapters
+
+- App: `wagmi.ts` defines Robinhood Chain mainnet/testnet, `chainFor()`, optional WalletConnect
+  connector; nav shows "Switch network" when the wallet's chain differs from the deployment's
+  (`data-testid="switch-network"`); `middleware.ts` geo-fence → `/restricted` (451); `/how-it-works`,
+  `/terms`; landing footer links; `.env.example` for a production deploy. `*.tsbuildinfo` untracked.
+- Contracts: `script/DeployAdapters.s.sol` (OpenEligibility + ChainlinkOracle, feed sanity loop,
+  writes `deployments/<chainId>-adapters.json`).
+- Ops: `deploy-adapters` command builds STOCKS/FEEDS from the chain profile in block order;
+  `loadAdapters` in `lib/season.ts`; `plan` prefers profile → adapters file → factory file for oracle
+  and eligibility (zero addresses skipped).
+- Docs: RUNBOOK §1b (adapters), §10 (app deployment), §11 (release checklist); DECISIONS.
+- What's next: hosting for app, Ponder indexer and keeper/watcher; share cards; mobile/a11y QA;
+  testnet season on 46630 with mocks; external audit; Pons launch → treasury multisig → adapters →
+  season. Counsel review of the terms and the Humane licence check are the user's items.
+- Known gaps: ERC-8056 `balanceOfUI` display for Stock Token balances not implemented; testnet
+  explorer and faucet unconfirmed; geo-fence relies on the host's country header.

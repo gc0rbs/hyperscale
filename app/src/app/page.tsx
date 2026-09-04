@@ -52,6 +52,7 @@ function Landing({ snap }: { snap: SeasonSnapshot }) {
           <div key={n} className="flex gap-4"><Mono className="text-signal text-[56px] leading-none">{n}</Mono><div className="flex flex-col gap-2"><div className="font-display uppercase text-[40px] font-semibold">{h}</div><p className="text-mine-muted text-[14px]">{b}</p></div></div>
         ))}
       </section>
+      <section className="flex gap-6 text-[13px] text-mine-muted"><Link href="/how-it-works" className="hover:text-mine-fg">How rewards work</Link><Link href="/terms" className="hover:text-mine-fg">Terms</Link><span className="ml-auto text-mine-dim">Not available in the US, Canada, the UK or Switzerland.</span></section>
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-mine-line pt-8">
         <div className="flex flex-col gap-1"><Label>Total hash</Label><Mono className="text-[22px]">{formatHash(g.totalHash)}</Mono></div>
         <div className="flex flex-col gap-1"><Label>Shift</Label><Mono className="text-[22px]">{Math.min(g.shift, 32)} / 32</Mono></div>

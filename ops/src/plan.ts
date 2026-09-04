@@ -24,7 +24,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createPublicClient, encodeAbiParameters, http, keccak256, parseAbi, parseUnits, type Address } from "viem";
 import { REPO_ROOT } from "./lib/artifacts.js";
-import { arg, hasFlag, loadChainProfile, loadFactoryDeployment, viemChain, type ChainProfile } from "./lib/season.js";
+import { arg, hasFlag, loadAdapters, loadChainProfile, loadFactoryDeployment, viemChain, type ChainProfile } from "./lib/season.js";
 import { validateSeasonParams, type SeasonParamsJson } from "./lib/validate.js";
 import { sizeDifficulty, sizePoolByValue } from "./sizing.js";
 
@@ -135,8 +135,10 @@ export async function plan() {
   const rig = (chain.rig ?? fac?.rig ?? ZERO) as Address;
   const lpToken = (chain.lpToken ?? fac?.lp ?? ZERO) as Address;
   const usdc = (chain.usdc ?? fac?.usdc ?? ZERO) as Address;
-  const oracle = (chain.oracle ?? fac?.oracle ?? ZERO) as Address;
-  const eligibility = (chain.eligibility ?? fac?.eligibility ?? ZERO) as Address;
+  const adapters = loadAdapters(chain.chainId);
+  const pick = (a?: string, b?: string, c?: string) => ([a, b, c].find((x) => x && !/^0x0{40}$/i.test(x)) ?? ZERO) as Address;
+  const oracle = pick(chain.oracle, adapters?.oracle, fac?.oracle);
+  const eligibility = pick(chain.eligibility, adapters?.eligibility, fac?.eligibility);
   const treasury = (arg("--treasury") ?? chain.treasury ?? fac?.deployer ?? ZERO) as Address;
   const stockSyms: string[] = tpl.stocks.map((s: { symbol: string }) => s.symbol);
   const stocks: Address[] = stockSyms.map((sym, i) => (chain.stocks?.[sym] ?? fac?.stocks?.[i] ?? ZERO) as Address);

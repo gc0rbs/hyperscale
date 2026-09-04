@@ -76,6 +76,12 @@ export function loadDeployment(id = chainId()): Deployment {
   return JSON.parse(readFileSync(p, "utf8")) as Deployment;
 }
 
+/** deployments/<chainId>-adapters.json from DeployAdapters.s.sol, if present. */
+export function loadAdapters(id = chainId()): { oracle: Address; eligibility: Address; stocks: Address[]; feeds: Address[] } | null {
+  const p = join(DEPLOYMENTS, `${id}-adapters.json`);
+  return existsSync(p) ? (JSON.parse(readFileSync(p, "utf8")) as { oracle: Address; eligibility: Address; stocks: Address[]; feeds: Address[] }) : null;
+}
+
 export function loadFactoryDeployment(id = chainId()): FactoryDeployment {
   const p = join(DEPLOYMENTS, `${id}-factory.json`);
   if (!existsSync(p)) throw new Error(`no factory deployment for chain ${id} (${p}); run DeployFactory first`);

@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContext } from "react";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
+import { useDeployment } from "@/app/providers";
 import { DevAccountContext, useActiveAddress } from "@/lib/use-account";
 import { short } from "@/lib/format";
 import { LogoMark } from "./Icons";
@@ -32,6 +33,9 @@ export function WalletButton() {
   const dev = useContext(DevAccountContext);
   const active = useActiveAddress();
   const mock = connectors.find((c) => c.id === "mock");
+  const dep = useDeployment();
+  const chainId = useChainId();
+  const { switchChain, isPending: switching } = useSwitchChain();
   if (!isConnected) {
     return (
       <div className="flex gap-2">
@@ -42,8 +46,14 @@ export function WalletButton() {
       </div>
     );
   }
+  const wrongNetwork = chainId !== dep.chainId;
   return (
     <div className="flex items-center gap-2">
+      {wrongNetwork && (
+        <button onClick={() => switchChain({ chainId: dep.chainId })} disabled={switching} className="h-9 px-3.5 rounded-full text-[13px] font-semibold bg-[var(--heat-hot)] text-white" data-testid="switch-network">
+          {switching ? "Switching…" : "Switch network"}
+        </button>
+      )}
       {connector?.id === "mock" && addresses && (
         <select aria-label="Acting as" data-testid="dev-account" className="h-9 px-2 border border-[var(--shell-line-strong)] rounded-full text-[12px] font-data bg-white" value={dev.index ?? 0} onChange={(e) => dev.setIndex(Number(e.target.value))}>
           {addresses.map((a, i) => <option key={a} value={i}>Dev {i} · {short(a)}</option>)}

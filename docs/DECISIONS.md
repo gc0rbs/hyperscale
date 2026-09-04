@@ -187,3 +187,23 @@ neither is load-bearing for the accounting. Changes:
   the 0.5% deviation trigger bounds the price error a stale-but-fresh timestamp can hide. Over a
   weekend the feed goes quiet, cash-out pauses, in-kind redemption is unaffected.
 - USDG confirmed 6 decimals on chain; testnet RPC confirmed at chain id 46630.
+
+## 2026-09-04 – Wallet, chain and geo-fence wiring for launch
+
+- **Chains in the app are fixed definitions**, not env-derived: mainnet 4663 (`robinhood`, Blockscout
+  explorer) and testnet 46630 (`robinhoodTestnet`), Anvil for dev. `NEXT_PUBLIC_CHAIN_ID` picks one and
+  `NEXT_PUBLIC_RPC_URL` overrides the RPC. A connected wallet on another chain sees a "Switch network"
+  button in the nav; writes are not attempted until it matches.
+- **WalletConnect is optional**: the connector is added only when `NEXT_PUBLIC_WC_PROJECT_ID` is set,
+  so a deploy without a WalletConnect Cloud project still works with injected wallets.
+- **Geo-fence in middleware** (docs/07 §1, §5): requests whose edge country header is US, CA, GB or
+  CH are rewritten to `/restricted` with HTTP 451. On by default in production only;
+  `NEXT_PUBLIC_GEOFENCE=0/1` overrides, `GEOFENCE_COUNTRIES` lists the countries. This is the legal
+  control that replaced on-chain eligibility once Stock Tokens turned out to have no transfer hook; it
+  is a best-effort control and the terms carry the eligibility clause as well.
+- `/how-it-works` (FR-A6 reference the terms point at) and `/terms` (draft structured per docs/07 §5,
+  wording for counsel) added; the landing footer links both and carries the region notice.
+- **Adapters get their own deploy step** (`DeployAdapters.s.sol`, `ops deploy-adapters`): deploys
+  `OpenEligibility` and `ChainlinkOracle` from the chain profile's stock and feed maps, checks every
+  feed answers, writes `deployments/<chainId>-adapters.json`; `ops plan` falls back to that file when
+  the profile leaves `oracle` / `eligibility` at zero. Run once per chain, not per season.

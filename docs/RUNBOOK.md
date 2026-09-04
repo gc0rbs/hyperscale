@@ -37,6 +37,18 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
+## 1b. Deploy the adapters (once per chain, or when the stock set changes)
+
+```
+PRIVATE_KEY=0x… pnpm deploy-adapters --chain robinhood               # dry run: deploys in simulation and prints every feed's live price
+PRIVATE_KEY=0x… pnpm deploy-adapters --chain robinhood --broadcast --verify --verifier blockscout --verifier-url https://robinhoodchain.blockscout.com/api
+```
+
+Deploys `OpenEligibility` and `ChainlinkOracle(stocks, feeds)` from the profile's `stocks` and `feeds`
+maps and writes `contracts/deployments/<chainId>-adapters.json`; `plan` picks the addresses up from
+there when the profile leaves `oracle` / `eligibility` at zero. The dry run fails if any feed does
+not answer, which is the pre-open oracle check from docs/08 §4 done early.
+
 ## 2. Plan the season
 
 ```
@@ -169,7 +181,19 @@ pnpm play warp 2700000 ; OPERATOR_KEY=… pnpm sweep                            
 dry run with `NEXT_PUBLIC_DEV_ACCOUNTS=1 pnpm --filter @stock-miner/app dev`; it reads
 `contracts/deployments/31337.json`.
 
-## 10. Release checklist
+## 10. App deployment
+
+The app is a Next.js site (Vercel or any Node host). Copy `app/.env.example` and fill the season
+addresses from `contracts/deployments/<chainId>.json`, or commit that file and leave the addresses
+unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
+WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
+(`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
+returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
+The wallet button prompts a network switch when the wallet is on the wrong chain. `/how-it-works`
+and `/terms` carry the disclosures docs/07 §5 requires; counsel replaces the terms wording before
+launch.
+
+## 11. Release checklist
 
 See the last entry of `docs/BUILD-LOG.md` for the docs/08 §4 checklist with the current status of
 each item.

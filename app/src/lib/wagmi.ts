@@ -1,7 +1,7 @@
 "use client";
 import { createConfig, http } from "wagmi";
-import { injected, mock } from "wagmi/connectors";
-import { defineChain, type Address } from "viem";
+import { injected, mock, walletConnect } from "wagmi/connectors";
+import { defineChain, type Address, type Chain } from "viem";
 import { foundry } from "viem/chains";
 
 /** Anvil's first five default accounts; usable as unlocked signers in dev and e2e. */
@@ -13,22 +13,46 @@ export const DEV_ACCOUNTS: Address[] = [
   "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
 ];
 
-/** Placeholder until PRD §10 assumptions are verified; chain id and RPC come from env. */
-export const robinhoodChain = defineChain({
-  id: Number(process.env.NEXT_PUBLIC_ROBINHOOD_CHAIN_ID ?? 0) || 46630,
+/** Robinhood Chain mainnet (verified 2026-09-04: Arbitrum Orbit, gas in ETH, Blockscout explorer). */
+export const robinhood = defineChain({
+  id: 4663,
   name: "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: [process.env.NEXT_PUBLIC_RPC_URL ?? "http://127.0.0.1:8545"] } },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+  blockExplorers: { default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" } },
 });
 
+/** Robinhood Chain testnet (chain id 46630; RPC verified 2026-09-04, explorer to confirm). */
+export const robinhoodTestnet = defineChain({
+  id: 46630,
+  name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } },
+  testnet: true,
+});
+
+export function chainFor(chainId: number, rpcUrl: string): Chain {
+  const base = chainId === foundry.id ? foundry : chainId === robinhood.id ? robinhood : chainId === robinhoodTestnet.id ? robinhoodTestnet : null;
+  if (base) return { ...base, rpcUrls: { default: { http: [rpcUrl] } } };
+  return defineChain({ id: chainId, name: `Chain ${chainId}`, nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [rpcUrl] } } });
+}
+
+/**
+ * Connectors: injected wallets always; WalletConnect when NEXT_PUBLIC_WC_PROJECT_ID is set; the mock
+ * connector with the Anvil accounts only on Anvil or with NEXT_PUBLIC_DEV_ACCOUNTS=1.
+ */
 export function makeWagmiConfig(chainId: number, rpcUrl: string) {
-  const chain = chainId === foundry.id ? { ...foundry, rpcUrls: { default: { http: [rpcUrl] } } } : robinhoodChain;
+  const chain = chainFor(chainId, rpcUrl);
   const devAccounts = process.env.NEXT_PUBLIC_DEV_ACCOUNTS === "1" || chainId === foundry.id;
+  const wcId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
+  const connectors = [
+    injected(),
+    ...(wcId ? [walletConnect({ projectId: wcId, showQrModal: true, metadata: { name: "Stock Miner", description: "Mine stock fragments on Robinhood Chain", url: process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"), icons: [] } })] : []),
+    ...(devAccounts ? [mock({ accounts: DEV_ACCOUNTS as [Address, ...Address[]], features: { reconnect: true } })] : []),
+  ];
   return createConfig({
     chains: [chain],
-    connectors: devAccounts
-      ? [injected(), mock({ accounts: DEV_ACCOUNTS as [Address, ...Address[]], features: { reconnect: true } })]
-      : [injected()],
+    connectors,
     transports: { [chain.id]: http(rpcUrl) },
     ssr: true,
     batch: { multicall: true },
