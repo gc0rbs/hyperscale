@@ -175,3 +175,69 @@ Plan, in order:
    to close, swept. Written up as `docs/RUNBOOK.md`.
 6. `docs/AUDIT-PACKAGE.md`, docs sync, DECISIONS entries, final BUILD-LOG entry with the docs/08 §4
    release checklist.
+
+## 2026-09-04 – Phase 4: hardening (shipped)
+
+**Security pass** (`docs/AUDIT-PACKAGE.md` §7–§8): six findings, all fixed in the same commits as
+their tests. Two medium: `emergencyWithdraw` could cancel an already-closed season (blocking every
+redemption); `sweep` was one-shot and stranded any Stock Token whose hook refused the treasury. Three
+low (burn ordering, factory validation gaps, zero-rate seasons), one informational (shadowing).
+slither 0.11: 30 results after the fixes, every one triaged; none high. slither runs in CI with
+`--fail-high`.
+
+**Differential fuzz**: `contracts/test/differential/DiffTrace.t.sol` + `python -m sim.diff`.
+100,000 random traces across eight season profiles, **0 mismatches** (action results, revert names,
+boundaries, close, per-rig balances). The harness found two bugs in the *reference* (`claim_all`
+ordering, settlement timing), both fixed; a 24-trace fixture is a permanent sim test. 587 s to
+generate, 32 s to replay.
+
+**Invariant campaign**: handler widened with pause cycles, cancellation and emergency withdrawals;
+invariants 5 (found block pays its pool minus dust) and 9 (frozen after close) added, so all nine
+§5.3 invariants are now in the handler suite. Campaign profile 5,000 runs × depth 256 × 8 functions =
+10.24 M handler calls: CAMPAIGN_RESULT.
+
+**Deployment**: `script/DeployFactory.s.sol`, `script/CreateSeason.s.sol` (reads the resolved season
+JSON; dry run without `--broadcast`); `ops plan` (24 h sampled LP weight, difficulty sizing, factory
+rules mirrored with the same reason strings, params hash), `fund`, `guardian`, `sweep`, `play` (dev);
+chain profiles with a `robinhood-testnet` placeholder set and a README mapping each blank to the PRD
+§10 assumption it depends on. `forge script --broadcast` works in the sandbox with `NO_PROXY` set.
+
+**Dry run** (`docs/RUNBOOK.md` §9, executed): factory → plan (one-week pace at 5 M hash) → create →
+fund → three rigs (RIG, LP, upgraded) → open → keeper-driven shifts → overclocks → block 0 found and
+claimed → close → claims, withdrawals, in-kind redemption → sweep refused while the window was open,
+moved everything after it. Pause/unpause and a full cancellation rehearsed on a second season; the
+watcher paged on both.
+
+**Docs synced**: 05 (§6 emergency row, §9 validation and CEI rows, sweep), 06 §6 (ops tooling), 08 §3
+(differential fuzz, static analysis, dry runs), README, CLAUDE.md, DECISIONS (nine entries),
+RUNBOOK, AUDIT-PACKAGE. Gas snapshot made deterministic (`--no-match-test 'testFuzz|invariant_'`).
+
+**Checks at hand-off**: `forge test` 40 tests + 8 invariants green; `forge snapshot --check` clean;
+interfaces match specs; sim 22 tests + ruff clean; app 6 unit tests, lint, typecheck, Playwright
+season at pace 300, parity vs Anvil; indexer codegen + tsc; ops 6 tests.
+
+**Known gaps**
+- No gas optimisation pass (accepted; Arbitrum-family chain).
+- `forge coverage` was not run in this session (via-IR needs `--ir-minimum`; command in the audit
+  package §10).
+- The `robinhood-testnet` profile is placeholders; the testnet season itself needs the Q1/Q3
+  decisions and the PRD §10 assumptions verified (`ops/chains/README.md`).
+- Simulation-recommended parameter changes (Q20) still not applied.
+
+**Release-readiness checklist (docs/08 §4)**
+
+| Item | Status |
+|---|---|
+| Params JSON published with hash ≥ 48h before `openTime` | tooling ready (`ops plan` prints the hash; `CreateSeason` records it); needs the real season |
+| `SeasonFactory.create` executed and contracts verified on explorer | scripts ready with dry run; verification flags documented; needs the explorer (PRD §10.1) |
+| Vault funded; `phase() == PreOpen`; app shows pool and USD value | `ops fund` asserts PreOpen; app shows pool; done in dry run |
+| Eligibility adapter tested with a known-eligible and an ineligible wallet | `AllowlistEligibility` tested in unit tests and dry run; the real adapter depends on Q1 |
+| Oracle feeds live and within staleness bounds | vault enforces ≤ 1h; real adapter depends on PRD §10.5 |
+| Difficulty sized from PreOpen TVL preview and simulation; pace and fail-safe published | `ops plan` computes and prints both; sim report available; needs the real inputs |
+| Keeper running; alerting running; on-call rota sized to the estimated duration | keeper and watcher done and exercised; `alert()` must be wired to the on-call channel |
+| Terms, "how rewards work" page, geo-fence live | not in this repo's scope (docs/07) |
+| Pause key holders and procedure documented; cancellation rehearsal done | procedure in RUNBOOK §7; rehearsal done on Anvil; testnet rehearsal pending the testnet |
+| Post-close plan: withdraw comms, redemption reminders, sweep date | RUNBOOK §8; `ops sweep` done |
+
+**Next**: decide Q1, Q3 (and Q20), fill `ops/chains/robinhood-testnet.json`, run RUNBOOK §1–§8 on
+the testnet, hand `docs/AUDIT-PACKAGE.md` to the auditor.
