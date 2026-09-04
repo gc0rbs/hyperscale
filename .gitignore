@@ -19,3 +19,5 @@ __pycache__/
 .DS_Store
 .ponder/
 generated/
+app/test-results/
+app/playwright-report/

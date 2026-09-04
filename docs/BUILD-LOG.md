@@ -110,3 +110,43 @@ recommended but **not applied** (DECISIONS 2026-09-03, open question Q20). docs/
 to exact floors.
 
 **Next**: Phase 4 wires `sim.replay` as the differential-fuzz oracle for the contracts.
+
+## 2026-09-03 – Phase 3: app (shipped)
+
+**What shipped** (`app/`, `ops/`, `indexer/`, `contracts/deployments/`)
+- Next.js 15 App Router with wagmi/viem reading the chain directly. Routes: `/` landing, `/mine`
+  (live mine: block card with work progress and ETA, rig room, hash stream, rig cards with GPU /
+  cooling / overclock purchase sheets, pre-open / long-haul / closed states, found banner), `/mine/new`
+  (activate with RIG or LP, approvals inline), `/claim` (claim-all and withdraw per rig), `/redeem`
+  (eligibility check, redeem per block), `/leaderboard` (first 200 rigs by hash), `/seasons`,
+  `/api/frag/[id]` metadata. Design tokens from `specs/design/tokens.css` feed the Tailwind theme;
+  the layout follows `design/launch` and `design/artboards`.
+- `src/lib/mine-math.ts`: TypeScript port of §5 (`advance`, `settle`, `pending`, `eta`,
+  `fragmentsPerSecond`, `blockProgressBps`). Parity test (`pnpm parity`) checks `pending()` and
+  `eta()` against the contract on Anvil over random states; passes.
+- Chain-anchored clock: UI time = wall clock + offset to the latest block timestamp, so time-warped
+  Anvil and real chains render the same.
+- Dev wallet: wagmi mock connector with the five Anvil accounts, "Acting as" selector persisted in
+  localStorage, enabled only with `NEXT_PUBLIC_DEV_ACCOUNTS=1`.
+- `ops/deploy-demo.ts` (viem; `forge script --broadcast` hangs in the remote sandbox), writes
+  `contracts/deployments/<chainId>.json` which the app reads server-side. `ops/sync-abi.ts` copies
+  the 12 ABIs into `app/src/abi`. `ops/keeper.ts` pokes the mine when a shift or the fail-safe is due;
+  `ops/watch.ts` prints alerts.
+- Ponder indexer (`indexer/`) with a Hono API: `/leaderboard`, `/rigs/:owner`, `/shifts`, `/season`.
+  Optional; the app does not depend on it.
+- Playwright season (`app/e2e/season.spec.ts`): starts Anvil, deploys, activates pre-open, buys a GPU,
+  opens, overclocks, warps to a block, claims, warps to close, withdraws, redeems, and checks balances
+  against the vault. Green at paces 60, 300 and 3600 seconds per block (E2E_PACE).
+- `pnpm -r check` green: app (7 unit tests, lint, typecheck), ops (sizing test), indexer (codegen +
+  tsc), contracts (38 tests + 6 invariants), sim (21 tests).
+
+**Deviations**: none in mechanics. The UI reads `progress()`/`eta()` views for anything that must be
+current without a poke; stored `shift`/`closeX` are only used by the estimator after `advance`.
+
+**Known gaps**
+- No real wallet has been tested (only injected + mock connectors). Robinhood Chain ids and RPC are
+  placeholders in `src/lib/wagmi.ts`.
+- Leaderboard reads the first 200 rigs; the indexer API is the path for larger seasons.
+- No Lighthouse / accessibility pass; mobile layout is responsive but only checked in Chromium.
+
+**Next**: Phase 4 (hardening) starts now on the same branch.
