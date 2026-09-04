@@ -288,3 +288,16 @@ overflow; all four scenes initialize under reduced motion. Browser measurements 
 illustration's original dimensions and position, with a viewport-wide starfield. Existing game pages
 are moved without content changes. Local preview remains on port 3010. WebGL has a vector fallback;
 real-season operations still require the existing deployment and chain services.
+
+### Hero entrance refinement
+
+The hero now plays a one-time entrance: the central mineral appears first, then stones and shards
+burst from the center with overlapping short delays and a small overshoot, settling within about
+0.9 seconds of visible animation. The existing scroll expansion is composed independently, and the
+final mesh positions/scales are preserved. Reduced motion skips the entrance. The hero's vector
+fallback appears only when rendering fails, avoiding a static-image flash before the entrance.
+Rounded star radii/opacities prevent server/browser floating-point hydration differences.
+
+Validation: app lint, typecheck and six tests pass. Fresh browser loads and reduced-motion reloads
+return HTTP 200 with no console errors; scroll interaction remains available. Disabling WebGL
+shows the vector illustration and keeps the heading visible. Preview server restarted cleanly.

@@ -26,8 +26,8 @@ const HERO_STARS = Array.from({ length: 240 }, (_, index) => {
   return {
     x: `${(sample(12.9898) * 100).toFixed(3)}%`,
     y: `${(sample(78.233) * 100).toFixed(3)}%`,
-    radius: 0.35 + sample(39.425) * 0.45,
-    opacity: 0.25 + sample(93.175) * 0.5,
+    radius: (0.35 + sample(39.425) * 0.45).toFixed(3),
+    opacity: (0.25 + sample(93.175) * 0.5).toFixed(3),
     color: index % 13 === 0 ? "#65aeb1" : "#b68b45",
   };
 });

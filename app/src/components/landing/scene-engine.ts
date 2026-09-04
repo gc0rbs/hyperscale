@@ -73,7 +73,9 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   scene.add(world);
   const object = new THREE.Group();
   world.add(object);
-  const parts: { mesh: THREE.Object3D; position: THREE.Vector3; direction: THREE.Vector3; phase: number }[] = [];
+  const mineral = new THREE.Group();
+  object.add(mineral);
+  const parts: { mesh: THREE.Object3D; position: THREE.Vector3; direction: THREE.Vector3; scale: THREE.Vector3; phase: number }[] = [];
   const tiers: THREE.Group[] = [];
   let coin: THREE.Group | undefined;
 
@@ -99,7 +101,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
       shard.position.copy(position);
       shard.scale.set(0.7 + rand(), 0.5 + rand(), 0.6 + rand());
       shard.rotation.set(rand() * 5, rand() * 5, rand() * 5);
-      parts.push({ mesh: shard, position: position.clone(), direction: position.clone().normalize(), phase: rand() * 6 });
+      parts.push({ mesh: shard, position: position.clone(), direction: position.clone().normalize(), scale: shard.scale.clone(), phase: rand() * 6 });
     }
   }
   function addDust() {
@@ -119,16 +121,16 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   if (kind === "core" || kind === "reward") {
     const geometry = new THREE.IcosahedronGeometry(kind === "core" ? 1.43 : 1.48, 0);
     geometry.scale(0.9, 1.12, 0.87);
-    mesh(geometry, gold, object);
-    const inner = mesh(new THREE.IcosahedronGeometry(1.0, 1), goldLight, object);
+    mesh(geometry, gold, mineral);
+    const inner = mesh(new THREE.IcosahedronGeometry(1.0, 1), goldLight, mineral);
     inner.rotation.set(0.2, 0.5, 0.4);
     const wireMaterial = new THREE.LineBasicMaterial({ color: 0x6de8e6, transparent: true, opacity: 0.75 });
     materials.push(wireMaterial);
     const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 25), wireMaterial);
-    object.add(outline);
+    mineral.add(outline);
     // One luminous mineral seam, deliberately separate from the faceted gold surface.
     const seamPath = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.5, 1.22, 0.62), new THREE.Vector3(0.1, 0.82, 1.15), new THREE.Vector3(0.48, 0, 1.08), new THREE.Vector3(0.13, -0.9, 0.9), new THREE.Vector3(-0.44, -1.23, 0.51)], false, "centripetal");
-    mesh(new THREE.TubeGeometry(seamPath, 5, 0.035, 5, false), emissiveCyan, object);
+    mesh(new THREE.TubeGeometry(seamPath, 5, 0.035, 5, false), emissiveCyan, mineral);
     object.rotation.set(0.08, -0.3, -0.17);
     addFragments(kind === "core" ? 31 : 15, kind === "core" ? 1.65 : 1.9, kind === "core" ? 2.8 : 2.6, object, kind === "core");
     addFragments(40, 1.9, 3.4, world);
@@ -209,6 +211,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   let displayed = initialValue;
   let frame = 0;
   let elapsed = 0;
+  let entranceFinished = kind !== "core" || reduced.matches;
   let previous = 0;
   let visible = false;
   let disposed = false;
@@ -231,10 +234,30 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
     object.rotation.y = baseRotation.y + (reduced.matches ? 0 : rotationY + Math.sin(elapsed * 0.22) * 0.1) + (kind === "reward" ? displayed * 0.32 : 0);
     if (kind !== "rig") object.position.y = Math.sin(elapsed * 0.75) * 0.065;
 
+    // Play once when the hero first renders. Scroll expansion remains an independent layer.
+    if (reduced.matches || elapsed >= 0.9) entranceFinished = true;
+    if (kind === "core") {
+      const progress = entranceFinished ? 1 : THREE.MathUtils.clamp(elapsed / 0.36, 0, 1);
+      const reveal = 1 - Math.pow(1 - progress, 3);
+      mineral.visible = progress > 0;
+      mineral.scale.setScalar(0.28 + reveal * 0.72);
+      mineral.rotation.y = (1 - reveal) * -0.35;
+    }
+
     parts.forEach((part, i) => {
       const offset = kind === "core" ? displayed * (0.68 + (i % 4) * 0.19) : 0;
       const gather = kind === "token" ? 1 - displayed * 0.89 : 1;
       part.mesh.position.copy(part.position).multiplyScalar(gather).addScaledVector(part.direction, offset);
+      if (kind === "core") {
+        // Different short delays make the stones and shards burst out in overlapping waves.
+        const delay = 0.07 + (i % 7) * 0.022 + part.phase * 0.023;
+        const progress = entranceFinished ? 1 : THREE.MathUtils.clamp((elapsed - delay) / 0.46, 0, 1);
+        const back = progress - 1;
+        const burst = 1 + 2.35 * back * back * back + 1.35 * back * back;
+        part.mesh.visible = progress > 0;
+        part.mesh.position.multiplyScalar(0.16 + burst * 0.84);
+        part.mesh.scale.copy(part.scale).multiplyScalar(Math.max(0.001, burst));
+      }
       if (!reduced.matches) {
         part.mesh.position.y += Math.sin(elapsed * 0.5 + part.phase) * 0.06 * gather;
         part.mesh.rotation.y += dt * 0.09;
@@ -280,6 +303,7 @@ export function createScene(host: HTMLElement, kind: SceneKind, initialValue: nu
   function contextLost(event: Event) {
     event.preventDefault();
     host.classList.remove("is-ready");
+    host.classList.add("is-fallback");
     cancelAnimationFrame(frame);
     frame = 0;
     visible = false;

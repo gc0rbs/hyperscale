@@ -45,6 +45,10 @@ html.landing-active { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .lp-scene-fallback { width: 100%; height: 100%; position: absolute; inset: 0; transition: opacity .5s; }
 .lp-scene.is-ready .lp-scene-fallback { opacity: 0; }
 .lp-scene-core { mask-image: linear-gradient(90deg, transparent, black 13%, black 87%, transparent); }
+/* Let the geometry entrance read clearly, without a static gem flashing first. */
+.lp-scene-core canvas { transition: opacity 120ms ease-out; }
+.lp-scene-core .lp-scene-fallback { opacity: 0; }
+.lp-scene-core.is-fallback .lp-scene-fallback { opacity: 1; }
 .lp-art-coordinate { position: absolute; right: 10%; top: 40px; display: flex; gap: 20px; color: #8d968a; font-size: 8px; font-family: var(--font-data); letter-spacing: .06em; }
 .lp-art-coordinate > span:first-child { color: #b7b9a9; }
 .lp-core-callout { position: absolute; right: 6%; bottom: 24%; display: flex; align-items: center; font-family: var(--font-data); font-size: 8px; line-height: 1.65; color: #b7b8a8; letter-spacing: .025em; }
