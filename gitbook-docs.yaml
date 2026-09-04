@@ -1,4 +1,4 @@
-# GitBook Git Sync site configuration (project directory = gitbook/).
+# GitBook Git Sync site configuration (project directory = repository root).
 # https://gitbook.com/docs/docs-as-code/git-sync/content-configuration
 $schema: https://api.gitbook.com/gitbook-docs.yaml
 site:
@@ -10,4 +10,4 @@ site:
       path: docs
       default: true
       content:
-        directory: ./
+        directory: ./gitbook
