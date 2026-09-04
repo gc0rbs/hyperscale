@@ -1,0 +1,28 @@
+{
+  "name": "robinhood",
+  "chainId": 4663,
+  "rpcUrl": "${ROBINHOOD_RPC:-https://rpc.mainnet.chain.robinhood.com}",
+  "explorerApi": "https://robinhoodchain.blockscout.com/api",
+  "explorer": "https://robinhoodchain.blockscout.com",
+  "mocks": false,
+  "notes": "Robinhood Chain mainnet (Arbitrum Orbit, gas in ETH). The public RPC is rate-limited; point ROBINHOOD_RPC at a QuickNode/Dwellir/ArrowRPC endpoint for the keeper and watcher. $RIG is launched on Pons and graduates to a Uniswap v3 RIG/WETH pool (1% tier) whose position is locked by the Pons locker; there is no fungible LP token, so LP staking is off (lpToken zero). Fill rig with the graduated token address, then usdc/oracle/eligibility/treasury/stocks once Q1 is settled.",
+  "rig": "0x0000000000000000000000000000000000000000",
+  "lpToken": "0x0000000000000000000000000000000000000000",
+  "usdc": "0x0000000000000000000000000000000000000000",
+  "oracle": "0x0000000000000000000000000000000000000000",
+  "eligibility": "0x0000000000000000000000000000000000000000",
+  "treasury": "0x0000000000000000000000000000000000000000",
+  "stocks": {
+    "NVDAx": "0x0000000000000000000000000000000000000000",
+    "TSLAx": "0x0000000000000000000000000000000000000000",
+    "AAPLx": "0x0000000000000000000000000000000000000000",
+    "SPYx": "0x0000000000000000000000000000000000000000"
+  },
+  "external": {
+    "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "uniswapV3PositionManager": "0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3",
+    "ponsFactory": "0xA5aAb3F0c6EeadF30Ef1D3Eb997108E976351feB",
+    "ponsLocker": "0x736D76699C26D0d966744cAe304C000d471f7F35"
+  }
+}

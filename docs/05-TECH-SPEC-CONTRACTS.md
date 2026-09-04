@@ -30,7 +30,7 @@ immutable; a new season is a new deployment.
 
 | Contract | Lifetime | Role |
 |---|---|---|
-| `RIG` | permanent | ERC-20, burnable, permit |
+| `RIG` | permanent | the Pons-launched ERC-20 (external). Burns are transfers to `SeasonMine.BURN_ADDRESS` (`0x…dEaD`); `contracts/src/tokens/RIG.sol` is the dev token |
 | `SeasonFactory` | permanent | deploys `SeasonMine` + `StockFragments` + `RedemptionVault` from a `SeasonParams` struct; registry |
 | `SeasonMine` | one season | staking, upgrades, hashrate, work accounting, block discovery, claims, exit, withdrawals |
 | `StockFragments` | one season | ERC-1155; id = block index; minter = `SeasonMine`; burner = `RedemptionVault`; transfers disabled in v1 |

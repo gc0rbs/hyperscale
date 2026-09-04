@@ -139,3 +139,21 @@ neither is load-bearing for the accounting. Changes:
   inline SVG; the rig room draws each machine from its state in SVG; one purpose-made render was
   generated (Higgsfield, Nano Banana Pro, with board 66 as the style reference) for the landing hero.
 - Licence check for Humane is the user's item before launch.
+
+## 2026-09-04 – $RIG launches on Pons; RIG-only staking (user decisions)
+
+- **$RIG is a Pons-launched token** on Robinhood Chain (chain 4663): plain ERC-20, fixed 1B supply,
+  18 decimals, no burn function, graduating to a Uniswap v3 RIG/WETH pool whose position is locked by
+  the Pons locker. Verified from the Pons docs and Robinhood Chain network details; PRD §10 items 1, 3
+  and 5 updated.
+- **Burns are dead-address transfers.** `SeasonMine._burn` now does `safeTransferFrom(player,
+  0x…dEaD)` instead of `burnFrom`. Same economic effect (unrecoverable, visible on chain); nominal
+  supply stays 1B. CLAUDE.md hard rule reworded; docs/04 and 05 updated; `PonsToken.t.sol` runs a
+  season against a burn-less ERC-20. `RIG.sol` is now a dev/test token only.
+- **No LP staking in v1** (Q3 closed). The user does not need the liquidity incentive. The mine's LP
+  path stays (audited, off by `lpToken = 0`); the app hides the LP option when the season has none. A
+  full-range Uniswap v3 wrapper token plus zap is the documented v1.1 route if that changes.
+- **No cap on rig count.** Pay, prices and overclocks are all linear in stake, so splitting gains
+  nothing; the minimum stake per rig is the anti-spam control and is sized per season.
+- Chain profile `ops/chains/robinhood.json` carries the verified chain, explorer, WETH, Uniswap v3 and
+  Pons addresses; season addresses stay zero until launch and Q1.

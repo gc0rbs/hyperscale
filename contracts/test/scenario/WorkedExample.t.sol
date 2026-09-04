@@ -10,7 +10,7 @@ contract WorkedExampleTest is SeasonTestBase {
         fundPlayer(ann, 5_000_000e18, 0);
         fundPlayer(bo, 2_000_000e18, 1_000_000e18);
         fundPlayer(cy, 2_500_000e18, 0);
-        uint256 supplyBefore = rig.totalSupply();
+        uint256 deadBefore = rig.balanceOf(mine.BURN_ADDRESS());
         uint256 a = activateRig(ann, 5_000_000e18);
         uint256 b = activateLp(bo, 1_000_000e18);
         uint256 c = activateRig(cy, 2_500_000e18);
@@ -49,7 +49,7 @@ contract WorkedExampleTest is SeasonTestBase {
         assertGe(pa + pb + pc, 5_000_000 - 3, "whole pool paid out minus dust");
 
         // Burns: Ann 10% of 5M; Bo 19% + 16% of 2.5M + 12 × 2% of 2.5M.
-        uint256 burned = supplyBefore - rig.totalSupply();
+        uint256 burned = rig.balanceOf(mine.BURN_ADDRESS()) - deadBefore; // burn = dead-address transfer
         assertEq(burned, 500_000e18 + 475_000e18 + 400_000e18 + 12 * 50_000e18);
     }
 }

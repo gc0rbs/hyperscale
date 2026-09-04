@@ -12,7 +12,7 @@ repository at the commit tagged in `docs/BUILD-LOG.md` (Phase 4 entry).
 | `contracts/src/RedemptionVault.sol` | ~170 | holds Stock Tokens + USDC; funding, in-kind redemption, cash-out, sweep |
 | `contracts/src/SeasonFactory.sol` | ~130 | parameter validation, deterministic deployment of the three above |
 | `contracts/src/factory/Deployers.sol`, `CreateAddress.sol` | 123 | per-contract deployers (EIP-170 split) and CREATE address prediction |
-| `contracts/src/tokens/RIG.sol` | 17 | fixed-supply ERC-20 with `ERC20Burnable` and permit |
+| `contracts/src/tokens/RIG.sol` | 17 | dev/test ERC-20 standing in for the Pons token; not deployed to mainnet |
 | `contracts/src/adapters/*` | 43 | `OpenEligibility`, `AllowlistEligibility` (owner-mutable, outside the immutable set) |
 
 Out of scope: mocks (`src/mocks/*`, they model expected external restrictions), scripts, the app,
@@ -28,10 +28,12 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 
 1. **Season contracts are immutable.** No proxies, no setters, no difficulty adjustment. The only
    privileged function is `pause`/`unpause` by the season's `treasury` address.
-2. **$RIG** is `contracts/src/tokens/RIG.sol` or an equivalent: standard ERC-20, no hooks, no
-   fee-on-transfer, `burnFrom` with allowance. Upgrade spend is burned from the player.
-3. **The LP token** is a fungible ERC-20 (Uniswap v2 shape) chosen at deployment; standard transfer
-   semantics. Its weight (`lpWeightPerToken`) is fixed at creation from a 24 h sampled reserve ratio.
+2. **$RIG** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
+   the two-block launch window, no fee-on-transfer). Upgrade spend is transferred from the player to
+   `SeasonMine.BURN_ADDRESS` (`0x…dEaD`). `contracts/src/tokens/RIG.sol` is the dev/test token.
+3. **The LP token** path is present but off for v1 (`lpToken` zero; the Pons pool is Uniswap v3 with
+   NFT positions). When used, it expects a fungible ERC-20 with standard transfer semantics and a
+   weight (`lpWeightPerToken`) fixed at creation from a 24 h sampled reserve ratio.
 4. **Stock Tokens** may have transfer hooks that revert for non-allowlisted parties. The vault treats
    them as opaque ERC-20s that may revert; the mine never touches them.
 5. **The oracle** (`IPriceOracle`) is trusted for `cashOut` only, with a 1 h staleness cap. In-kind

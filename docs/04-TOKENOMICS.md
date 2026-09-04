@@ -4,11 +4,11 @@
 
 | Property | Value |
 |---|---|
-| Standard | ERC-20 + EIP-2612 permit + `burn` / `burnFrom` (OpenZeppelin `ERC20Burnable`) |
+| Standard | Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function). `contracts/src/tokens/RIG.sol` is the dev/test token |
 | Supply | Fixed at genesis: 1,000,000,000 RIG. No mint function. |
 | Decimals | 18 |
 | Chain | Robinhood Chain (native). No bridge in v1. |
-| Deflation | All upgrade spend is burned. Supply only goes down. |
+| Deflation | All upgrade spend is sent to `0x…dEaD`: unrecoverable, visible on chain. Nominal supply stays 1B; circulating supply only goes down. |
 
 ### Genesis allocation (proposal, to be finalised)
 
@@ -26,7 +26,7 @@ depends on these numbers.
 ## 2. Value flows in a season
 
 ```
- player ──upgrades (100%)──▶ RIG.burn()
+ player ──upgrades (100%)──▶ transfer to 0x…dEaD (burn)
  player ──activation fee (1%)──▶ Treasury
  player ──early exit fee (3% of deposit)──▶ Treasury
  player ──stake──▶ SeasonMine ──(close or exit)──▶ player

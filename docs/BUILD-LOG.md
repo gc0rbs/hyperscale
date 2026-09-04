@@ -260,3 +260,16 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   params table, 05, 06, 07, 08, 09 (Q9, Q13, Q14), GLOSSARY, README, RUNBOOK, AUDIT-PACKAGE.
 - Checks: forge 43 tests + 8 invariants, snapshot regenerated, interfaces match; sim 22 tests; ops 6;
   app check, Playwright season (pace 300), parity.
+
+## 2026-09-04 – Pons compatibility
+
+- Burn = transfer to `0x…dEaD` (`SeasonMine.BURN_ADDRESS`); `ERC20Burnable` dependency dropped.
+  New `test/unit/PonsToken.t.sol`: full season on a burn-less ERC-20, LP disabled, spend lands at the
+  dead address, mine holds deposits only. Worked-example test measures burn at the dead address.
+  Gas snapshot regenerated.
+- App: the activate page shows the LP option only when `lpWeightPerToken > 0`.
+- `ops/chains/robinhood.json` (mainnet 4663) with verified external addresses; foundry rpc endpoint
+  `robinhood`; chains README rewritten for the Pons token.
+- Docs: CLAUDE.md, PRD §10/§11, 04, 05, 09 (Q3 closed), AUDIT-PACKAGE §1–2, DECISIONS.
+- Still open before a testnet season: Q1 (Stock Tokens and their hooks), the oracle for cash-out,
+  whether a Robinhood Chain testnet with faucets exists.

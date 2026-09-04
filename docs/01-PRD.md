@@ -175,15 +175,15 @@ IDs are stable and referenced from the tech specs and test plan. "MUST" items ar
 
 ## 10. Assumptions to verify (discovery milestone)
 
-1. Robinhood Chain is an Arbitrum Orbit chain (Nitro stack), EVM-equivalent, ETH for gas, sub-second blocks, `block.timestamp` set by the sequencer and monotone.
+1. **Verified 2026-09-04.** Robinhood Chain is an Arbitrum Orbit chain, chain id 4663, ETH for gas, public RPC `rpc.mainnet.chain.robinhood.com`, explorer `robinhoodchain.blockscout.com`.
 2. Stock Tokens are ERC-20 with 18 decimals and a transfer-restriction hook; the exact interface of the restriction is unknown and must be obtained.
-3. A constant-product (Uniswap v2-style) DEX exists on the chain for the RIG/USDC pair; if only a v3-style DEX exists, LP staking is deferred to v1.1.
+3. **Verified 2026-09-04, and decided.** $RIG launches on Pons and graduates to a Uniswap v3 RIG/WETH pool (NFT position, locked). No fungible LP exists; LP staking is off in v1 (Q3). The token has no burn function; upgrade spend is transferred to the dead address.
 4. A price oracle (Pyth or Chainlink) publishes the underlying equity prices on the chain, needed for cash-out.
-5. Testnet faucets, a block explorer, and a public RPC exist.
+5. Explorer and public RPC exist (verified). A Robinhood Chain testnet with faucets is still to be confirmed.
 
 ## 11. Release scope
 
-**v1 (season 1):** everything marked MUST above; RIG staking; LP staking if assumption 3 holds; non-transferable fragments; redemption + cash-out; early exit; leaderboard; ETA display.
+**v1 (season 1):** everything marked MUST above; RIG staking (no LP: Pons graduates to Uniswap v3); non-transferable fragments; redemption + cash-out; early exit; leaderboard; ETA display.
 
 **v1.1 candidates:** rig NFTs (transferable), fragment transferability (post legal), "browser boost" mini-game (doc 02 §6), multiple LP pairs, season pass / cosmetics, cross-season fragment roll-over.
 

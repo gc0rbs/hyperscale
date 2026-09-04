@@ -79,7 +79,7 @@ function Activate({ snap }: { snap: SeasonSnapshot }) {
       <Panel className="flex flex-col gap-6" data-testid="activate">
         <div className="font-display leading-none uppercase tracking-[0.02em] text-[64px] font-medium">Activate a rig</div>
         <div className="flex gap-2">
-          {(["RIG", "RIG/USDC LP"] as const).map((l, i) => <button key={l} onClick={() => setAsset(i as 0 | 1)} className={`h-10 px-4 rounded-sm border text-[14px] font-semibold ${asset === i ? "border-ember text-ember bg-[var(--ember-tint)]" : "border-mine-line text-mine-muted"}`}>{l}</button>)}
+          {(p.lpWeightPerToken > 0n ? (["RIG", "RIG/USDC LP"] as const) : (["RIG"] as const)).map((l, i) => <button key={l} onClick={() => setAsset(i as 0 | 1)} className={`h-10 px-4 rounded-sm border text-[14px] font-semibold ${asset === i ? "border-ember text-ember bg-[var(--ember-tint)]" : "border-mine-line text-mine-muted"}`}>{l}</button>)}
         </div>
         <label className="flex flex-col gap-2"><Label>Amount</Label><input data-testid="amount" value={amountStr} onChange={(ev) => setAmountStr(ev.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-12 px-4 bg-mine-panel2 border border-mine-line rounded-sm font-data text-[22px] text-mine-fg outline-none focus:border-signal" /><Mono className="text-mine-muted text-[12px]">balance {formatRig(asset === 0 ? rigBal : lpBal)} {asset === 0 ? "RIG" : "LP"}{asset === 1 ? ` · 1 LP = ${Number(p.lpWeightPerToken) / 1e18} RIG-equivalent (bonus included)` : ""}</Mono></label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

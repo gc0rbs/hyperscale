@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -26,6 +25,9 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
 
     uint256 internal constant WAD = 1e18;
     uint256 internal constant BPS = 10_000;
+    /// @dev Upgrade spend is sent here. $RIG is a launchpad-issued ERC-20 with no burn function, so a
+    ///      transfer to the conventional dead address is the burn: provably unrecoverable, visible on chain.
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     // ── immutable configuration ─────────────────────────────────────────────
     SeasonParams internal _p;
@@ -609,7 +611,7 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     }
 
     function _burn(uint256 amount) internal {
-        if (amount > 0) ERC20Burnable(address(_rig)).burnFrom(msg.sender, amount);
+        if (amount > 0) _rig.safeTransferFrom(msg.sender, BURN_ADDRESS, amount);
     }
 
     function _owned(uint256 rigId) internal view returns (Rig storage r) {
