@@ -1,28 +1,131 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createPublicClient, createWalletClient, http, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, defineChain, http, type Address, type Chain, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { artifact, REPO_ROOT } from "./artifacts.js";
 
-export function loadDeployment(chainId = Number(process.env.CHAIN_ID ?? 31337)) {
-  const p = join(REPO_ROOT, "contracts", "deployments", `${chainId}.json`);
-  return JSON.parse(readFileSync(p, "utf8")) as { mine: Address; vault: Address; fragments: Address; rig: Address; openTime: number };
+export const ANVIL_KEYS: Hex[] = [
+  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+  "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+  "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+  "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6",
+  "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a",
+];
+
+export interface Deployment {
+  chainId: number;
+  seasonId: number;
+  rig: Address;
+  lp: Address;
+  usdc: Address;
+  oracle: Address;
+  eligibility: Address;
+  factory: Address;
+  mine: Address;
+  fragments: Address;
+  vault: Address;
+  stocks: Address[];
+  openTime: number;
+  difficultyTotal: string;
+  seasonFile?: string;
+  paramsHash?: Hex;
 }
 
-export function clients() {
+export interface FactoryDeployment {
+  chainId: number;
+  deployer: Address;
+  factory: Address;
+  mineDeployer: Address;
+  fragmentsDeployer: Address;
+  vaultDeployer: Address;
+  baseUri: string;
+  rig?: Address;
+  lp?: Address;
+  usdc?: Address;
+  oracle?: Address;
+  eligibility?: Address;
+  stocks?: Address[];
+}
+
+export interface ChainProfile {
+  name: string;
+  chainId: number;
+  rpcUrl: string;
+  explorerApi: string | null;
+  mocks: boolean;
+  rig?: Address;
+  lpToken?: Address;
+  lpPairKind?: string;
+  usdc?: Address;
+  oracle?: Address;
+  eligibility?: Address;
+  treasury?: Address;
+  stocks?: Record<string, Address>;
+}
+
+export const DEPLOYMENTS = join(REPO_ROOT, "contracts", "deployments");
+
+export function chainId(): number {
+  return Number(process.env.CHAIN_ID ?? 31337);
+}
+
+export function loadDeployment(id = chainId()): Deployment {
+  const p = join(DEPLOYMENTS, `${id}.json`);
+  if (!existsSync(p)) throw new Error(`no season deployment for chain ${id} (${p}); run CreateSeason first`);
+  return JSON.parse(readFileSync(p, "utf8")) as Deployment;
+}
+
+export function loadFactoryDeployment(id = chainId()): FactoryDeployment {
+  const p = join(DEPLOYMENTS, `${id}-factory.json`);
+  if (!existsSync(p)) throw new Error(`no factory deployment for chain ${id} (${p}); run DeployFactory first`);
+  return JSON.parse(readFileSync(p, "utf8")) as FactoryDeployment;
+}
+
+/** Expands `${ENV}` placeholders in a profile string. */
+function expand(s: string | null | undefined): string | null {
+  if (s == null) return null;
+  return s.replace(/\$\{([A-Z0-9_]+)\}/g, (_, k: string) => process.env[k] ?? "");
+}
+
+export function loadChainProfile(name: string): ChainProfile {
+  const p = join(REPO_ROOT, "ops", "chains", `${name}.json`);
+  if (!existsSync(p)) throw new Error(`unknown chain profile ${name} (${p})`);
+  const raw = JSON.parse(readFileSync(p, "utf8")) as ChainProfile;
+  return { ...raw, rpcUrl: expand(raw.rpcUrl) ?? "", explorerApi: expand(raw.explorerApi) };
+}
+
+export function viemChain(id = chainId(), rpc = process.env.RPC_URL ?? "http://127.0.0.1:8545"): Chain {
+  if (id === 31337) return foundry;
+  return defineChain({
+    id,
+    name: `chain-${id}`,
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: { default: { http: [rpc] } },
+  });
+}
+
+export function clients(keyEnv = "KEEPER_KEY") {
   const rpc = process.env.RPC_URL ?? "http://127.0.0.1:8545";
-  const key = (process.env.KEEPER_KEY ?? "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d") as Hex;
+  const key = (process.env[keyEnv] ?? process.env.PRIVATE_KEY ?? ANVIL_KEYS[1]) as Hex;
   const account = privateKeyToAccount(key);
-  const pub = createPublicClient({ chain: foundry, transport: http(rpc) });
-  const wallet = createWalletClient({ account, chain: foundry, transport: http(rpc) });
-  return { pub, wallet, account };
+  const chain = viemChain(chainId(), rpc);
+  const pub = createPublicClient({ chain, transport: http(rpc) });
+  const wallet = createWalletClient({ account, chain, transport: http(rpc) });
+  return { pub, wallet, account, chain };
 }
 
 export const mineAbi = artifact("SeasonMine.sol", "SeasonMine").abi;
 export const vaultAbi = artifact("RedemptionVault.sol", "RedemptionVault").abi;
+export const fragmentsAbi = artifact("StockFragments.sol", "StockFragments").abi;
+export const erc20Abi = artifact("MockERC20.sol", "MockERC20").abi;
+export const stockAbi = artifact("MockStockToken.sol", "MockStockToken").abi;
+export const rigAbi = artifact("RIG.sol", "RIG").abi;
+export const eligibilityAbi = artifact("AllowlistEligibility.sol", "AllowlistEligibility").abi;
 
 export interface Eta { toShiftEnd: bigint; toBlockFound: bigint; toClose: bigint; idle: boolean }
+
+export const PHASES = ["Funding", "PreOpen", "Open", "Closed", "Cancelled"] as const;
 
 export async function readState(mine: Address) {
   const { pub } = clients();
@@ -36,4 +139,14 @@ export async function readState(mine: Address) {
   ]);
   const block = await pub.getBlock();
   return { phase, shift, totalHash, closeX, eta, lastX, now: block.timestamp };
+}
+
+export function arg(flag: string, def?: string): string | undefined {
+  const i = process.argv.indexOf(flag);
+  if (i >= 0 && i + 1 < process.argv.length) return process.argv[i + 1];
+  return def;
+}
+
+export function hasFlag(flag: string): boolean {
+  return process.argv.includes(flag);
 }

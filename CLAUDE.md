@@ -57,11 +57,17 @@ foundryup                                   # install/update Foundry (contracts)
 cd contracts && forge build && forge test   # unit + fuzz + invariant
 forge test --match-path 'test/scenario/*'   # scenarios incl. pace-replay
 forge snapshot --check                      # gas regressions
+FOUNDRY_PROFILE=campaign forge test --match-path 'test/invariant/*'   # 10M-call invariant campaign
+DIFF_OUT=diff/t.jsonl forge test --match-contract DiffTrace --fuzz-runs 100000 && cd ../sim && uv run python -m sim.diff ../contracts/diff/t.jsonl
 cd sim && uv run pytest && uv run python -m sim.run --params ../specs/params/season-default.json
 pnpm -r check                               # everything
+cd ops && pnpm deploy-factory / plan / create-season / fund / keeper / watch / guardian / sweep   # docs/RUNBOOK.md
 ```
 
 ## Environment notes
 - Foundry may be missing in a fresh remote session: run `foundryup` (network goes through the proxy).
+- `forge script --broadcast` against local Anvil needs `NO_PROXY=127.0.0.1,localhost` in remote sessions
+  (`ops/scripts/forge-script.sh` sets it); without it the broadcast hangs on the agent proxy.
+- `pkill -f "next dev"` kills the tool shell; use `pkill -f "[n]ext-server"`.
 - Chain assumptions (Orbit, Stock Token hooks, DEX, oracle) are unverified; see `docs/01-PRD.md` §10.
   Build against mocks in `contracts/test/mocks/` that model the *expected* restrictions.

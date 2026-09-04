@@ -22,3 +22,6 @@ generated/
 app/test-results/
 app/playwright-report/
 contracts/diff/
+contracts/deployments/*.json
+ops/seasons/*.json
+!ops/seasons/*.example.json

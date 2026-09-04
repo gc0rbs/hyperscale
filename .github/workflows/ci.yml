@@ -27,6 +27,19 @@ jobs:
       - name: Gas snapshot
         run: cd contracts && forge snapshot --check || (echo "::warning::gas snapshot changed; run forge snapshot" && exit 1)
 
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: foundry-rs/foundry-toolchain@v1
+        with: { version: stable }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install slither-analyzer==0.11.3
+      # Findings are triaged in docs/AUDIT-PACKAGE.md §8; fail only on new high-severity results.
+      - run: cd contracts && slither . --filter-paths "lib/|test/|script/|mocks/" --exclude-informational --exclude-optimization --fail-high
+
   ts:
     runs-on: ubuntu-latest
     steps:

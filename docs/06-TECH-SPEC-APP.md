@@ -89,22 +89,29 @@ shift, season duration vs planned.
 
 ## 6. Operations tooling
 
-- `scripts/season/plan.ts`: takes a params JSON; computes `lpWeightPerToken` from DEX reserves (24h
-  TWAP); computes `difficulty[]` from expected hash and planned pace (doc 04 §5.2); prints pool USD
-  value; validates against factory rules; outputs deploy calldata and a params hash.
-- `scripts/season/fund.ts`: approves and funds the vault; asserts `phase() == PreOpen`.
-- `scripts/season/keeper.ts`: calls `poke()` when `eta().nextShift` has passed or every N minutes.
-- `scripts/season/watch.ts`: alerts on `Paused`, `SeasonCancelled`, `ClosedByFailSafe`, `totalHash == 0`
-  for > 1h, ETA to close > 5× planned, vault reserve low, oracle staleness.
-- `scripts/season/sweep.ts`: after redemption window.
+All in `ops/` (`pnpm --filter @stock-miner/ops <script>`); the full procedure is `docs/RUNBOOK.md`.
+
+- `deploy-factory` / `create-season`: wrappers over `contracts/script/DeployFactory.s.sol` and
+  `CreateSeason.s.sol` (forge scripts; dry run without `--broadcast`; `--verify` via Blockscout flags).
+- `plan`: params template + chain profile (`ops/chains/<name>.json`) → resolved season JSON in
+  `ops/seasons/`. Computes `lpWeightPerToken` from 24 hourly samples of the pair's reserves, sizes
+  `difficulty[]` from expected hash and planned pace (doc 04 §5.2), validates against the factory rules
+  (`ops/src/lib/validate.ts` mirrors `SeasonFactory._validate`), prints the params hash.
+- `fund`: checks balances, approves and calls `RedemptionVault.fund`; asserts `phase() == PreOpen`.
+- `keeper`: calls `poke()` when a shift boundary is due or the stored state is > 10 min stale.
+- `watch`: alerts on `Paused`, `SeasonCancelled`, `totalHash == 0` for > 1h, ETA to close > 5× planned,
+  vault reserve low after close.
+- `guardian`: `pause` / `unpause` / `status` with the treasury key.
+- `sweep`: after the redemption window or a cancellation; repeatable.
+- `play` (Anvil only): scripted players for dry runs and rehearsals.
 
 ## 7. Testing (app)
 
 - Playwright end-to-end against a local Anvil fork with time-warping helpers to drive all 32 shifts
   in minutes, at three paces (fast, planned, slow) to exercise both layouts.
 - Visual regression on `/mine` in each phase and density.
-- Contract math parity test: TypeScript `estimate`/`eta` vs Foundry `pending()`/`eta()` on 1,000
-  fuzzed states.
+- Contract math parity test: TypeScript `pending`/`eta` vs the contract's `pending()`/`eta()` on random
+  states against Anvil (`pnpm --filter @stock-miner/app parity`).
 
 ## 8. Accessibility and performance
 

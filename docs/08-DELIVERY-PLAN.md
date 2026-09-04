@@ -33,12 +33,16 @@ Total ≈ 14–16 weeks to season 1.
   mine (`totalHash == 0`) then resume; overclock bought one second before a shift ends; 32 shifts crossed
   in a single `poke()`; the same season replayed at 6-hour, 1-day and 3-week paces yielding identical
   fragment distributions; exit mid-shift; fail-safe close mid-block; claim ordering; pause > grace.
+- **Differential fuzz**: random action traces executed against `SeasonMine` and replayed through the
+  Python reference (`sim.diff`); ≥ 100k traces with zero mismatches before audit.
+- **Static analysis**: slither, findings triaged in `docs/AUDIT-PACKAGE.md`.
 - **Economic simulation**: agent-based Python model of N players with strategies (early GPU maxer,
   finale overclocker, passive LP, early exiter) to tune params, pool sizing and difficulty sizing;
   outputs burn, share distribution, Gini of rewards, and season duration distribution across
   participation scenarios.
 - **App**: Playwright full season on Anvil; parity test; reduced-motion audit.
-- **Testnet season** as dress rehearsal for ops scripts and alerting.
+- **Anvil dry run and testnet season** as dress rehearsals for the ops scripts, keeper, alerting and
+  the pause/cancel procedure (`docs/RUNBOOK.md`).
 
 ## 4. Launch checklist (season 1)
 

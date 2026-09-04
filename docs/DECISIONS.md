@@ -71,3 +71,31 @@ Recommended by the simulation, **not applied** because they change the economics
 Applied now: docs/03 §7 worked-example numbers corrected to exact integer floors (1,794,871 / 2,564,102 /
 641,025); the contracts' scenario test and the Python reference both assert them within dust.
 Open question Q20 added to docs/09.
+
+## 2026-09-04 – Phase 4 hardening decisions
+
+- **A pause after close cannot cancel the season.** `emergencyWithdraw` flips `cancelled` only while
+  `closeX == 0`; after close it settles the rig, returns the deposit and leaves earned fragments
+  claimable once unpaused. Before this, a guardian pause that outlived the grace period after a
+  normal close would have voided everyone's redemption. FR-S6 text unchanged; docs/05 §6 table updated.
+- **`RedemptionVault.sweep` is repeatable.** One-shot sweeping stranded any Stock Token whose transfer
+  hook refused the treasury. Now every call moves whatever balances remain; a refusing asset is retried
+  later. Interface NatSpec in `specs/contracts/IRedemptionVault.sol` updated.
+- **Burns are the last effect** in `upgradeGpu`, `upgradeCooling`, `overclock` (checks-effects-
+  interactions). No behaviour change; slither's reentrancy findings on those paths go away.
+- **Factory validation widened**: `minStakeWeight > 0`; `lpToken` and `lpWeightPerToken` must be both
+  zero or both non-zero; `poolTokens[b] × fragPerToken ≤ uint128 max`; the mine constructor rejects a
+  `ratePerWork` of zero. `ops/plan` mirrors the rules with the same reason strings.
+- **Reference (`sim/`) mirrors the contract's claim semantics exactly**: `claim` settles then reverts
+  `AlreadyClaimed` when nothing is mintable; `claimAll` settles once, then mints every found block, all
+  or nothing. Found by the differential harness (two reference-side bugs; the contract was right).
+- **Interface return names**: `claim`/`claimAll` return `minted`, `cashOut`/`quoteCashOut` return
+  `usdcOut` (were shadowing the `fragments()` / `usdc()` getters). Selectors unchanged.
+- **forge scripts are the deployment path.** `forge script --broadcast` works in the remote sandbox
+  with `NO_PROXY=127.0.0.1,localhost`; the earlier "hangs" were the agent proxy. `ops/deploy-demo.ts`
+  stays for the app's Playwright setup only.
+- **`--verify` uses Blockscout flags on the CLI**, not an `[etherscan]` block, until the explorer is
+  known (docs/01 §10.1).
+- **Not changed, logged as accepted**: pause does not stop the clock; cancellation forfeits unclaimed
+  fragments to the treasury; `claim` of nothing reverts `AlreadyClaimed`. See `docs/AUDIT-PACKAGE.md`
+  §9.

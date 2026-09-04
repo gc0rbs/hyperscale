@@ -227,7 +227,7 @@ r.lastX = toX
 | `claim(rigId, b)` / `claimAll(rigId)` | block found or closed | settle; `frag = earned[b] / 1e18`; check `mintedFragments[b] + frag ≤ supply`; mint id `b`; zero `earned[b]`. |
 | `exit(rigId)` | Open | settle; remove `baseHash + ocHash` from `totalHash` and `ocHash` from its `ocExpiring` bucket; fee `amount × earlyExitFeeBps` to treasury; return remainder; `inactive = true`. Earned stays claimable. |
 | `withdraw(rigId)` | Closed | settle; return full deposit; `inactive = true`. |
-| `emergencyWithdraw(rigId)` | paused > grace | return deposit; forfeits unclaimed; season cancelled; vault `sweep` enabled early. |
+| `emergencyWithdraw(rigId)` | paused > grace | return deposit. If the season was still open: season cancelled, unclaimed fragments forfeited, vault `sweep` enabled early. If it had already closed: nothing is cancelled; earned fragments stay claimable after an unpause. |
 | views | any | `phase()`, `rigHash(rigId)`, `pending(rigId, b)` (simulated), `progress()` (block, shift, workInShift, remaining), `eta()` (seconds to next shift/block/close at current `totalHash`, 0 if idle), `params()` |
 
 Permission: `activate` is by `msg.sender`; other rig functions require `rigs[rigId].owner == msg.sender`.
@@ -247,7 +247,7 @@ redeem(id, fragments)       require eligibility.isEligible(msg.sender); require 
                             tokens = fragments × 1e18 / fragPerToken; burn; transfer stock.
 cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 1h); usdc = tokens × price × (1 − fee);
                             require reserve ≥ usdc; burn; transfer USDC.
-sweep()                     after closeX + redemptionDays, or if cancelled: send all balances to treasury.
+sweep()                     after closeX + redemptionDays, or if cancelled: send all balances to treasury. Repeatable; an asset whose hook refuses the treasury stays and is retried.
 ```
 
 Redemption opens at close (not per block) so the vault never has to reason about which blocks are
@@ -271,7 +271,9 @@ Eligibility adapters (doc 07): `OpenEligibility`, `MerkleEligibility`, `TokenHoo
 | Exit/re-enter churn | Exit fee 3%; upgrades lost; nothing gained. |
 | Idle mine with stuck stakes | `exit` any time; fail-safe close. |
 | Stock Token transfer hooks failing at redemption | `redeem` reverts cleanly; `cashOut` alternative; `sweep` uses `try/catch` per asset. |
-| Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `maxDurationSeconds ≥ 14 days`; `openTime ≥ now + 48h`. |
+| Factory misconfiguration | `create` validates: arrays length `blocks == 4`; `gpuMultBps` strictly increasing from 10000; `ocBoostBps × maxActiveOc ≤ 30000`; `heatPerOc[c] ≤ heatMax`; `difficulty[b] > 0` and divisible by `shiftsPerBlock`; `poolTokens[b] × fragPerToken ≤ uint128 max`; `minStakeWeight > 0`; `lpToken` and `lpWeightPerToken` both zero or both set; `maxDurationSeconds ≥ 14 days`; `openTime ≥ now + 48h`; fees capped. The mine constructor also rejects `ratePerWork == 0`. |
+| Reentrancy ordering | Burns and transfers are the last effect of every player action (checks-effects-interactions) on top of `nonReentrant`. |
+| Post-close pause | `emergencyWithdraw` never cancels a closed season; redemption stays open. |
 
 ## 10. Gas (measured, via-IR, unit suite; Arbitrum-family chain)
 
@@ -286,7 +288,8 @@ Eligibility adapters (doc 07): `OpenEligibility`, `MerkleEligibility`, `TokenHoo
 | `poke` | ~34k idle | 963k | worst case: all 32 shifts crossed in one call; the keeper keeps it short |
 
 Original targets (activate ≤ 220k, claimAll ≤ 260k) were optimistic; see `docs/DECISIONS.md`
-2026-09-03. Optimisation is a Phase 4 item.
+2026-09-03. No optimisation pass was done in Phase 4 (not a blocker on an Arbitrum-family chain); the
+audit package lists it under known limitations.
 
 ## 11. Events
 

@@ -27,9 +27,11 @@ pnpm --filter @stock-miner/app dev     # Next.js dev server
 | `sim/` | Python 3.11, uv, numpy, hypothesis | ruff, pytest |
 | `app/` | Next.js 15, React 19, wagmi/viem, Tailwind; tokens from `specs/design/tokens.css` | eslint, tsc, vitest |
 | `indexer/` | Ponder (stub until the ABI exists) | tsc |
-| `ops/` | TypeScript scripts: difficulty sizing, season planning | tsc, vitest |
+| `ops/` | TypeScript scripts: plan, fund, keeper, watch, guardian, sweep; forge-script wrappers | tsc, vitest |
 
-CI (`.github/workflows/ci.yml`) runs the same three groups. The build follows `docs/10-BUILD-PLAN.md`;
+Deploying and running a season: `docs/RUNBOOK.md`. Audit material: `docs/AUDIT-PACKAGE.md`.
+
+CI (`.github/workflows/ci.yml`) runs the same groups plus slither. The build follows `docs/10-BUILD-PLAN.md`;
 `docs/BUILD-LOG.md` is the hand-off between sessions.
 
 ## Documents
@@ -47,6 +49,8 @@ CI (`.github/workflows/ci.yml`) runs the same three groups. The build follows `d
 | 9 | [Open questions](docs/09-OPEN-QUESTIONS.md) | Decisions still needed before build |
 | 10 | [Build plan](docs/10-BUILD-PLAN.md) | Phases and the Claude Code prompt for each; how to start |
 | 11 | [Design brief](docs/11-DESIGN-BRIEF.md) | Visual direction (approved), principles, type, colour, components, motion; mockups and references in `design/` |
+| – | [Runbook](docs/RUNBOOK.md) | Deploy, fund, run, pause/cancel, close and sweep a season with the ops scripts |
+| – | [Audit package](docs/AUDIT-PACKAGE.md) | Scope, trust assumptions, actors, accounting argument, invariants, findings, how to run everything |
 | – | [Decisions](docs/DECISIONS.md) | Dated log of spec, design and build decisions |
 | – | [Glossary](docs/GLOSSARY.md) | Terms used across the docs |
 
