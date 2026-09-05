@@ -41,6 +41,16 @@ html.landing-active { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .lp-purchase-content h2 { font: 600 80px/.95 var(--font-display); margin: 22px 0 18px; }
 .lp-purchase-content h2 span { color: var(--lp-gold); }
 .lp-purchase-content p { font-size: 14px; line-height: 1.8; color: var(--lp-muted); margin-bottom: 26px; }
+.lp-ca { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 14px 16px; margin-bottom: 22px; border: 1px solid #665035; background: #0e0f0b; }
+.lp-ca-label { grid-column: 1 / -1; font-family: var(--font-data); font-size: 9px; letter-spacing: .085em; text-transform: uppercase; color: var(--lp-muted); }
+.lp-ca-address { font-family: var(--font-data); font-size: 12px; line-height: 1.5; color: var(--lp-fg); word-break: break-all; user-select: all; }
+.lp-ca-copy { font-family: var(--font-data); font-size: 10px; letter-spacing: .085em; text-transform: uppercase; color: var(--lp-gold); border: 1px solid #665035; padding: 8px 12px; transition: background .25s, color .25s; }
+.lp-ca-copy:hover { background: var(--lp-gold); color: var(--lp-bg); }
+.lp-purchase-actions { display: flex; flex-direction: column; gap: 12px; }
+.lp-purchase-actions .lp-button { width: 100%; margin-top: 0; }
+.lp-purchase-actions .lp-button-outline { background: transparent; color: var(--lp-fg); border: 1px solid #665035; }
+.lp-purchase-actions .lp-button-outline:hover { background: #1c1d17; }
+.lp-purchase-close { align-self: flex-start; margin-top: 6px; }
 .lp-menu-toggle, .lp-mobile-nav { display: none; }
 .lp-hero { min-height: max(745px, 100svh); height: 100svh; position: relative; margin: 0 4.5%; display: flex; flex-direction: column; justify-content: center; padding-bottom: 72px; }
 /* The transparent 3D scene sits above a single uninterrupted starfield. */
