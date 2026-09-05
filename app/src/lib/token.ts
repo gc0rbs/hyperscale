@@ -20,7 +20,12 @@ const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 31337);
 const raw = process.env.NEXT_PUBLIC_RIG_ADDRESS?.trim() ?? "";
 export const RIG_ADDRESS: Address | null = raw && isAddress(raw) && !/^0x0{40}$/i.test(raw) ? (raw as Address) : KNOWN_RIG[chainId] ?? null;
 
+/** Official purchase page per chain (Pons token page); NEXT_PUBLIC_RIG_BUY_URL overrides. */
+const KNOWN_BUY: Record<number, string> = {
+  4663: "https://www.ponsfamily.com/launchpad/0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f",
+};
+
 const buy = process.env.NEXT_PUBLIC_RIG_BUY_URL?.trim() ?? "";
-export const RIG_BUY_URL: string | null = /^https:\/\/\S+$/.test(buy) ? buy : null;
+export const RIG_BUY_URL: string | null = /^https:\/\/\S+$/.test(buy) ? buy : KNOWN_BUY[chainId] ?? null;
 
 export const RIG_EXPLORER_URL: string | null = RIG_ADDRESS && EXPLORERS[chainId] ? `${EXPLORERS[chainId]}/token/${RIG_ADDRESS}` : null;
