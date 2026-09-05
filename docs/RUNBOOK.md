@@ -39,6 +39,16 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
+**Rate-limited RPC (the public Robinhood Chain endpoint returns 429 to Forge's forked simulation):**
+use the sequential viem deployer instead. It sends one transaction at a time and writes the same files.
+
+```
+export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://rpc.mainnet.chain.robinhood.com
+pnpm deploy-mainnet factory [--base-uri https://stockminer.fi/api/frag/{id}.json]   # step 1
+pnpm deploy-mainnet adapters --chain robinhood                                      # step 1b, prints every feed's live price
+pnpm deploy-mainnet season --season seasons/season-1.json [--dry-run]               # step 3, simulates create first
+```
+
 ## 1b. Deploy the adapters (once per chain, or when the stock set changes)
 
 ```
@@ -83,7 +93,8 @@ SEASON_FILE=../ops/seasons/season-1.json PRIVATE_KEY=0x… pnpm create-season --
 ```
 
 Writes `contracts/deployments/<chainId>.json` (mine, fragments, vault, tokens, `openTime`,
-`paramsHash`). The app reads this file server-side; commit it for the app deployment, or set the
+`paramsHash`). `pnpm deploy-mainnet season --season <file>` does the same over a rate-limited RPC
+and refuses a file whose params were edited after `plan` (hash mismatch). The app reads this file server-side; commit it for the app deployment, or set the
 app's `NEXT_PUBLIC_*` addresses from it. Confirm the emitted `paramsHash` equals the published one.
 
 ## 4. Fund the vault
@@ -207,9 +218,13 @@ dry run with `NEXT_PUBLIC_DEV_ACCOUNTS=1 pnpm --filter @stock-miner/app dev`; it
 The app is a Next.js site (Vercel or any Node host). Copy `app/.env.example` and fill the season
 addresses from `contracts/deployments/<chainId>.json`, or commit that file and leave the addresses
 unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
-WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
+WalletConnect (mobile wallets); injected wallets work without it. The project (type App, Reown
+dashboard) is `88a3136a4e95ed0e552697cd35d54650`, a public identifier shipped in the client bundle;
+set its allowed domain to the app's public origin, `https://stockminer.fi`. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
-returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
+returning the `/restricted` page with HTTP 451. **Season 1 runs with the fence off** (`NEXT_PUBLIC_GEOFENCE=0`,
+client decision, DECISIONS 2026-09-05); the country header it would read needs Cloudflare in front, so
+turning it on later means adding the Cloudflare proxy first (§10c step 3).
 The wallet button prompts a network switch when the wallet is on the wrong chain. Set
 `NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
 rendered from live season state) and the WalletConnect metadata. `NEXT_PUBLIC_INDEXER_URL` (the
@@ -240,7 +255,7 @@ Dockerfile with the repo root as context and is described by a config file in `r
 
 | Service | Config | Image | Variables |
 |---|---|---|---|
-| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (stockminer.fi was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` on the testnet |
+| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (stockminer.fi was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` (fence off for season 1, client decision) |
 | `indexer` | `railway/indexer.json` | `indexer/Dockerfile` | `DATABASE_URL` (Railway Postgres reference), `DATABASE_SCHEMA` (one per season), `CHAIN_ID`, `PONDER_RPC_URL_<chainId>`, `SEASON_MINE_ADDRESS`, `STOCK_FRAGMENTS_ADDRESS`, `REDEMPTION_VAULT_ADDRESS`, `START_BLOCK` |
 | `keeper` | `railway/keeper.json` | `ops/Dockerfile` | `CHAIN_ID`, `RPC_URL`, `KEEPER_KEY`, `MINE_ADDRESS` |
 | `watch` | `railway/watch.json` | `ops/Dockerfile` | as keeper without the key, plus `VAULT_ADDRESS`, `ALERT_WEBHOOK_URL` |
@@ -268,10 +283,10 @@ Steps for a new environment or season:
    import created are empty shells and fail to build; delete them.
 2. After §3 (`create-season`) copy the addresses from `contracts/deployments/<chainId>.json` into the
    variables of all four services. `NEXT_PUBLIC_*` are inlined at build time, so redeploy `app`.
-3. Cloudflare (free plan): add the domain, point nameservers at Cloudflare, add a proxied CNAME from the
-   app hostname to the Railway domain, SSL Full (strict), and add the same hostname as a custom domain
-   on `app`. The geo-fence reads `cf-ipcountry`, which Cloudflare sets on every proxied request;
-   nothing else to configure. Behind the proxy the visitor IP is `cf-connecting-ip`.
+3. Domain: add the custom domain on `app` (target port 3000) and point a CNAME at the Railway
+   domain it shows. `stockminer.fi` is set up this way, straight to Railway. Cloudflare is only needed
+   if the geo-fence is ever turned on: proxied CNAME (orange cloud), SSL Full (strict); the fence reads
+   `cf-ipcountry`, and behind the proxy the visitor IP is `cf-connecting-ip`.
 4. Verify: `GET /api/health` on the app returns `{"ok":true}`; with the fence on,
    `curl -H 'cf-ipcountry: US'` returns 451 and `/restricted`; `GET /health` on the indexer is 200 and
    `/ready` flips to 200 once caught up; keeper logs show `[keeper] ok shift=…`.

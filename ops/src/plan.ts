@@ -86,9 +86,9 @@ function seasonParamsAbi() {
   }] as const;
 }
 
-/** keccak256(abi.encode(SeasonParams)) exactly as `SeasonFactory.create` emits it. */
-export function paramsHash(p: SeasonParamsJson) {
-  const encoded = encodeAbiParameters(seasonParamsAbi(), [{
+/** The JSON params as the `SeasonParams` struct viem passes to `SeasonFactory.create`. */
+export function seasonParamsStruct(p: SeasonParamsJson) {
+  return {
     rig: p.rig as Address, lpToken: p.lpToken as Address, lpWeightPerToken: BigInt(p.lpWeightPerToken),
     openTime: BigInt(p.openTime), maxDurationSeconds: p.maxDurationSeconds, blocks: p.blocks, shiftsPerBlock: p.shiftsPerBlock,
     stocks: p.stocks as Address[], poolTokens: p.poolTokens.map(BigInt), difficulty: p.difficulty.map(BigInt),
@@ -100,8 +100,12 @@ export function paramsHash(p: SeasonParamsJson) {
     heatPerOc: p.heatPerOc as [number, number, number, number], coolPerShift: p.coolPerShift as [number, number, number, number],
     heatMax: p.heatMax, ocCostBps: p.ocCostBps, ocBoostBps: p.ocBoostBps, maxActiveOc: p.maxActiveOc, ocShiftSpan: p.ocShiftSpan,
     redemptionDays: p.redemptionDays, cashOutFeeBps: p.cashOutFeeBps, pauseGraceSeconds: p.pauseGraceSeconds, treasury: p.treasury as Address,
-  }]);
-  return keccak256(encoded);
+  };
+}
+
+/** keccak256(abi.encode(SeasonParams)) exactly as `SeasonFactory.create` emits it. */
+export function paramsHash(p: SeasonParamsJson) {
+  return keccak256(encodeAbiParameters(seasonParamsAbi(), [seasonParamsStruct(p)]));
 }
 
 /** Mid prices from Robinhood's Stock Token price API (15 s cache, 60 req/s). */

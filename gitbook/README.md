@@ -4,6 +4,8 @@ description: Four blocks. One mine. Closes forever.
 
 # Welcome to Stock Miner
 
+The mine lives at [stockminer.fi](https://stockminer.fi).
+
 Stock Miner is a mining game on Robinhood Chain. You stake **$RIG** to run a virtual rig, burn $RIG on upgrades to raise its hashrate, and earn **fragments** of real Robinhood Stock Tokens across four reward blocks. When the fourth block is found, the mine closes for good, your stake comes back, and your fragments become stock.
 
 There is no proof of work and nothing runs on your computer. "Hashrate" is a number on chain that your rig earns with, every second, at a fixed rate per unit of work. What other players do changes how fast the mine finishes, never how much your own work pays.
