@@ -164,7 +164,9 @@ html.landing-active { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .lp-token-art .lp-scene-action:hover { background: #302014; border-color: var(--lp-gold); }
 .lp-token-art .lp-action-icon { border-color: #715437; color: var(--lp-gold); }
 .lp-token-caption { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; color: #ae967d; font-size: 7px; font-family: var(--font-data); letter-spacing: .04em; }
-.lp-questions { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8%; padding-top: 70px; margin-top: 85px; scroll-margin-top: 35px; }
+.lp-questions { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8%; padding: 70px 0 90px; margin-top: 85px; scroll-margin-top: 35px; position: relative; isolation: isolate; }
+/* The questions sit on the app's blue-black ground (--mine-bg), bleeding to both viewport edges. */
+.lp-questions::before { content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); background: var(--mine-bg, #0A0B0D); border-top: 1px solid var(--mine-line, #25262B); }
 .lp-questions > div > .lp-eyebrow { color: #717664; font-size: 8px; margin-bottom: 26px; }
 .lp-questions h3 { font-family: var(--font-display); font-size: 73px; font-weight: 600; line-height: .9; }
 .lp-faq-list details { border-bottom: 1px solid var(--lp-line); }
@@ -240,7 +242,7 @@ html.lp-motion-ready .lp-reveal.is-visible > :where(h1,h2,p,.lp-feature,.lp-smal
  .lp-mine-footnote { margin-top: 14px; padding-top: 14px; gap: 20px; align-items: flex-start; } .lp-small-gem { font-size: 32px; } .lp-mine-footnote p { font-size: 10px; }
  .lp-collect-layout { display: flex; flex-direction: column; gap: 12px; } .lp-collect-copy h2 { font-size: clamp(106px, 25vw, 150px); } .lp-collect-copy > p { font-size: 12px; } .lp-equation { gap: 27px; } .lp-equation strong { font-size: 32px; } .lp-collect-copy > .lp-collect-note { font-size: 9px; }
  .lp-token-art { min-height: 415px; margin: 0 -7%; } .lp-scene-token { top: -15px; bottom: 25px; } .lp-token-art .lp-scene-action { bottom: 26px; } .lp-token-caption { font-size: 6px; bottom: 0; }
- .lp-questions { display: flex; flex-direction: column; gap: 30px; padding-top: 40px; margin-top: 45px; } .lp-questions > div > .lp-eyebrow { font-size: 7px; margin-bottom: 21px; } .lp-questions h3 { font-size: 70px; } .lp-faq-list summary { font-size: 11px; min-height: 63px; } .lp-faq-list details p { font-size: 11px; }
+ .lp-questions { display: flex; flex-direction: column; gap: 30px; padding: 40px 0 60px; margin-top: 45px; } .lp-questions > div > .lp-eyebrow { font-size: 7px; margin-bottom: 21px; } .lp-questions h3 { font-size: 70px; } .lp-faq-list summary { font-size: 11px; min-height: 63px; } .lp-faq-list details p { font-size: 11px; }
  .lp-footer { padding: 33px 6% 22px; } .lp-footer-top { flex-wrap: wrap; gap: 26px; padding-bottom: 27px; } .lp-footer-top > span { display: none; } .lp-footer-top > a:last-child { font-size: 6px; } .lp-footer-bottom { flex-wrap: wrap; gap: 18px; font-size: 6px; } .lp-footer-bottom > span:nth-child(2) { display: none; }
 }
 @media (max-width: 370px) { .lp-header { gap: 10px; } .lp-logo > span { font-size: 29px; } .lp-nav-cta { font-size: 8px; padding: 9px; gap: 6px; } .lp-menu-toggle { width: 20px; } .lp-hero h1 { font-size: 122px; } .lp-hero-copy > p { font-size: 11px; } .lp-hero-actions { gap: 20px; } .lp-hero-art { height: 380px; } .lp-section h2 { font-size: 93px; } .lp-mine-heading h2 { font-size: 59px; } }
