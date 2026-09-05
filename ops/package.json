@@ -16,7 +16,8 @@
     "sync-abi": "tsx src/sync-abi.ts",
     "deploy-demo": "tsx src/deploy-demo.ts",
     "guardian": "tsx src/guardian.ts",
-    "deploy-adapters": "tsx src/deploy-adapters.ts"
+    "deploy-adapters": "tsx src/deploy-adapters.ts",
+    "deploy-mainnet": "tsx src/deploy-mainnet.ts"
   },
   "dependencies": {
     "viem": "2.21.55"

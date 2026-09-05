@@ -39,6 +39,16 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
+**Rate-limited RPC (the public Robinhood Chain endpoint returns 429 to Forge's forked simulation):**
+use the sequential viem deployer instead. It sends one transaction at a time and writes the same files.
+
+```
+export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://rpc.mainnet.chain.robinhood.com
+pnpm deploy-mainnet factory [--base-uri https://stockminer.fi/api/frag/{id}.json]   # step 1
+pnpm deploy-mainnet adapters --chain robinhood                                      # step 1b, prints every feed's live price
+pnpm deploy-mainnet season --season seasons/season-1.json [--dry-run]               # step 3, simulates create first
+```
+
 ## 1b. Deploy the adapters (once per chain, or when the stock set changes)
 
 ```
@@ -83,7 +93,8 @@ SEASON_FILE=../ops/seasons/season-1.json PRIVATE_KEY=0x… pnpm create-season --
 ```
 
 Writes `contracts/deployments/<chainId>.json` (mine, fragments, vault, tokens, `openTime`,
-`paramsHash`). The app reads this file server-side; commit it for the app deployment, or set the
+`paramsHash`). `pnpm deploy-mainnet season --season <file>` does the same over a rate-limited RPC
+and refuses a file whose params were edited after `plan` (hash mismatch). The app reads this file server-side; commit it for the app deployment, or set the
 app's `NEXT_PUBLIC_*` addresses from it. Confirm the emitted `paramsHash` equals the published one.
 
 ## 4. Fund the vault
