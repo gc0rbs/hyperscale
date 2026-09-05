@@ -1,4 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(pnpm deploy-factory:*)",
+      "Bash(pnpm deploy-adapters:*)",
+      "Bash(pnpm create-season:*)",
+      "Bash(pnpm fund:*)",
+      "Bash(pnpm plan:*)",
+      "Bash(cast:*)",
+      "Bash(forge:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
