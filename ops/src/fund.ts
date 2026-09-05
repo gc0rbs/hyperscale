@@ -5,14 +5,14 @@
  *
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops fund [--mint-mocks] [--dry-run]
  *
- * --mint-mocks (chain 31337 only): mint the pool amounts and USDC to the operator on the mock tokens
+ * --mint-mocks (mock factory deployments only): mint the pool amounts and USDC to the operator on the mock tokens
  *   and allowlist the vault and operator on each mock Stock Token, so a dry run needs nothing else.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { formatUnits, type Address } from "viem";
 import { REPO_ROOT } from "./lib/artifacts.js";
-import { arg, clients, erc20Abi, hasFlag, loadDeployment, mineAbi, PHASES, stockAbi, vaultAbi, type Deployment } from "./lib/season.js";
+import { arg, clients, erc20Abi, hasFlag, loadDeployment, loadFactoryDeployment, mineAbi, PHASES, stockAbi, vaultAbi, type Deployment, type FactoryDeployment } from "./lib/season.js";
 import { parseUnits } from "viem";
 
 /** Pool amounts from the season file when the artifact names one, else from the mine; reserve from the file or --usdc-reserve. */
@@ -51,7 +51,10 @@ async function main() {
   }
 
   if (hasFlag("--mint-mocks")) {
-    if (dep.chainId !== 31337 && process.env.ALLOW_MOCK_MINT !== "1") throw new Error("--mint-mocks is for Anvil only (ALLOW_MOCK_MINT=1 on a testnet deployed with DEPLOY_MOCKS=true)");
+    // Only against a factory deployment that recorded mock tokens (DeployFactory with DEPLOY_MOCKS=true).
+    let fac: FactoryDeployment | undefined;
+    try { fac = loadFactoryDeployment(dep.chainId); } catch { fac = undefined; }
+    if (!fac?.stocks || fac.stocks[0] !== dep.stocks[0]) throw new Error("--mint-mocks needs a DEPLOY_MOCKS=true factory deployment for this chain");
     for (let b = 0; b < 4; b++) {
       await tx(dep.stocks[b], stockAbi, "setAllowed", [dep.vault, true]);
       await tx(dep.stocks[b], stockAbi, "setAllowed", [account.address, true]);
