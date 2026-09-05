@@ -13,6 +13,9 @@ COPY ops/package.json ops/
 COPY sim/package.json sim/
 RUN pnpm install --frozen-lockfile --filter @stock-miner/app...
 COPY specs/design specs/design
+# Tracked mainnet deployment files: the app reads contracts/deployments/<chainId>.json when the
+# NEXT_PUBLIC_*_ADDRESS variables are unset (lib/deployment.ts).
+COPY contracts/deployments contracts/deployments
 COPY app app
 # NEXT_PUBLIC_* are inlined at build time; Railway passes service variables as build args.
 ARG NEXT_PUBLIC_CHAIN_ID NEXT_PUBLIC_RPC_URL NEXT_PUBLIC_SEASON_ID NEXT_PUBLIC_MINE_ADDRESS \
@@ -29,6 +32,7 @@ ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000
 COPY --from=build /repo/app/.next/standalone /repo
 COPY --from=build /repo/app/.next/static /repo/app/.next/static
 COPY --from=build /repo/app/public /repo/app/public
+COPY --from=build /repo/contracts/deployments /repo/contracts/deployments
 WORKDIR /repo/app
 EXPOSE 3000
 CMD ["node", "server.js"]
