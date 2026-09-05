@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { join } from "node:path";
 
 /** Audit R4: baseline security headers at the app layer. A CSP is left to the edge: WalletConnect and
  *  injected wallets need connect-src/frame-src allowances that depend on the host; see RUNBOOK §10. */
@@ -13,6 +14,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Railway runs the traced standalone server (app/Dockerfile): `node server.js`, no package manager at runtime.
+  output: "standalone",
+  outputFileTracingRoot: join(__dirname, ".."),
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
