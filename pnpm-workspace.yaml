@@ -4,3 +4,8 @@ packages:
   - ops
   - contracts
   - sim
+
+# pnpm 10 no longer hoists eslint plugins to the root by default; eslint-config-next (eslintrc-style,
+# via FlatCompat) resolves @next/eslint-plugin-next from the app directory and needs this.
+publicHoistPattern:
+  - "*eslint*"
