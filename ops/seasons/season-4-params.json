@@ -1,0 +1,106 @@
+{
+  "name": "season-default",
+  "notes": "Defaults referenced by docs/03 and docs/04. Addresses, openTime and difficulty are placeholders filled by ops/plan. A season ends when block 4 is found or at maxDurationSeconds (the cap), whichever comes first; difficulty is sized for the planned pace and never adjusted in-season. Defaults: 3h planned pace at 10M hash, 6h cap.",
+  "rig": "0x0000000000000000000000000000000000000000",
+  "lpToken": "0x0000000000000000000000000000000000000000",
+  "lpBonusBps": 12500,
+  "lpWeightPerToken": "0",
+  "openTime": 0,
+  "blocks": 4,
+  "shiftsPerBlock": 8,
+  "sizing": {
+    "expectedTotalHash": "10000000",
+    "plannedSeconds": 10800,
+    "difficultyTotal": "108000000000",
+    "diffShareBps": [
+      2000,
+      2500,
+      2500,
+      3000
+    ],
+    "maxDurationSeconds": 21600
+  },
+  "stocks": [
+    {
+      "symbol": "NVDA",
+      "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+      "poolTokens": "1.091437686177110677",
+      "valueShareBps": 1500,
+      "difficulty": "21600000000",
+      "name": "NVIDIA"
+    },
+    {
+      "symbol": "MU",
+      "address": "0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD",
+      "poolTokens": "0.313293866571912438",
+      "valueShareBps": 2000,
+      "difficulty": "27000000000",
+      "name": "Micron Technology"
+    },
+    {
+      "symbol": "SNDK",
+      "address": "0xB90A19fF0Af67f7779afF50A882A9CfF42446400",
+      "poolTokens": "0.202889946244749847",
+      "valueShareBps": 2500,
+      "difficulty": "27000000000",
+      "name": "Sandisk"
+    },
+    {
+      "symbol": "QQQ",
+      "address": "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68",
+      "poolTokens": "1.040038376296501088",
+      "valueShareBps": 4000,
+      "difficulty": "32400000000",
+      "name": "Invesco QQQ"
+    }
+  ],
+  "fragPerToken": 1000000,
+  "minStakeWeight": "100",
+  "activationFeeBps": 100,
+  "earlyExitFeeBps": 300,
+  "gpuMultBps": [
+    10000,
+    12000,
+    14000,
+    16000,
+    18000,
+    20000
+  ],
+  "gpuCostBps": [
+    400,
+    600,
+    900,
+    1300,
+    1800
+  ],
+  "coolCostBps": [
+    300,
+    500,
+    800
+  ],
+  "heatPerOc": [
+    40,
+    30,
+    22,
+    15
+  ],
+  "coolPerShift": [
+    10,
+    18,
+    26,
+    36
+  ],
+  "heatMax": 100,
+  "ocCostBps": 200,
+  "ocBoostBps": 5000,
+  "maxActiveOc": 3,
+  "ocShiftSpan": 1,
+  "redemptionDays": 30,
+  "cashOutFeeBps": 100,
+  "pauseGraceSeconds": 1800,
+  "usdcReserveShareBps": 5000,
+  "transfersEnabled": false,
+  "treasury": "0x0000000000000000000000000000000000000000",
+  "stocksNote": "Season-1 set (decided 2026-09-04): NVDA, MU, SNDK, QQQ, canonical Robinhood Stock Token addresses on chain 4663 from api.robinhood.com/rhj/assets. poolTokens here are the docs/03 worked-example amounts; ops plan --pool-usd sizes the real pool from valueShareBps and live prices.",
+  "quoteToken": "USDG"
+}
