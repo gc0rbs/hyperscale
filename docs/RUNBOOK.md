@@ -236,7 +236,7 @@ Dockerfile with the repo root as context and is described by a config file in `r
 
 | Service | Config | Image | Variables |
 |---|---|---|---|
-| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000` (the public domain targets 3000), `NEXT_PUBLIC_GEOFENCE=0` on the testnet |
+| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (stockminer.fi was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` on the testnet |
 | `indexer` | `railway/indexer.json` | `indexer/Dockerfile` | `DATABASE_URL` (Railway Postgres reference), `DATABASE_SCHEMA` (one per season), `CHAIN_ID`, `PONDER_RPC_URL_<chainId>`, `SEASON_MINE_ADDRESS`, `STOCK_FRAGMENTS_ADDRESS`, `REDEMPTION_VAULT_ADDRESS`, `START_BLOCK` |
 | `keeper` | `railway/keeper.json` | `ops/Dockerfile` | `CHAIN_ID`, `RPC_URL`, `KEEPER_KEY`, `MINE_ADDRESS` |
 | `watch` | `railway/watch.json` | `ops/Dockerfile` | as keeper without the key, plus `VAULT_ADDRESS`, `ALERT_WEBHOOK_URL` |
@@ -259,7 +259,9 @@ the custom domain is added.
 Steps for a new environment or season:
 
 1. Create the services and Postgres, set each config-as-code path, give `app` (and `indexer`, if the
-   app should read it) a public domain. Pin `PORT=3000` on `app`.
+   app should read it) a public domain. Pin `PORT=3000` on `app` and set every domain's target port
+   to 3000. Connect GitHub to these services only: the five `@stock-miner/*` services the repo
+   import created are empty shells and fail to build; delete them.
 2. After §3 (`create-season`) copy the addresses from `contracts/deployments/<chainId>.json` into the
    variables of all four services. `NEXT_PUBLIC_*` are inlined at build time, so redeploy `app`.
 3. Cloudflare (free plan): add the domain, point nameservers at Cloudflare, add a proxied CNAME from the
