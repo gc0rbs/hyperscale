@@ -2,7 +2,8 @@
 :root, .lp-chrome { --lp-header-height: 100px; --lp-gold: #ffb33e; --lp-cyan: #45dce4; --lp-line: var(--shell-line, #392e27); --lp-muted: var(--shell-muted, #b5a89c); --lp-fg: var(--shell-fg, #f4ecdf); --lp-bg: var(--shell-bg, #100d0c); }
 /* App chrome: the landing header reused above the game (components/Nav.tsx). */
 .lp-chrome { color: var(--lp-fg); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; border-bottom: 1px solid var(--lp-line); }
-.lp-chrome .lp-header { position: relative; }
+.lp-chrome .lp-header { position: relative; margin: 0 32px; } /* app pages pad 32px (md:px-8): align the header with them */
+@media (max-width: 767px) { .lp-chrome .lp-header { margin: 0 16px; } }
 .lp-desktop-nav a[aria-current="page"], .lp-mobile-nav a[aria-current="page"] { color: var(--lp-gold); }
 .lp-nav-cta:disabled { opacity: .5; cursor: default; }
 /* In the app chrome the CTA is a plain, smaller gold button: no metal gradient, no sheen. */
