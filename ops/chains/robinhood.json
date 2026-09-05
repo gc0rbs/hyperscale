@@ -9,8 +9,8 @@
   "rig": "0x0000000000000000000000000000000000000000",
   "lpToken": "0x0000000000000000000000000000000000000000",
   "usdc": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-  "oracle": "0x0000000000000000000000000000000000000000",
-  "eligibility": "0x0000000000000000000000000000000000000000",
+  "oracle": "0x1f3c31dd21928fcd846a51a5edfa116d4fe250d7",
+  "eligibility": "0x482f3bdf7abab6929076a58bf1bd50c95bc8a056",
   "treasury": "0x3E5d37a7a93d67E7D6e92866c8610aC500b952e2",
   "stocks": {
     "NVDA": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
@@ -32,5 +32,7 @@
     "SNDK": "0xfb133Fa4B7b385802B693a293606682Df47109A3",
     "QQQ": "0x80901d846d5D7B030F26B480776EE3b29374C2ae"
   },
-  "feedsNote": "Chainlink proxies on chain 4663 (reference-data-directory feeds-robinhood-mainnet.json, 2026-09-04): 8 decimals, 24 h heartbeat, 0.5% deviation. NVDA verified live at $230.24. Also available: SPY 0x319724394D3A0e3669269846abE664Cd621f9f6A, ETH/USD 0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9, USDG/USD 0x61B7e5650328764B076A108EFF5fa7282a1B9aD2. Deploy ChainlinkOracle(stocks, feeds) and put its address in `oracle`; deploy OpenEligibility for `eligibility`."
+  "feedsNote": "Chainlink proxies on chain 4663 (reference-data-directory feeds-robinhood-mainnet.json, 2026-09-04): 8 decimals, 24 h heartbeat, 0.5% deviation. NVDA verified live at $230.24. Also available: SPY 0x319724394D3A0e3669269846abE664Cd621f9f6A, ETH/USD 0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9, USDG/USD 0x61B7e5650328764B076A108EFF5fa7282a1B9aD2. Deploy ChainlinkOracle(stocks, feeds) and put its address in `oracle`; deploy OpenEligibility for `eligibility`.",
+  "factory": "0x9ed850b183d7b9523cbc9673d82a4071ce74d52a",
+  "deployedNote": "Mainnet 2026-09-05 from deployer 0x0F89e3Ce3e4646341De2f71C0Da2C7cea5CeD0a2: factory, OpenEligibility, ChainlinkOracle (feeds verified live). rig stays zero until the Pons launch."
 }
