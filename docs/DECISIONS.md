@@ -289,3 +289,19 @@ neither is load-bearing for the accounting. Changes:
   friends), since Railway has no read-only mount for `contracts/deployments/`.
 - **Token-only staking for launch comms** (same day): `docs/LAUNCH-SOCIAL-GUIDE.md` drops LP, matching
   the Pons decision (LP off in v1).
+
+## 2026-09-04 – One dark world: the game app adopts the landing page's palette (user decision)
+
+- **Supersedes the "light fintech shell" half of the 2026-09-03 direction.** The public landing page
+  shipped on mineral black (`#100D0C`), parchment (`#F4ECDF`) and gold (`#FFB33E`); a white app header
+  and light claim/redeem/leaderboard pages read as a different product when you clicked "Enter the
+  mine". The user chose to carry the landing's world through the whole app.
+- **Token-level change only.** `--shell-*` now resolve to a dark surface one step lighter than the mine
+  (`#0D0E11` / panels `#131417`); `--mine-*` sit on a slightly blue black (`#0A0B0D`, user call after
+  the landing's warm panel and line colours read as brown when used as fills); text stays the landing's
+  parchment, `--ember` is the landing gold and `--signal` the landing cyan. No component structure,
+  layout or copy changed; the rig room and all art are untouched. Two densities remain (shell vs.
+  mine), so the seam is now tonal rather than light/dark.
+- **No pills anywhere.** The wallet chip and dev-account controls drop `rounded-full` for the 4px
+  radius; "Connect wallet" is a gold button like the landing's primary actions.
+- **Brief §1 and §2.8 updated**; `specs/design/tokens.{css,json}` are the source of truth as before.

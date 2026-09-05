@@ -87,19 +87,11 @@ export function FramedIcon({ name, size = 44, className = "" }: { name: IconName
   );
 }
 
-/** The logo mark: crossed pick and hammer inside an ember frame (design/launch/64-type-logo.webp). */
-export function LogoMark({ size = 24, frame = true }: { size?: number; frame?: boolean }) {
+/** The supplied brand artwork; the viewport excludes its transparent outer padding. */
+export function LogoMark({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      {frame && <rect x="2" y="2" width="28" height="28" fill="none" stroke="var(--ember)" strokeWidth="2.6" />}
-      <g fill="none" stroke="var(--ember)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        {/* pickaxe: handle bottom-left to top-right, curved head */}
-        <path d="M8.5 23.5 21 11" />
-        <path d="M17 7.5c3 .2 5.8 1.6 7.6 3.9" />
-        {/* hammer: handle bottom-right to top-left, square head */}
-        <path d="M23.5 23.5 11.5 11.5" />
-        <path d="M8.2 9.8l3.3 3.3 3.3-3.3-3.3-3.3z" fill="var(--ember)" strokeWidth="1.5" />
-      </g>
+    <svg width={size} height={size} viewBox="222 268 822 810" aria-hidden="true" focusable="false">
+      <image href="/brand/stock-miner-logo.png" width="1254" height="1254" />
     </svg>
   );
 }

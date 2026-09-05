@@ -11,7 +11,8 @@
     "test": "vitest run",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
     "e2e": "playwright test",
-    "parity": "vitest run --config vitest.parity.config.ts"
+    "parity": "vitest run --config vitest.parity.config.ts",
+    "export:landing": "node scripts/export-landing.mjs"
   },
   "dependencies": {
     "@fontsource-variable/readex-pro": "5.1.0",
@@ -20,6 +21,7 @@
     "next": "15.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "three": "0.180.0",
     "viem": "2.21.55",
     "wagmi": "2.14.6"
   },
@@ -29,6 +31,7 @@
     "@types/node": "22.10.2",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
+    "@types/three": "0.180.0",
     "autoprefixer": "10.4.20",
     "eslint": "9.17.0",
     "eslint-config-next": "15.1.2",

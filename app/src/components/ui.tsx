@@ -35,8 +35,8 @@ export function Btn({ children, onClick, disabled, tone = "ghost", className = "
     ember: "bg-ember text-[#1A1408] border-transparent",
     signal: "bg-signal text-[#062126] border-transparent",
     ghost: "bg-transparent text-mine-fg border-mine-line",
-    shell: "bg-shell-fg text-white border-transparent",
-    shellGhost: "bg-white text-shell-fg border-[var(--shell-line-strong)]",
+    shell: "bg-shell-fg text-shell-bg border-transparent",
+    shellGhost: "bg-shell-card text-shell-fg border-[var(--shell-line-strong)]",
   };
   return (
     <button type={type} title={title} onClick={onClick} disabled={disabled} {...rest} className={`h-10 px-4 rounded-sm inline-flex items-center justify-center gap-2 text-[14px] font-semibold border whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed transition-opacity ${tones[tone]} ${className}`}>

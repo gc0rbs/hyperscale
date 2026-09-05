@@ -1,35 +1,39 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { useDeployment } from "@/app/providers";
 import { DevAccountContext, useActiveAddress } from "@/lib/use-account";
 import { short } from "@/lib/format";
 import { LogoMark } from "./Icons";
+import "@/components/landing/landing.css";
 
 const LINKS = [["/mine", "Mine"], ["/claim", "Claim"], ["/redeem", "Redeem"], ["/leaderboard", "Leaderboard"]] as const;
 
+/** The landing page's header, reused verbatim (same classes from landing.css) so the app and the site share one chrome. */
 export function Nav() {
   const path = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const links = (onPick?: () => void) =>
+    LINKS.map(([href, label]) => (
+      <Link key={href} href={href} aria-current={path.startsWith(href) ? "page" : undefined} onClick={onPick}>{label}</Link>
+    ));
   return (
-    <>
-    <header className="h-14 flex items-center gap-4 md:gap-8 px-4 md:px-8 bg-shell-card text-shell-fg border-b border-shell-line">
-      <Link href="/" className="flex items-center gap-2.5">
-        <LogoMark size={26} />
-        <span className="font-display uppercase tracking-[0.02em] text-[34px] font-bold leading-none whitespace-nowrap translate-y-[2px]">Stock Miner</span>
-      </Link>
-      <nav className="hidden md:flex gap-6 text-[15px] font-medium text-shell-muted">
-        {LINKS.map(([href, label]) => <Link key={href} href={href} className={path.startsWith(href) ? "text-shell-fg" : ""}>{label}</Link>)}
-      </nav>
-      <div className="ml-auto"><WalletButton /></div>
-    </header>
-    {/* Mobile section links: the header nav is hidden below md, and a phone still needs Claim and Redeem. */}
-    <nav className="md:hidden flex gap-5 px-4 h-10 items-center overflow-x-auto whitespace-nowrap text-[13px] font-medium text-shell-muted bg-shell-card border-b border-shell-line" aria-label="Sections">
-      {LINKS.map(([href, label]) => <Link key={href} href={href} className={`py-2 ${path.startsWith(href) ? "text-shell-fg" : ""}`}>{label}</Link>)}
-    </nav>
-    </>
+    <div className="lp-chrome">
+      <header className="lp-header">
+        <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={34} /></Link>
+        <nav className="lp-desktop-nav" aria-label="Main navigation">{links()}</nav>
+        <div className="lp-header-actions"><WalletButton /></div>
+        <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
+        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation">{links(() => setMenuOpen(false))}</nav>}
+      </header>
+    </div>
   );
+}
+
+function Arrow() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14" stroke="currentColor" strokeWidth="1.5" /></svg>;
 }
 
 export function WalletButton() {
@@ -44,30 +48,26 @@ export function WalletButton() {
   const { switchChain, isPending: switching } = useSwitchChain();
   if (!isConnected) {
     return (
-      <div className="flex gap-2">
+      <>
+        {mock && <button onClick={() => connect({ connector: mock })} className="lp-buy-token" data-testid="connect-dev">Dev accounts</button>}
         {connectors.filter((c) => c.id !== "mock").slice(0, 1).map((c) => (
-          <button key={c.uid} onClick={() => connect({ connector: c })} disabled={isPending} className="h-9 px-3.5 whitespace-nowrap border border-[var(--shell-line-strong)] rounded-full text-[13px]"><span className="hidden sm:inline">Connect wallet</span><span className="sm:hidden">Connect</span></button>
+          <button key={c.uid} onClick={() => connect({ connector: c })} disabled={isPending} className="lp-nav-cta"><span>Connect wallet</span><Arrow /></button>
         ))}
-        {mock && <button onClick={() => connect({ connector: mock })} className="h-9 px-3.5 whitespace-nowrap border border-dashed border-[var(--shell-line-strong)] rounded-full text-[13px] text-shell-muted" data-testid="connect-dev"><span className="hidden sm:inline">Dev accounts</span><span className="sm:hidden">Dev</span></button>}
-      </div>
+      </>
     );
   }
   const wrongNetwork = chainId !== dep.chainId;
   return (
-    <div className="flex items-center gap-2">
+    <>
       {wrongNetwork && (
-        <button onClick={() => switchChain({ chainId: dep.chainId })} disabled={switching} className="h-9 px-3.5 whitespace-nowrap rounded-full text-[13px] font-semibold bg-[var(--heat-hot)] text-white" data-testid="switch-network">
-          {switching ? "Switching…" : "Switch network"}
-        </button>
+        <button onClick={() => switchChain({ chainId: dep.chainId })} disabled={switching} className="lp-nav-cta" style={{ background: "var(--heat-hot)", color: "#fff" }} data-testid="switch-network"><span>{switching ? "Switching…" : "Switch network"}</span></button>
       )}
       {connector?.id === "mock" && addresses && (
-        <select aria-label="Acting as" data-testid="dev-account" className="h-9 px-2 border border-[var(--shell-line-strong)] rounded-full text-[12px] font-data bg-white" value={dev.index ?? 0} onChange={(e) => dev.setIndex(Number(e.target.value))}>
+        <select aria-label="Acting as" data-testid="dev-account" className="lp-account-select" value={dev.index ?? 0} onChange={(e) => dev.setIndex(Number(e.target.value))}>
           {addresses.map((a, i) => <option key={a} value={i}>Dev {i} · {short(a)}</option>)}
         </select>
       )}
-      <button onClick={() => disconnect()} className="h-9 px-3.5 whitespace-nowrap border border-[var(--shell-line-strong)] rounded-full text-[13px] font-data" title="Disconnect">
-        {active ? short(active) : "…"}
-      </button>
-    </div>
+      <button onClick={() => disconnect()} className="lp-nav-cta" title="Disconnect"><span>{active ? short(active) : "…"}</span><Arrow /></button>
+    </>
   );
 }

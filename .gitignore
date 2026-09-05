@@ -30,3 +30,6 @@ ops/seasons/*.json
 *.tsbuildinfo
 app/test-results/
 app/playwright-report/
+.playwright-cli/
+output/playwright/
+.herenow/
