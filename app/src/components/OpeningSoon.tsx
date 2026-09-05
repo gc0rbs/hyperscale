@@ -19,6 +19,8 @@ interface Props {
   estRun?: string;
   /** show the "Activate a rig" action (a season exists and rigs can be pre-staked) */
   canActivate?: boolean;
+  /** the season exists but the vault is not funded yet: rigs cannot activate until it is */
+  funding?: boolean;
   embedded?: boolean;
 }
 
@@ -34,7 +36,7 @@ function useTick(enabled: boolean) {
 const seg = (n: number) => String(Math.max(0, n)).padStart(2, "0");
 
 /** The pre-open screen: before the season exists (no countdown) and between creation and openTime. */
-export function OpeningSoon({ openTime, now, symbols, pool, workShare, staked, estRun, canActivate = false, embedded = false }: Props) {
+export function OpeningSoon({ openTime, now, symbols, pool, workShare, staked, estRun, canActivate = false, funding = false, embedded = false }: Props) {
   useTick(openTime !== undefined && now === undefined);
   const t = now ?? Math.floor(Date.now() / 1000);
   const secs = openTime !== undefined ? Math.max(0, openTime - t) : null;
@@ -50,7 +52,7 @@ export function OpeningSoon({ openTime, now, symbols, pool, workShare, staked, e
       <div className="opening-grid" aria-hidden />
       <div className={`relative flex flex-col gap-8 ${embedded ? "p-6 md:p-10" : "px-6 md:px-12 py-14 md:py-20 max-w-[1240px] mx-auto"}`}>
         <div className="flex items-center gap-3 text-[11px] tracking-[0.1em] uppercase font-data text-mine-muted">
-          <span className="opening-dot" aria-hidden />{secs === null ? "Preparing the mine · Robinhood Chain" : secs === 0 ? "Opening · waiting for the first shift" : "Pre-open · Robinhood Chain"}
+          <span className="opening-dot" aria-hidden />{secs === null ? "Preparing the mine · Robinhood Chain" : funding ? "Funding the pool · Robinhood Chain" : secs === 0 ? "Opening · waiting for the first shift" : "Pre-open · Robinhood Chain"}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-10 items-end">
@@ -61,7 +63,9 @@ export function OpeningSoon({ openTime, now, symbols, pool, workShare, staked, e
             <p className="text-mine-muted text-[15px] leading-relaxed max-w-[520px]">
               {secs === null
                 ? "Four blocks, four Stock Tokens, one mine that closes forever when the last block is found. Rigs go on sale when the season is created; get your $RIG ready."
-                : "Rigs activated before the doors open start working the very first second. Every rig earns for its own hash-work, so early is never crowded out."}
+                : funding
+                  ? "The season is on chain and the reward pool is being deposited into the vault. Rig activation opens the moment the pool is in; get your $RIG ready."
+                  : "Rigs activated before the doors open start working the very first second. Every rig earns for its own hash-work, so early is never crowded out."}
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               {canActivate && <Link href="/mine/new" className="h-12 px-5 rounded-sm inline-flex items-center gap-3 bg-ember text-[#1A1408] text-[14px] font-semibold" data-testid="opening-activate">Activate a rig <span aria-hidden>↗</span></Link>}

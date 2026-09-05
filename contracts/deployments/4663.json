@@ -1,24 +1,25 @@
 {
   "chainId": 4663,
-  "seasonId": 0,
+  "seasonId": 3,
   "rig": "0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f",
   "lp": "0x0000000000000000000000000000000000000000",
   "usdc": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
   "oracle": "0x1f3c31dd21928fcd846a51a5edfa116d4fe250d7",
   "eligibility": "0x482f3bdf7abab6929076a58bf1bd50c95bc8a056",
   "factory": "0x9ed850b183d7b9523cbc9673d82a4071ce74d52a",
-  "mine": "0xF77b7c8899c4C428DEa09De9efEe6e70863fc505",
-  "fragments": "0x9cB678b6D12b01d2a27f5e9e4148b75068c30022",
-  "vault": "0x35FA2598e4165fDa3C6165b6423AC9E3222E80bA",
+  "mine": "0xAe5390d869a76652c7Fd79e7Da98a7D584F859e2",
+  "fragments": "0xd6bAfD33EbF082bd29aF93f443307cb04Dd5A010",
+  "vault": "0xA2d412ad83eB4737b3dD356B595F5Fb9cBD2a02A",
   "stocks": [
     "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
     "0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD",
     "0xB90A19fF0Af67f7779afF50A882A9CfF42446400",
     "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68"
   ],
-  "openTime": 1788587712,
-  "block": 54744097,
-  "seasonFile": "/home/user/stock-miner/ops/seasons/season-1.json",
-  "paramsHash": "0x1e3f524475361563d2798dedb18b1bed6af7a6dfea9951dd5e87705ac0052971",
-  "difficultyTotal": "108000000000000000000000000000"
+  "openTime": 1788577499,
+  "block": 54782672,
+  "seasonFile": "/home/user/stock-miner/ops/seasons/season-4.json",
+  "paramsHash": "0x68b62e8cb32742f2899df8655950d871d041e1de1dc0df019edf4b7eaef81cd7",
+  "difficultyTotal": "30000000000000000000000000000",
+  "seasonNumber": 1
 }
