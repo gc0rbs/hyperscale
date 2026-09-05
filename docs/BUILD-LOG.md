@@ -260,3 +260,136 @@ User decision (DECISIONS 2026-09-04, "Seasons are short"). Shipped in one pass:
   params table, 05, 06, 07, 08, 09 (Q9, Q13, Q14), GLOSSARY, README, RUNBOOK, AUDIT-PACKAGE.
 - Checks: forge 43 tests + 8 invariants, snapshot regenerated, interfaces match; sim 22 tests; ops 6;
   app check, Playwright season (pace 300), parity.
+
+## 2026-09-04 – Pons compatibility
+
+- Burn = transfer to `0x…dEaD` (`SeasonMine.BURN_ADDRESS`); `ERC20Burnable` dependency dropped.
+  New `test/unit/PonsToken.t.sol`: full season on a burn-less ERC-20, LP disabled, spend lands at the
+  dead address, mine holds deposits only. Worked-example test measures burn at the dead address.
+  Gas snapshot regenerated.
+- App: the activate page shows the LP option only when `lpWeightPerToken > 0`.
+- `ops/chains/robinhood.json` (mainnet 4663) with verified external addresses; foundry rpc endpoint
+  `robinhood`; chains README rewritten for the Pons token.
+- Docs: CLAUDE.md, PRD §10/§11, 04, 05, 09 (Q3 closed), AUDIT-PACKAGE §1–2, DECISIONS.
+- Still open before a testnet season: Q1 (Stock Tokens and their hooks), the oracle for cash-out,
+  whether a Robinhood Chain testnet with faucets exists.
+
+## 2026-09-04 – Season-1 stock set and Robinhood token integration
+
+- `ChainlinkOracle` adapter + `MockAggregator` + unit tests (rescaling, negative answers, validation).
+- `RedemptionVault` reads the quote token's `decimals()` at construction (USDG on Robinhood Chain).
+- Symbols NVDA / MU / SNDK / QQQ across params, mocks, tests, app; real token addresses in the
+  template and the mainnet chain profile; USDG address; testnet chain id 46630.
+- `ops plan --pool-usd [--prices]`: pool sizing by value share at live Robinhood prices
+  (`sizePoolByValue`, tested).
+- Docs: PRD §10 (items 2, 4, 5 verified) and risks, 04 §5.1, 05, 07 risk register, 09 (Q1 closed),
+  AUDIT-PACKAGE §1–2, RUNBOOK, chains README, DECISIONS.
+- Checks: forge 47 tests green, snapshot regenerated, interfaces match; ops 7 tests; app check green.
+- Feeds, USDG decimals and testnet RPC filled from chain and Chainlink data; vault staleness cap 26 h
+  (24 h heartbeat + margin); Vault test updated.
+
+## 2026-09-04 – Launch wiring: chains, wallets, geo-fence, adapters
+
+- App: `wagmi.ts` defines Robinhood Chain mainnet/testnet, `chainFor()`, optional WalletConnect
+  connector; nav shows "Switch network" when the wallet's chain differs from the deployment's
+  (`data-testid="switch-network"`); `middleware.ts` geo-fence → `/restricted` (451); `/how-it-works`,
+  `/terms`; landing footer links; `.env.example` for a production deploy. `*.tsbuildinfo` untracked.
+- Contracts: `script/DeployAdapters.s.sol` (OpenEligibility + ChainlinkOracle, feed sanity loop,
+  writes `deployments/<chainId>-adapters.json`).
+- Ops: `deploy-adapters` command builds STOCKS/FEEDS from the chain profile in block order;
+  `loadAdapters` in `lib/season.ts`; `plan` prefers profile → adapters file → factory file for oracle
+  and eligibility (zero addresses skipped).
+- Docs: RUNBOOK §1b (adapters), §10 (app deployment), §11 (release checklist); DECISIONS.
+- What's next: hosting for app, Ponder indexer and keeper/watcher; share cards; mobile/a11y QA;
+  testnet season on 46630 with mocks; audit (client's); Pons launch (client's) → treasury wallet → adapters →
+  season. Counsel review of the terms and the Humane licence check are the user's items.
+- Known gaps: ERC-8056 `balanceOfUI` display for Stock Token balances not implemented; testnet
+  explorer and faucet unconfirmed; geo-fence relies on the host's country header.
+
+## 2026-09-04 – Hosting: compose stack, alert webhook, indexer start block
+
+- `docker-compose.yml`, `.env.example`, `.dockerignore`, `ops/Dockerfile` (Foundry build stage + Node
+  runtime, entrypoint `pnpm --filter @stock-miner/ops`), `indexer/Dockerfile`.
+- `ops watch`: `ALERT_WEBHOOK_URL` / `ALERT_MIN_LEVEL` / `ALERT_REPEAT_SECONDS`; verified on Anvil
+  with a local receiver (info forwarded at `info`, suppressed at `warn`).
+- `CreateSeason.s.sol` and `deploy-demo` write `block`; `ponder.config.ts` uses it as the default
+  start block (empty `START_BLOCK` means unset).
+- RUNBOOK §5 (hosting, alerts), indexer README, DECISIONS.
+- Checks: forge build, ops 7 tests, indexer check, `docker compose config`. Image builds are not
+  verified here (no Docker daemon in the session); first `docker compose up --build` is on the host.
+
+## 2026-09-04 – Share card, notifications, CI images
+
+- `opengraph-image.tsx` + `twitter-image.tsx` (live status, 1200×630, verified on Anvil), layout
+  `openGraph`/`twitter` metadata.
+- `lib/use-notify.ts` (`useNotifyPref`, `useMineNotifications`), `NotifyToggle` in the mine header
+  and the long-haul card, `ShareButton` on the found banner.
+- CI `docker` job builds `ops/Dockerfile` and `indexer/Dockerfile`.
+- Checks: app check; Playwright season rerun.
+
+## 2026-09-04 – Mobile QA pass (390×844)
+
+- Scripted pass over every route (horizontal overflow, elements wider than the viewport, tap targets
+  under 32 px, unnamed buttons/links, console errors). Fixed: wallet buttons and chips wrapping,
+  season header row, block-card ticker row and captions, footer/inline links padded to tap size,
+  section links (Mine / Claim / Redeem / Leaderboard) were unreachable below `md`, now a scrolling row
+  under the header. Result: no overflow, no console errors on any route.
+- Still to do by hand on devices: wallet connect flows (WalletConnect modal), notification permission
+  prompt on iOS Safari (requires the site to be added to the home screen), colour-contrast audit of
+  the muted text on the panel background.
+
+## 2026-09-04 – Launch status (current release checklist, docs/08 §4)
+
+Everything engineering can do without the real token, keys and counsel is done and pushed. This
+table supersedes the Phase 4 checklist above.
+
+| Item | Status |
+|---|---|
+| Params JSON published with hash before `openTime` | `ops plan --pool-usd … --max-duration 21600` prints the hash; `CreateSeason` records it and the creation block. No 48h minimum (short seasons) |
+| `SeasonFactory.create` executed and contracts verified | scripts + dry run; `--verify` flags in RUNBOOK §1–3. Needs the graduated $RIG address (Pons launch, client's) and the treasury wallet address |
+| Vault funded; `phase() == PreOpen`; app shows pool | `ops fund` asserts PreOpen; app shows pool and USD value |
+| Eligibility adapter | `OpenEligibility` (Stock Tokens have no transfer hook); legal restriction is the geo-fence + terms. `ops deploy-adapters` |
+| Oracle feeds live and within staleness | `ChainlinkOracle` over the four recorded feeds, 26h cap (24h heartbeat); `deploy-adapters` checks every feed answers |
+| Difficulty sized; pace and cap published | `ops plan` from a hash estimate; cap = 2× planned (6h default) shown in the app from the start |
+| Keeper, alerting, on-call | `docker-compose.yml` (Postgres, indexer, keeper, watcher); watcher posts to `ALERT_WEBHOOK_URL`. Needs a host, a keeper hot wallet and the webhook |
+| Terms, how-rewards-work, geo-fence | `/terms` (draft for counsel), `/how-it-works`, edge middleware (US/CA/GB/CH → 451). Counsel wording pending |
+| Pause key holders; cancellation rehearsal | RUNBOOK §7; rehearsed on Anvil (scenario + e2e). Testnet rehearsal pending a funded 46630 key |
+| Post-close plan | RUNBOOK §8; `ops sweep` repeatable |
+| App hosting | `app/.env.example`, RUNBOOK §10, share card and WalletConnect need `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_WC_PROJECT_ID` |
+
+**Client's items before launch** (2026-09-04: Pons launch, treasury and audit are the client's; no
+multisig): Pons launch → $RIG address; treasury wallet (hardware, single key); funded deployer,
+operator and keeper keys (env only); host for the compose stack and the app; WalletConnect project id;
+alert webhook; counsel review of `/terms`; external audit
+(`docs/AUDIT-PACKAGE.md`); testnet rehearsal on 46630 with `DEPLOY_MOCKS`.
+
+**Resolved after this table**: Humane licence (freeware, commercial use allowed, files unmodified; see
+`app/src/fonts/humane/LICENSE.md`; keep the repo private while the TTFs are committed).
+
+**Known gaps**: ERC-8056 `balanceOfUI` display (no surface shows Stock Token balances yet); testnet
+explorer and faucet unconfirmed; geo-fence depends on the host's country header; Docker images
+build in CI but have not been run end to end on a host from this session.
+
+## 2026-09-04 – Public docs (GitBook)
+
+- `gitbook/` with `.gitbook.yaml` root: welcome, getting started (3), playing (8), safety (9),
+  reference (6: parameters, formulas, addresses incl. Stock Tokens and Chainlink feeds, FAQ, glossary,
+  terms summary). Written from docs/03, 04, 05 §5.3, 07, AUDIT-PACKAGE §2/§3/§9 and the params
+  template; every number is the season default and labelled as such.
+- Root README brought up to date (Pons token, season-1 set, 3h/6h, links to gitbook/ and docs/).
+- RUNBOOK §10b: how the GitBook syncs and what to update per season.
+- To do when known: the audit report link, season contract addresses, the $RIG address.
+
+## 2026-09-04 – Audit remediation (docs/AUDIT-RESPONSE-2026-09-04.md)
+
+- Every confirmed bug (B1–B14), high-risk item (R1–R5) and integration item (I1–I6) from the
+  2026-09-04 codebase audit is resolved or was already fixed on this branch; the response document
+  maps each to its change and regression test.
+- Validation rerun on this branch: workspace checks (app 9 tests, ops 13, indexer, sim unchanged);
+  `next build` clean; Foundry 51 tests + 10 invariants; differential campaign **100,000 traces,
+  0 mismatches**; Playwright 3 scenarios incl. the failed-purchase case; `pnpm audit --prod`
+  0 critical / 0 high (7 moderate, 1 low, transitive); Solidity formatted; gas snapshot regenerated
+  under Foundry v1.5.1 (now pinned in CI). The 10.24M-call invariant campaign was started on this
+  commit; its result is recorded in the next entry.
+- Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
+  real wallet extension, refresh during confirmation, visual regression.

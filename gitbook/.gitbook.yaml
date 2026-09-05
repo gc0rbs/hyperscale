@@ -1,0 +1,5 @@
+# Used when the GitBook space's project directory is set to gitbook/ (the repo-root .gitbook.yaml covers the default).
+root: ./
+structure:
+  readme: README.md
+  summary: SUMMARY.md

@@ -37,4 +37,5 @@ bracket_spacing = false
 # Verification: pass --verify --verifier blockscout --verifier-url $ROBINHOOD_EXPLORER_API on the CLI.
 [rpc_endpoints]
 anvil = "http://127.0.0.1:8545"
-robinhood_testnet = "${ROBINHOOD_TESTNET_RPC}"
+robinhood = "${ROBINHOOD_RPC}"
+robinhood_testnet = "https://rpc.testnet.chain.robinhood.com"

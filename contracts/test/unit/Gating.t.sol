@@ -150,4 +150,29 @@ contract GatingTest is SeasonTestBase {
         mine.unpause();
         gpu(ann, a, 1);
     }
+
+    /// Audit B3: a vault with a zero adapter or quote token would revert on every redemption and sweep.
+    function test_factory_rejects_zero_vault_dependencies() public {
+        ISeasonMine.SeasonParams memory p = defaultParams();
+        bytes memory err = abi.encodeWithSelector(ISeasonFactory.InvalidParams.selector, "vault dependencies");
+        vm.expectRevert(err);
+        factory.create(p, address(0), address(oracle), address(usdc), false);
+        vm.expectRevert(err);
+        factory.create(p, address(elig), address(0), address(usdc), false);
+        vm.expectRevert(err);
+        factory.create(p, address(elig), address(oracle), address(0), false);
+    }
+
+    /// Audit R2: pause is impossible after close, and claims/withdrawals ignore a pause that outlives
+    /// the close, so a lost guardian key can never strand earned fragments.
+    function test_pause_after_close_reverts_and_claims_ignore_pause() public {
+        vm.prank(treasury);
+        mine.pause();
+        vm.prank(treasury);
+        mine.unpause();
+        warpToClose();
+        vm.prank(treasury);
+        vm.expectRevert(abi.encodeWithSelector(ISeasonMine.WrongPhase.selector, ISeasonMine.Phase.Closed));
+        mine.pause();
+    }
 }

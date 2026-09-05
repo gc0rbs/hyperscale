@@ -25,3 +25,8 @@ contracts/diff/
 contracts/deployments/*.json
 ops/seasons/*.json
 !ops/seasons/*.example.json
+
+# TypeScript incremental build state
+*.tsbuildinfo
+app/test-results/
+app/playwright-report/

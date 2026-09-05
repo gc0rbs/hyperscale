@@ -163,29 +163,62 @@ contract MineUnitTest is SeasonTestBase {
         assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Cancelled));
     }
 
-    /// FR-S6 boundary: a pause that outlives the grace period after the season has already closed
-    /// must not cancel it. Deposits come back; earned fragments survive an unpause.
-    function test_FR_S6_emergency_withdraw_after_close_does_not_cancel() public {
+    /// FR-S6 boundary (audit R2): a pause that started while open and outlives the close must not
+    /// cancel the season, and must not block claims or withdrawals once the close is persisted.
+    function test_FR_S6_pause_outliving_close_does_not_cancel_or_block_claims() public {
         fundPlayer(ann, 1_000_000e18, 0);
         uint256 id = activateRig(ann, 1_000_000e18);
         open();
+        vm.warp(block.timestamp + 1 hours);
+        vm.prank(treasury);
+        mine.pause();
         warpToClose();
-        uint256 earned = mine.pending(id, 3);
+        vm.warp(block.timestamp + 6 hours + 1);
+        uint256 earned = mine.pending(id, 0);
         assertGt(earned, 0);
+        // still paused, but the close persists on the first call and claims go through
+        vm.prank(ann);
+        mine.claimAll(id);
+        assertEq(frags.balanceOf(ann, 0), earned);
+        assertFalse(mine.cancelled(), "closed season is not cancelled");
+        assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Closed));
+        uint256 before = rig.balanceOf(ann);
+        vm.prank(ann);
+        mine.withdraw(id);
+        assertEq(rig.balanceOf(ann) - before, 1_000_000e18);
+        vm.prank(treasury);
+        vm.expectRevert(abi.encodeWithSelector(ISeasonMine.WrongPhase.selector, ISeasonMine.Phase.Closed));
+        mine.pause();
+    }
+
+    /// Audit B4: a cancelled season is frozen at the cancellation instant.
+    function test_cancelled_season_is_frozen() public {
+        fundPlayer(ann, 1_000_000e18, 0);
+        fundPlayer(bo, 1_000_000e18, 0);
+        uint256 a = activateRig(ann, 1_000_000e18);
+        uint256 b = activateRig(bo, 1_000_000e18);
+        open();
+        vm.warp(block.timestamp + 30 minutes);
         vm.prank(treasury);
         mine.pause();
         vm.warp(block.timestamp + 6 hours + 1);
-        uint256 before = rig.balanceOf(ann);
         vm.prank(ann);
-        mine.emergencyWithdraw(id);
-        assertEq(rig.balanceOf(ann) - before, 1_000_000e18);
-        assertFalse(mine.cancelled(), "closed season is not cancelled");
-        assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Closed));
-        assertEq(mine.pending(id, 3), earned, "earned fragments preserved");
-        vm.prank(treasury);
-        mine.unpause();
-        vm.prank(ann);
-        mine.claimAll(id);
-        assertEq(frags.balanceOf(ann, 3), earned);
+        mine.emergencyWithdraw(a);
+        assertTrue(mine.cancelled());
+        uint16 shift0 = mine.shift();
+        uint256 lastX0 = mine.lastX();
+        uint256 work0 = mine.workInShift();
+        uint256 pendingB = mine.pending(b, 0);
+        vm.warp(block.timestamp + 3 hours);
+        mine.poke();
+        assertEq(mine.shift(), shift0, "shift frozen");
+        assertEq(mine.lastX(), lastX0, "lastX frozen");
+        assertEq(mine.workInShift(), work0, "work frozen");
+        assertEq(mine.pending(b, 0), pendingB, "earnings frozen");
+        assertEq(mine.closeX(), 0, "never closes");
+        vm.prank(bo);
+        mine.emergencyWithdraw(b);
+        assertEq(mine.shift(), shift0);
+        assertEq(mine.lastX(), lastX0);
     }
 }

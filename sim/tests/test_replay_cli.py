@@ -57,6 +57,6 @@ def test_cli_prints(tmp_path, capsys):
     f.write_text(json.dumps(trace()))
     assert main([str(f)]) == 0
     text = capsys.readouterr().out
-    assert "shift boundaries" in text and "NVDAx=" in text and "reverted" in text
+    assert "shift boundaries" in text and "NVDA=" in text and "reverted" in text
     assert main([str(f), "--json"]) == 0
     json.loads(capsys.readouterr().out)

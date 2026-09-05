@@ -139,3 +139,140 @@ neither is load-bearing for the accounting. Changes:
   inline SVG; the rig room draws each machine from its state in SVG; one purpose-made render was
   generated (Higgsfield, Nano Banana Pro, with board 66 as the style reference) for the landing hero.
 - Licence check for Humane is the user's item before launch.
+
+## 2026-09-04 – $RIG launches on Pons; RIG-only staking (user decisions)
+
+- **$RIG is a Pons-launched token** on Robinhood Chain (chain 4663): plain ERC-20, fixed 1B supply,
+  18 decimals, no burn function, graduating to a Uniswap v3 RIG/WETH pool whose position is locked by
+  the Pons locker. Verified from the Pons docs and Robinhood Chain network details; PRD §10 items 1, 3
+  and 5 updated.
+- **Burns are dead-address transfers.** `SeasonMine._burn` now does `safeTransferFrom(player,
+  0x…dEaD)` instead of `burnFrom`. Same economic effect (unrecoverable, visible on chain); nominal
+  supply stays 1B. CLAUDE.md hard rule reworded; docs/04 and 05 updated; `PonsToken.t.sol` runs a
+  season against a burn-less ERC-20. `RIG.sol` is now a dev/test token only.
+- **No LP staking in v1** (Q3 closed). The user does not need the liquidity incentive. The mine's LP
+  path stays (audited, off by `lpToken = 0`); the app hides the LP option when the season has none. A
+  full-range Uniswap v3 wrapper token plus zap is the documented v1.1 route if that changes.
+- **No cap on rig count.** Pay, prices and overclocks are all linear in stake, so splitting gains
+  nothing; the minimum stake per rig is the anti-spam control and is sized per season.
+- Chain profile `ops/chains/robinhood.json` carries the verified chain, explorer, WETH, Uniswap v3 and
+  Pons addresses; season addresses stay zero until launch and Q1.
+
+## 2026-09-04 – Season-1 Stock Tokens and what Robinhood's tokens actually are (user decision)
+
+- **Set: NVDA, MU, SNDK, QQQ** (AI/GPU infrastructure theme; QQQ as the index finale). Canonical
+  addresses on chain 4663 from Robinhood's asset API are in `specs/params/season-default.json` and
+  `ops/chains/robinhood.json`. Value shares stay 15/20/25/40; `ops plan --pool-usd` converts them to
+  token amounts at live mid prices (2026-09-04: NVDA $230, MU $999, SNDK $1,719, QQQ $717).
+- **Robinhood Stock Tokens are plain ERC-20s** (18 decimals, ERC-8056 multiplier, no hook). The
+  allowlist risk that shaped the vault design is gone; the legal restriction (no U.S., CA, UK, CH
+  persons) becomes a front-end geo-fence plus terms. Mainnet uses `OpenEligibility`. Tests keep the
+  stricter allowlisted mock. Q1 closed.
+- **Cash-out oracle is Chainlink.** Every token has a feed with the multiplier baked in;
+  `ChainlinkOracle` adapts it (immutable stock → feed map, rescaled to 1e8, non-positive answers read
+  as stale). The quote token is **USDG**, so the vault now reads the quote token's `decimals()` at
+  construction instead of assuming six.
+- App ticker constants and mocks use the new symbols; the docs/03 worked example keeps its numbers
+  under the NVDA name.
+- Still to fill before the testnet season: the four Chainlink feed addresses, USDG decimals check,
+  testnet (46630) RPC and faucet.
+
+## 2026-09-04 – Feed facts and the cash-out staleness cap
+
+- Chainlink feeds for NVDA, MU, SNDK, QQQ (and SPY, ETH/USD, USDG/USD) on chain 4663 recorded in
+  `ops/chains/robinhood.json` from Chainlink's reference data; NVDA verified live. They are 8-decimal,
+  24 h heartbeat, 0.5% deviation feeds.
+- **Vault staleness cap raised from 1 h to 26 h.** With a 24 h heartbeat a stable price legitimately
+  carries a day-old timestamp; a 1 h cap would have refused most cash-outs. 26 h = heartbeat + margin;
+  the 0.5% deviation trigger bounds the price error a stale-but-fresh timestamp can hide. Over a
+  weekend the feed goes quiet, cash-out pauses, in-kind redemption is unaffected.
+- USDG confirmed 6 decimals on chain; testnet RPC confirmed at chain id 46630.
+
+## 2026-09-04 – Wallet, chain and geo-fence wiring for launch
+
+- **Chains in the app are fixed definitions**, not env-derived: mainnet 4663 (`robinhood`, Blockscout
+  explorer) and testnet 46630 (`robinhoodTestnet`), Anvil for dev. `NEXT_PUBLIC_CHAIN_ID` picks one and
+  `NEXT_PUBLIC_RPC_URL` overrides the RPC. A connected wallet on another chain sees a "Switch network"
+  button in the nav; writes are not attempted until it matches.
+- **WalletConnect is optional**: the connector is added only when `NEXT_PUBLIC_WC_PROJECT_ID` is set,
+  so a deploy without a WalletConnect Cloud project still works with injected wallets.
+- **Geo-fence in middleware** (docs/07 §1, §5): requests whose edge country header is US, CA, GB or
+  CH are rewritten to `/restricted` with HTTP 451. On by default in production only;
+  `NEXT_PUBLIC_GEOFENCE=0/1` overrides, `GEOFENCE_COUNTRIES` lists the countries. This is the legal
+  control that replaced on-chain eligibility once Stock Tokens turned out to have no transfer hook; it
+  is a best-effort control and the terms carry the eligibility clause as well.
+- `/how-it-works` (FR-A6 reference the terms point at) and `/terms` (draft structured per docs/07 §5,
+  wording for counsel) added; the landing footer links both and carries the region notice.
+- **Adapters get their own deploy step** (`DeployAdapters.s.sol`, `ops deploy-adapters`): deploys
+  `OpenEligibility` and `ChainlinkOracle` from the chain profile's stock and feed maps, checks every
+  feed answers, writes `deployments/<chainId>-adapters.json`; `ops plan` falls back to that file when
+  the profile leaves `oracle` / `eligibility` at zero. Run once per chain, not per season.
+
+## 2026-09-04 – Hosting the always-on services
+
+- **One compose stack per season** (`docker-compose.yml`: Postgres, Ponder indexer, keeper, watcher),
+  built from `ops/Dockerfile` and `indexer/Dockerfile`. The ops image compiles the contracts with the
+  pinned Foundry so ABIs match the deployed bytecode; season addresses are mounted from
+  `contracts/deployments/<chainId>.json`; keys come from the environment only (`.env`, git-ignored).
+- **Watcher alerts go to a webhook** (`ALERT_WEBHOOK_URL`, Slack/Discord JSON), warn and page levels by
+  default, one send per identical message per `ALERT_REPEAT_SECONDS` (15 min) so a standing pause pages
+  once per window, not every tick. Logging is unchanged.
+- **CreateSeason records the creation block** (`block` in the deployment JSON) and the indexer starts
+  there by default; indexing a mainnet season from block 0 was the alternative and is wasteful.
+  The keeper is restarted only on failure because it exits by itself at close.
+
+## 2026-09-04 – Share card and notifications
+
+- **Share card is rendered from live state** (`app/src/app/opengraph-image.tsx`, `next/og`, Humane
+  Bold): a link pasted mid-season shows which block is mining and the tick bar, with a static
+  fallback when the RPC does not answer within 1.5 s. Twitter card reuses it. `NEXT_PUBLIC_APP_URL`
+  is the metadata base.
+- **Notifications are local browser notifications, opt-in**, not web push: they fire while a Stock
+  Miner tab is open, which covers a ≤6 h season without a push server or a stored subscription. Block
+  found, mine closed, and (long haul only) shift start; the first observation after load is silent.
+  Web push stays a v1.1 item if seasons ever run for days again.
+- Block-found banner gets a Share button (Web Share on mobile, clipboard elsewhere).
+- CI builds both Docker images (no push) so a broken Dockerfile fails the PR, not the launch night.
+
+## 2026-09-04 – Humane font licence (user provided the EULA)
+
+- Humane V.2.0 is freeware, free for personal and commercial use; the files may not be modified
+  without the designer's written permission; only the right to use is granted. Transcribed in
+  `app/src/fonts/humane/LICENSE.md`.
+- Consequences: the `.ttf` files are served unmodified (no WOFF2 conversion, no subsetting; both
+  `next/font/local` and the share card use the raw files), the designer is credited in the landing
+  footer, and the repository must stay private while the files are committed (or the files move to a
+  private asset bucket before the repo goes public). The "Humane licence check" launch item is closed.
+
+## 2026-09-04 – Launch responsibilities (user decision)
+
+- **The client launches $RIG on Pons**, runs the treasury as a **single operator key (no multisig)**,
+  and **commissions the audit themselves**. `docs/AUDIT-PACKAGE.md` is the hand-off to their auditor.
+- Consequence of a single-key treasury: that key holds the only live admin power (pause) and receives
+  fees and sweeps. The runbook now says to keep it on a hardware wallet distinct from the deployer
+  and keeper keys. A compromised treasury key can pause a season; if the pause outlives the grace
+  period, players cancel it and recover deposits, so the blast radius is one season, not funds. Q17
+  closed.
+
+## 2026-09-04 – Public docs are a GitBook synced from the repo
+
+- Player docs live in `gitbook/` and sync through GitBook Git Sync, so they version with the code
+  and a parameter change and its doc change land in one commit. Internal specs stay in `docs/`.
+- The safety section states which guarantees are enforced by code and which depend on people
+  (operator sizing, the pause key, Chainlink, Robinhood, the geo-fence), and reproduces the known
+  limitations from the audit package verbatim in plain language. Nothing is promised that the
+  contracts do not enforce.
+
+## 2026-09-04 – Audit remediation
+
+- **Pause is scoped to an open mine** (audit R2): `pause()` reverts after the close is recorded and
+  claims/withdrawals ignore a pause once `closeX != 0`. A cancelled mine keeps `closeX == 0`, so its
+  unclaimed fragments stay forfeited. Rationale: after close the mine holds only deposits and minting
+  is capped by the pool, so a pause protects nothing and a lost key would strand rewards.
+- **A cancelled mine is frozen** at the cancellation instant (audit B4).
+- **The factory refuses zero vault dependencies** (audit B3).
+- **No default signing keys off Anvil** (audit R1): scripts and ops fail closed without the role key.
+- **App transaction handling is one hook** (audit B7) and RPC failures are an error state (B8).
+- **Dependencies**: Next 15.5.25, React 19.2.8; pnpm overrides for vulnerable transitive packages;
+  `pnpm audit --prod --audit-level high` in CI. Foundry pinned to v1.5.1 in CI.
+- Full mapping in `docs/AUDIT-RESPONSE-2026-09-04.md`.

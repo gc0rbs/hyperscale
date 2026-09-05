@@ -23,7 +23,9 @@ Claude sessions.
 - `bash .claude/hooks/session-start.sh` (Foundry, pnpm, uv) and `cd contracts && forge build`.
 - Chain profile in `ops/chains/<name>.json` with every address filled (`ops/chains/README.md`).
 - The decisions in `docs/09-OPEN-QUESTIONS.md` Q1 (stock tokens / eligibility) and Q3 (DEX / LP) made.
-- A treasury multisig, the four Stock Token pool amounts in the operator's wallet, and the USDC reserve.
+- A treasury wallet (the client runs a single operator key, not a multisig: use a hardware wallet that is
+  never the deployer or keeper key; it receives fees and sweeps and holds the pause power), the four
+  Stock Token pool amounts in the operator's wallet, and the USDG reserve.
 
 ## 1. Deploy the factory (once per chain)
 
@@ -37,6 +39,18 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
+## 1b. Deploy the adapters (once per chain, or when the stock set changes)
+
+```
+PRIVATE_KEY=0x… pnpm deploy-adapters --chain robinhood               # dry run: deploys in simulation and prints every feed's live price
+PRIVATE_KEY=0x… pnpm deploy-adapters --chain robinhood --broadcast --verify --verifier blockscout --verifier-url https://robinhoodchain.blockscout.com/api
+```
+
+Deploys `OpenEligibility` and `ChainlinkOracle(stocks, feeds)` from the profile's `stocks` and `feeds`
+maps and writes `contracts/deployments/<chainId>-adapters.json`; `plan` picks the addresses up from
+there when the profile leaves `oracle` / `eligibility` at zero. The dry run fails if any feed does
+not answer, which is the pre-open oracle check from docs/08 §4 done early.
+
 ## 2. Plan the season
 
 ```
@@ -45,6 +59,8 @@ pnpm plan --chain robinhood-testnet --name season-1 \
      [--lp-bonus-bps 12500] [--treasury 0x…] [--usdc-reserve 50000]
 ```
 
+- `--pool-usd 10000` sizes the four pools by value share (15/20/25/40) at live Robinhood mid prices
+  (`--prices file.json` for an offline quote). Without it the template's token amounts are used.
 - `--expected-hash` is expected total hash in RIG-equivalent units (stake weight × average
   multiplier; docs/04 §5.2). `--planned-seconds` is the pace you would like at that hash; duration is
   an outcome. `--max-duration` is the cap (default 2× planned, ≥ 1h): the season ends there if block 4
@@ -73,7 +89,7 @@ app's `NEXT_PUBLIC_*` addresses from it. Confirm the emitted `paramsHash` equals
 ## 4. Fund the vault
 
 ```
-OPERATOR_KEY=0x… pnpm fund --dry-run      # shows balances needed vs held
+OPERATOR_KEY=0x… pnpm fund [--usdc-reserve 50000] --dry-run      # shows balances needed vs held
 OPERATOR_KEY=0x… pnpm fund                # approve + RedemptionVault.fund(usdcReserve)
 ```
 
@@ -89,13 +105,28 @@ with `StalePrice`), and start the keeper and watcher.
 
 ```
 KEEPER_KEY=0x… pnpm keeper --interval 30                 # poke() when a shift boundary is due or state is >10 min stale
-pnpm watch --interval 60 --planned-seconds 86400          # alerts; wire `alert()` to the on-call channel
+ALERT_WEBHOOK_URL=https://… pnpm watch --interval 60 --planned-seconds 10800   # alerts to Slack/Discord
 ```
 
 The keeper is a convenience: shift boundaries are computed retroactively and exactly by any
-transaction, so a missed poke costs nothing but gas for the next player. Keep one keeper per season;
-it stops itself at close. The watcher pages on `Paused`, `SeasonCancelled`, warns on
-`totalHash == 0` for over an hour, ETA to close over 5× planned, and a low USDC reserve after close.
+transaction, so a missed poke costs nothing but gas for the next player. It pokes when a boundary has
+passed or the stored view is over ten minutes stale, and once more when the mine is logically closed
+but the close is not yet recorded (so redemption opens without waiting for a player). Keep one keeper
+per season; it stops itself after that final poke. The watcher pages on `Paused`, `SeasonCancelled`, warns on
+`totalHash == 0` for over an hour, ETA to close over 5× planned, and a low USDG reserve after close.
+Alerts at `warn` and `page` level go to `ALERT_WEBHOOK_URL` (Slack or Discord incoming webhook, JSON
+`{text, content}`), the same message at most once per `ALERT_REPEAT_SECONDS` (default 15 min); every
+alert is also logged. `ALERT_MIN_LEVEL=info` forwards the per-tick status lines too.
+
+**Hosting.** `docker-compose.yml` at the repo root runs Postgres, the Ponder indexer, the keeper and
+the watcher on one small VM (docs/06 §5–6): `cp .env.example .env`, fill `CHAIN_ID`, `RPC_URL`,
+`KEEPER_KEY`, `ALERT_WEBHOOK_URL`, then `docker compose up -d --build`. The season addresses are read
+from `contracts/deployments/<chainId>.json` (mounted read-only; copy it to the host after
+CreateSeason). The indexer starts from the `block` CreateSeason records in that file. Keys come from
+the environment only. The images (`ops/Dockerfile`, `indexer/Dockerfile`) build from the repo root;
+the ops image compiles the contracts with the pinned Foundry so the ABIs match the deployed code.
+`docker compose logs -f watch` is the on-call view; `docker compose run --rm keeper guardian status`
+runs a one-off command in the same image (`sweep`, `guardian pause` with `GUARDIAN_KEY` set).
 
 What "normal" looks like: `[keeper] ok shift=N next shift in ~Ns`, and `[watch] INFO shift N hash=…`.
 `poke` gas is ~60k when one boundary is crossed and up to ~960k if all 32 are crossed at once.
@@ -125,10 +156,11 @@ pnpm guardian status                          # shows grace deadline
 GUARDIAN_KEY=0x… pnpm guardian unpause        # before the grace deadline
 ```
 
-Rules: the guardian key is the treasury multisig; two signers; pause only for a suspected accounting
-bug or a Stock Token / oracle incident that would make claims or redemptions wrong. A pause after
-close does not cancel anything (players use `emergencyWithdraw` to recover deposits if it outlives the
-grace period; their fragments stay claimable after an unpause).
+Rules: the guardian key is the treasury wallet (one signer, by the client's decision); pause only for a suspected accounting
+bug or a Stock Token / oracle incident that would make claims or redemptions wrong. A pause is
+impossible once the close is recorded (`pause()` reverts), and a pause that started earlier stops
+blocking claims and withdrawals the moment the close is recorded, so a lost guardian key can never
+strand earned fragments (audit R2).
 
 ## 8. Close, redemption, sweep
 
@@ -136,6 +168,9 @@ grace period; their fragments stay claimable after an unpause).
   reports the reserve. Players `claimAll` and `withdraw`; the app guides them. Redemption
   (`redeem` in kind, `cashOut` to USDC) is open for `redemptionDays` after `closeX`.
 - Comms cadence (docs/08 §4): withdraw reminder at close, redemption reminders at day 1, 7, 25.
+- If the app or explorer shows the mine closed but `closeX()` is still zero (nobody transacted after
+  the final boundary), the keeper's last poke records it; otherwise `pnpm keeper --once` or the
+  "Record the close" button on the closed screen.
 - After the window: `OPERATOR_KEY=0x… pnpm sweep` (permissionless, repeatable). Its output names any
   Stock Token whose transfer hook refused the treasury; allowlist the treasury with the issuer and run
   it again. `sweep --dry-run` shows what would move.
@@ -167,7 +202,33 @@ pnpm play warp 2700000 ; OPERATOR_KEY=… pnpm sweep                            
 dry run with `NEXT_PUBLIC_DEV_ACCOUNTS=1 pnpm --filter @stock-miner/app dev`; it reads
 `contracts/deployments/31337.json`.
 
-## 10. Release checklist
+## 10. App deployment
+
+The app is a Next.js site (Vercel or any Node host). Copy `app/.env.example` and fill the season
+addresses from `contracts/deployments/<chainId>.json`, or commit that file and leave the addresses
+unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
+WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
+(`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
+returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
+The wallet button prompts a network switch when the wallet is on the wrong chain. Set
+`NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
+rendered from live season state) and the WalletConnect metadata. `NEXT_PUBLIC_INDEXER_URL` (the
+Ponder API, §5) enables wallet rankings and mine history; without it those screens read the chain.
+Security headers (nosniff, frame deny, referrer, permissions, HSTS) come from `next.config.ts`; a
+Content-Security-Policy is the edge's job because WalletConnect needs host-specific `connect-src` and
+`frame-src` allowances. Verify the live response headers after the first deploy. `/how-it-works`
+and `/terms` carry the disclosures docs/07 §5 requires; counsel replaces the terms wording before
+launch.
+
+## 10b. Public docs (GitBook)
+
+The player-facing docs live in `gitbook/` and sync to GitBook through `.gitbook.yaml` at the repo
+root (GitBook → Space → Integrations → Git Sync, pick this repository and the default branch). Update
+them in the same commit as any player-visible change: parameters in `reference/season-parameters.md`,
+addresses in `reference/contracts-and-addresses.md`, and the audit link in `safety/testing-and-audits.md`
+once the report exists.
+
+## 11. Release checklist
 
 See the last entry of `docs/BUILD-LOG.md` for the docs/08 §4 checklist with the current status of
 each item.

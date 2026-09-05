@@ -13,10 +13,10 @@ season for. Doc 02 §5 explains why.
 |---|---|---|---|
 | Funding | deployment | vault funded | operator funds the Stock Token pool |
 | PreOpen | funded | `openTime` | activate rigs, buy GPU / cooling (no overclocks, no work) |
-| Open – Block 1 | `openTime` | block 1 found (work = `D_1`) | everything; mines NVDAx |
-| Open – Block 2 | block 1 found | block 2 found | block 1 claimable; mines TSLAx |
-| Open – Block 3 | block 2 found | block 3 found | blocks 1–2 claimable; mines AAPLx |
-| Open – Block 4 | block 3 found | block 4 found = **close** | blocks 1–3 claimable; mines SPYx |
+| Open – Block 1 | `openTime` | block 1 found (work = `D_1`) | everything; mines NVDA |
+| Open – Block 2 | block 1 found | block 2 found | block 1 claimable; mines MU |
+| Open – Block 3 | block 2 found | block 3 found | blocks 1–2 claimable; mines SNDK |
+| Open – Block 4 | block 3 found | block 4 found = **close** | blocks 1–3 claimable; mines QQQ |
 | Closed / Redemption | close | close + 30 days | withdraw, claim block 4, redeem, cash out |
 | Swept | close + 30 days | – | operator sweeps unclaimed assets per doc 04 |
 
@@ -129,10 +129,10 @@ wall-clock terms, which the ETA makes visible.
 
 | Block | Stock | Share of pool value | Share of total difficulty | Example pool (season 1) |
 |---|---|---|---|---|
-| 1 | NVDAx | 15% | 20% | 5.0 NVDAx |
-| 2 | TSLAx | 20% | 25% | 6.0 TSLAx |
-| 3 | AAPLx | 25% | 25% | 10.0 AAPLx |
-| 4 | SPYx | 40% | 30% | 6.0 SPYx |
+| 1 | NVDA | 15% | 20% | 5.0 NVDA |
+| 2 | MU | 20% | 25% | 6.0 MU |
+| 3 | SNDK | 25% | 25% | 10.0 SNDK |
+| 4 | QQQ | 40% | 30% | 6.0 QQQ |
 
 Pool value escalates so the finale is the richest per unit of work (40% of value for 30% of work),
 which rewards staying and makes block 4 the natural "everyone overclocks" moment.
@@ -183,9 +183,9 @@ Block 1: Bo's hash with 3 overclocks = 4,000,000 + 6,000,000 = 10,000,000. Total
   every 37 min: ~4 rounds, 12 overclocks.
 - Pay rate `r_1 = 5,000,000 fragments / 1.728e11 = 2.894e-5` fragments per hash-second.
 - Ann: `7,000,000 × 8,861.5 × 2.894e-5 = 1,794,871` fragments (exact integer floor; the contract and the
-  Python reference agree) = 1.795 NVDAx. (Equivalently `5.0 × 7/19.5`.)
-- Bo: `2,564,102` = 2.564 NVDAx.
-- Cy: `641,025` = 0.641 NVDAx. The three sum to 4,999,998; two fragments of rounding dust stay in the vault.
+  Python reference agree) = 1.795 NVDA. (Equivalently `5.0 × 7/19.5`.)
+- Bo: `2,564,102` = 2.564 NVDA.
+- Cy: `641,025` = 0.641 NVDA. The three sum to 4,999,998; two fragments of rounding dust stay in the vault.
 
 Note what Ann sees in the UI: "202.6 fragments/s" from the moment the mine opens, and that number never
 changes when Bo overclocks. What changes is the ETA on the block, which shortens.

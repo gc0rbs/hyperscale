@@ -1,6 +1,7 @@
 # Stock Miner – audit package
 
-Prepared 2026-09-04 for an external review of the season contracts. Everything referenced is in this
+Prepared 2026-09-04 for the external review the client commissions (they run the audit; this
+package is the hand-off). Everything referenced is in this
 repository at the commit tagged in `docs/BUILD-LOG.md` (Phase 4 entry).
 
 ## 1. Scope
@@ -12,8 +13,8 @@ repository at the commit tagged in `docs/BUILD-LOG.md` (Phase 4 entry).
 | `contracts/src/RedemptionVault.sol` | ~170 | holds Stock Tokens + USDC; funding, in-kind redemption, cash-out, sweep |
 | `contracts/src/SeasonFactory.sol` | ~130 | parameter validation, deterministic deployment of the three above |
 | `contracts/src/factory/Deployers.sol`, `CreateAddress.sol` | 123 | per-contract deployers (EIP-170 split) and CREATE address prediction |
-| `contracts/src/tokens/RIG.sol` | 17 | fixed-supply ERC-20 with `ERC20Burnable` and permit |
-| `contracts/src/adapters/*` | 43 | `OpenEligibility`, `AllowlistEligibility` (owner-mutable, outside the immutable set) |
+| `contracts/src/tokens/RIG.sol` | 17 | dev/test ERC-20 standing in for the Pons token; not deployed to mainnet |
+| `contracts/src/adapters/*` | ~110 | `OpenEligibility` (mainnet), `AllowlistEligibility` (owner-mutable, tests), `ChainlinkOracle` (immutable stock → feed map over AggregatorV3) |
 
 Out of scope: mocks (`src/mocks/*`, they model expected external restrictions), scripts, the app,
 the indexer, the Python simulation (used as the differential-testing oracle, §6).
@@ -28,20 +29,26 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 
 1. **Season contracts are immutable.** No proxies, no setters, no difficulty adjustment. The only
    privileged function is `pause`/`unpause` by the season's `treasury` address.
-2. **$RIG** is `contracts/src/tokens/RIG.sol` or an equivalent: standard ERC-20, no hooks, no
-   fee-on-transfer, `burnFrom` with allowance. Upgrade spend is burned from the player.
-3. **The LP token** is a fungible ERC-20 (Uniswap v2 shape) chosen at deployment; standard transfer
-   semantics. Its weight (`lpWeightPerToken`) is fixed at creation from a 24 h sampled reserve ratio.
-4. **Stock Tokens** may have transfer hooks that revert for non-allowlisted parties. The vault treats
-   them as opaque ERC-20s that may revert; the mine never touches them.
-5. **The oracle** (`IPriceOracle`) is trusted for `cashOut` only, with a 1 h staleness cap. In-kind
-   redemption never depends on it.
-6. **The eligibility adapter** decides who may receive Stock Tokens in kind. It is external and may
-   be mutable (issuer KYC lists change).
+2. **$RIG** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
+   the two-block launch window, no fee-on-transfer). Upgrade spend is transferred from the player to
+   `SeasonMine.BURN_ADDRESS` (`0x…dEaD`). `contracts/src/tokens/RIG.sol` is the dev/test token.
+3. **The LP token** path is present but off for v1 (`lpToken` zero; the Pons pool is Uniswap v3 with
+   NFT positions). When used, it expects a fungible ERC-20 with standard transfer semantics and a
+   weight (`lpWeightPerToken`) fixed at creation from a 24 h sampled reserve ratio.
+4. **Stock Tokens** (Robinhood, verified 2026-09-04) are plain ERC-20s with an ERC-8056 multiplier and
+   no transfer hook. The vault still treats them as opaque ERC-20s that may revert (defensive).
+5. **The oracle** (`ChainlinkOracle` over the per-token Chainlink feeds; feeds include the multiplier) is
+   trusted for `cashOut` only, with a 26 h staleness cap (the feeds' 24 h heartbeat plus margin; a 0.5%
+   deviation triggers an update sooner). In-kind redemption never depends on it. The
+   quote token is USDG; the vault reads its `decimals()` once at construction.
+6. **The eligibility adapter** decides who may receive Stock Tokens in kind. Mainnet uses
+   `OpenEligibility` (the legal restriction is a front-end geo-fence); `AllowlistEligibility` remains
+   for issuers that require one.
 7. **Sequencer timestamps** are honest within the usual bounds. All work is credited by the same
    clock at a fixed rate per unit of work, so timestamp skew cannot favour one rig over another.
-8. **Chain assumptions** in `docs/01-PRD.md` §10 (Orbit L2, hooks, DEX, oracle) are unverified as of
-   this package; the code is built against mocks of the expected restrictions.
+8. **Chain assumptions** in `docs/01-PRD.md` §10 are verified as of 2026-09-04 (chain 4663, Pons token,
+   Uniswap v3, unrestricted Stock Tokens, Chainlink feeds, USDG); tests still run against a stricter
+   mock Stock Token with an allowlist, which the real token does not have.
 
 ## 3. Actors and powers
 
@@ -49,7 +56,7 @@ Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.
 |---|---|---|
 | Player | activate (RIG or LP), upgrade GPU / cooling, overclock, claim, exit (3% fee), withdraw after close, `emergencyWithdraw` when a pause outlives the grace period, redeem / cash out fragments | change anyone else's rig; claim more than the pool (`mintedFragments[b] ≤ supply[b]` enforced in `_claim`) |
 | Anyone | `poke()` (advance shift discovery), `sweep()` after the window or a cancellation | alter accounting: `poke` is a pure catch-up |
-| Guardian (= `treasury`) | `pause`, `unpause` (not after cancellation); receives fees and sweeps | set parameters, mint, move stakes, cancel directly |
+| Guardian (= `treasury`) | `pause` while the close is not yet recorded, `unpause` (not after cancellation); receives fees and sweeps | pause a closed season, block claims or withdrawals after the close is recorded, set parameters, mint, move stakes, cancel directly |
 | Operator (factory caller) | `fund` the vault once | withdraw pool or reserve (only `sweep` to the treasury after the window) |
 | Factory | deploy seasons with validated params | touch a deployed season |
 | Deployer of the deployers | `init(factory)` once | anything after init |
@@ -60,7 +67,10 @@ their deposit and, if the season was still open, cancels it: unclaimed fragments
 the vault becomes sweepable to the treasury at once. A guardian can therefore end an open season
 early and the treasury receives the unredeemed pool. This is by design (FR-S6: the cancel path must
 return stakes) and must be disclosed in the terms (docs/07 §5). A season that has already closed
-cannot be cancelled this way (Phase 4 fix, §7).
+cannot be cancelled this way (Phase 4 fix, §7), cannot be paused (`pause` reverts once `closeX` is
+recorded), and a pause that started earlier stops blocking `claim`/`claimAll`/`withdraw` the moment
+the close is recorded (2026-09-04 audit, R2). A cancelled season is frozen at the cancellation
+instant: no boundaries, work or close are discovered afterwards (audit B4, invariant 10).
 
 ## 4. The accounting argument
 
@@ -167,8 +177,12 @@ No high-severity finding. Full output: run the command above (the JSON is not co
 ## 9. Known limitations (accepted, disclosed)
 
 - **Pause does not stop the clock.** Work accrues for everyone during a pause (FR-S6 requires that
-  pausing not alter rewards). Players cannot overclock or exit while paused; the grace period bounds
-  how long that can last.
+  pausing not alter rewards). Players cannot overclock, exit or (while the season is open) claim
+  while paused; the grace period bounds how long that can last. After the close is recorded, claims
+  and withdrawals ignore the pause.
+- **The close must be recorded by a transaction.** `phase()` reports `Closed` from the simulated
+  state before any transaction has persisted `closeX`; the vault pokes before every redemption and
+  sweep, the keeper pokes once at that point, and the app offers a `poke` on the closed screen.
 - **Cancellation forfeits unclaimed fragments** and sends the pool to the treasury (§3).
 - **Contract wallets** must implement `onERC1155Received` to claim (fragments are ERC-1155).
 - **`claim` reverts with `AlreadyClaimed` whenever there is nothing to mint**, including a block that

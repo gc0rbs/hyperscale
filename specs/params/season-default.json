@@ -22,32 +22,36 @@
   },
   "stocks": [
     {
-      "symbol": "NVDAx",
-      "address": "0x0000000000000000000000000000000000000000",
+      "symbol": "NVDA",
+      "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
       "poolTokens": "5.0",
       "valueShareBps": 1500,
-      "difficulty": "21600000000"
+      "difficulty": "21600000000",
+      "name": "NVIDIA"
     },
     {
-      "symbol": "TSLAx",
-      "address": "0x0000000000000000000000000000000000000000",
+      "symbol": "MU",
+      "address": "0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD",
       "poolTokens": "6.0",
       "valueShareBps": 2000,
-      "difficulty": "27000000000"
+      "difficulty": "27000000000",
+      "name": "Micron Technology"
     },
     {
-      "symbol": "AAPLx",
-      "address": "0x0000000000000000000000000000000000000000",
+      "symbol": "SNDK",
+      "address": "0xB90A19fF0Af67f7779afF50A882A9CfF42446400",
       "poolTokens": "10.0",
       "valueShareBps": 2500,
-      "difficulty": "27000000000"
+      "difficulty": "27000000000",
+      "name": "Sandisk"
     },
     {
-      "symbol": "SPYx",
-      "address": "0x0000000000000000000000000000000000000000",
+      "symbol": "QQQ",
+      "address": "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68",
       "poolTokens": "6.0",
       "valueShareBps": 4000,
-      "difficulty": "32400000000"
+      "difficulty": "32400000000",
+      "name": "Invesco QQQ"
     }
   ],
   "fragPerToken": 1000000,
@@ -96,5 +100,7 @@
   "pauseGraceSeconds": 1800,
   "usdcReserveShareBps": 5000,
   "transfersEnabled": false,
-  "treasury": "0x0000000000000000000000000000000000000000"
+  "treasury": "0x0000000000000000000000000000000000000000",
+  "stocksNote": "Season-1 set (decided 2026-09-04): NVDA, MU, SNDK, QQQ, canonical Robinhood Stock Token addresses on chain 4663 from api.robinhood.com/rhj/assets. poolTokens here are the docs/03 worked-example amounts; ops plan --pool-usd sizes the real pool from valueShareBps and live prices.",
+  "quoteToken": "USDG"
 }

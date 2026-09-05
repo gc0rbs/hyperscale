@@ -42,6 +42,7 @@ export interface Deployment {
   vault: Address;
   stocks: Address[];
   openTime: number;
+  block?: number;
   difficultyTotal: string;
 }
 
@@ -79,8 +80,8 @@ export async function deployDemo(): Promise<Deployment> {
   await write("Deployers.sol", "FragmentsDeployer", fd, "init", [factory]);
   await write("Deployers.sol", "VaultDeployer", vd, "init", [factory]);
 
-  const syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
-  const prices = [172n * 10n ** 8n, 350n * 10n ** 8n, 230n * 10n ** 8n, 767n * 10n ** 8n];
+  const syms = ["NVDA", "MU", "SNDK", "QQQ"];
+  const prices = [230n * 10n ** 8n, 999n * 10n ** 8n, 1719n * 10n ** 8n, 717n * 10n ** 8n];
   const pool = [5n * WAD, 6n * WAD, 10n * WAD, 6n * WAD];
   const diffShare = [2000n, 2500n, 2500n, 3000n];
   const now = (await pub.getBlock()).timestamp;
@@ -130,7 +131,7 @@ export async function deployDemo(): Promise<Deployment> {
   const chainId = await pub.getChainId();
   const dep: Deployment = {
     chainId, seasonId: Number(seasonId), rig, lp, usdc, oracle, eligibility, factory, mine, fragments, vault, stocks,
-    openTime: Number(openTime), difficultyTotal: dTotal.toString(),
+    openTime: Number(openTime), block: Number(await pub.getBlockNumber()), difficultyTotal: dTotal.toString(),
   };
   const dir = join(REPO_ROOT, "contracts", "deployments");
   mkdirSync(dir, { recursive: true });

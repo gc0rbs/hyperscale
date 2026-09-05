@@ -15,7 +15,7 @@ import { StockFragmentsAbi } from "./abis/StockFragments";
  *   PONDER_RPC_URL_<chainId>  default http://127.0.0.1:8545
  *   DEPLOYMENTS_FILE          default ../contracts/deployments/<chainId>.json
  *   SEASON_MINE_ADDRESS, STOCK_FRAGMENTS_ADDRESS, REDEMPTION_VAULT_ADDRESS
- *   START_BLOCK               default 0
+ *   START_BLOCK               default: the `block` recorded in the deployments file, else 0
  */
 interface Deployment {
   chainId?: number;
@@ -25,6 +25,7 @@ interface Deployment {
   factory?: Address;
   rig?: Address;
   openTime?: number;
+  block?: number;
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +49,8 @@ function pick(envName: string, fromFile: Address | undefined, label: string): Ad
   return value.toLowerCase() as Address;
 }
 
-const startBlock = Number(process.env.START_BLOCK ?? "0");
+// An empty START_BLOCK (compose passes "" when unset) means "use the deployment file".
+const startBlock = Number(process.env.START_BLOCK || deployment.block || 0);
 
 export default createConfig({
   chains: {

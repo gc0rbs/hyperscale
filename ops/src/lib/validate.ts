@@ -71,3 +71,9 @@ export function validateSeasonParams(p: SeasonParamsJson, now: number): string[]
   if (p.redemptionDays === 0 || p.pauseGraceSeconds === 0) errs.push("windows");
   return [...new Set(errs)];
 }
+
+/** Mirror of the factory's vault-dependency check (audit B3): a zero adapter or quote token bricks the vault. */
+export function validateVaultDeps(d: { eligibility: string; oracle: string; usdc: string }): string[] {
+  const isZero = (a: string) => !a || a.toLowerCase() === ZERO;
+  return isZero(d.eligibility) || isZero(d.oracle) || isZero(d.usdc) ? ["vault dependencies"] : [];
+}

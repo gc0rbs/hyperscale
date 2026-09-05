@@ -1,8 +1,8 @@
 /**
- * Watcher (docs/06 §6): prints alerts for the conditions ops must react to. Wire the `alert`
- * function to Telegram/Slack in production.
+ * Watcher (docs/06 §6): logs the conditions ops must react to and forwards warn/page alerts to
+ * ALERT_WEBHOOK_URL (Slack or Discord incoming webhook) when set.
  *
- *   pnpm --filter @stock-miner/ops watch [--interval 60] [--planned-seconds 86400]
+ *   ALERT_WEBHOOK_URL=https://… pnpm --filter @stock-miner/ops watch [--interval 60] [--planned-seconds 10800]
  */
 import { clients, loadDeployment, mineAbi, readState, vaultAbi } from "./lib/season.js";
 
@@ -10,9 +10,31 @@ const interval = Number(process.argv.includes("--interval") ? process.argv[proce
 const planned = Number(process.argv.includes("--planned-seconds") ? process.argv[process.argv.indexOf("--planned-seconds") + 1] : 86_400);
 const once = process.argv.includes("--once");
 
-function alert(level: "info" | "warn" | "page", msg: string) {
+type Level = "info" | "warn" | "page";
+const RANK: Record<Level, number> = { info: 0, warn: 1, page: 2 };
+const webhook = process.env.ALERT_WEBHOOK_URL;
+const minLevel = (process.env.ALERT_MIN_LEVEL ?? "warn") as Level;
+const repeatMs = Number(process.env.ALERT_REPEAT_SECONDS ?? 900) * 1000;
+const lastSent = new Map<string, number>();
+
+/**
+ * Logs every alert; forwards those at or above ALERT_MIN_LEVEL (default warn) to ALERT_WEBHOOK_URL as
+ * JSON `{text, content}` (Slack incoming webhooks read `text`, Discord reads `content`). An identical
+ * message is not resent within ALERT_REPEAT_SECONDS (default 900) so a standing condition pages once
+ * per window instead of every tick.
+ */
+function alert(level: Level, msg: string) {
   const stamp = new Date().toISOString();
   console.log(`[watch] ${stamp} ${level.toUpperCase()} ${msg}`);
+  if (!webhook || RANK[level] < (RANK[minLevel] ?? 1)) return;
+  const now = Date.now();
+  const prev = lastSent.get(msg);
+  if (prev !== undefined && now - prev < repeatMs) return;
+  lastSent.set(msg, now);
+  const text = `[stock-miner watch] ${level.toUpperCase()} ${msg}`;
+  fetch(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, content: text }) })
+    .then((r) => { if (!r.ok) console.error(`[watch] webhook responded ${r.status}`); })
+    .catch((e: Error) => console.error(`[watch] webhook error: ${e.message}`));
 }
 
 let idleSince: number | null = null;

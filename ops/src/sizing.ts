@@ -21,6 +21,22 @@ export interface Sizing {
 
 const ONE_HOUR = 3600n;
 
+/**
+ * Pool sizing by value (docs/04 §5.1): split `poolUsd` by `valueShareBps` and convert each block's
+ * share to whole-token units (1e18) at the given USD price. Prices in USD per token (floats are fine
+ * here; the result is rounded to 1e-6 token).
+ */
+export function sizePoolByValue(poolUsd: number, valueShareBps: readonly number[], pricesUsd: readonly number[]): bigint[] {
+  const sum = valueShareBps.reduce((a, b) => a + b, 0);
+  if (sum !== 10_000) throw new Error(`valueShareBps must sum to 10000, got ${sum}`);
+  if (valueShareBps.length !== pricesUsd.length) throw new Error("one price per block");
+  return valueShareBps.map((bps, i) => {
+    if (!(pricesUsd[i] > 0)) throw new Error(`price for block ${i} must be positive`);
+    const tokens = (poolUsd * bps) / 10_000 / pricesUsd[i];
+    return BigInt(Math.round(tokens * 1e6)) * 10n ** 12n;
+  });
+}
+
 export function sizeDifficulty(input: SizingInput): Sizing {
   const sum = input.diffShareBps.reduce((a, b) => a + b, 0);
   if (sum !== 10_000) throw new Error(`diffShareBps must sum to 10000, got ${sum}`);

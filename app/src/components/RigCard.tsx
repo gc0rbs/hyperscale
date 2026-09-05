@@ -1,6 +1,5 @@
 "use client";
 import { useMemo } from "react";
-import { TICKERS } from "@/lib/contracts";
 import { formatHash, formatInt, formatRig } from "@/lib/format";
 import { advance, fragmentsPerSecond, settle } from "@/lib/mine-math";
 import type { RigSnapshot, SeasonSnapshot } from "@/lib/season-model";
@@ -33,7 +32,7 @@ export function RigCard({ rig, snap, now, onAction, disabled }: { rig: RigSnapsh
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Hashrate" value={<>{formatHash(hash).replace(" H", "")}<span className="text-mine-muted text-[14px]"> H</span></>} big />
         <Stat label="Fragments / s" value={fps.toFixed(1)} sub="fixed for this block" />
-        <Stat label="Earned this block" value={formatInt(earnedFrag)} sub={`${(Number(earnedFrag) / Number(p.fragPerToken)).toFixed(3)} ${TICKERS[b]}`} />
+        <Stat label="Earned this block" value={formatInt(earnedFrag)} sub={`${(Number(earnedFrag) / Number(p.fragPerToken)).toFixed(3)} ${snap.symbols[b]}`} />
       </div>
       <div className="h-px bg-mine-line" />
       <div className="grid grid-cols-2 gap-4"><Pips on={rig.gpuTier} total={5} label="GPU" /><Pips on={rig.coolingTier} total={3} label="Cooling" /></div>

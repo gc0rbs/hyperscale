@@ -27,6 +27,8 @@ export interface Deployment {
   vault: Address;
   stocks: Address[];
   openTime: number;
+  /** block the season was created in (indexer start block) */
+  block?: number;
   difficultyTotal: string;
   seasonFile?: string;
   paramsHash?: Hex;
@@ -76,6 +78,12 @@ export function loadDeployment(id = chainId()): Deployment {
   return JSON.parse(readFileSync(p, "utf8")) as Deployment;
 }
 
+/** deployments/<chainId>-adapters.json from DeployAdapters.s.sol, if present. */
+export function loadAdapters(id = chainId()): { oracle: Address; eligibility: Address; stocks: Address[]; feeds: Address[] } | null {
+  const p = join(DEPLOYMENTS, `${id}-adapters.json`);
+  return existsSync(p) ? (JSON.parse(readFileSync(p, "utf8")) as { oracle: Address; eligibility: Address; stocks: Address[]; feeds: Address[] }) : null;
+}
+
 export function loadFactoryDeployment(id = chainId()): FactoryDeployment {
   const p = join(DEPLOYMENTS, `${id}-factory.json`);
   if (!existsSync(p)) throw new Error(`no factory deployment for chain ${id} (${p}); run DeployFactory first`);
@@ -107,9 +115,15 @@ export function viemChain(id = chainId(), rpc = process.env.RPC_URL ?? "http://1
 
 export function clients(keyEnv = "KEEPER_KEY") {
   const rpc = process.env.RPC_URL ?? "http://127.0.0.1:8545";
-  const key = (process.env[keyEnv] ?? process.env.PRIVATE_KEY ?? ANVIL_KEYS[1]) as Hex;
+  const id = chainId();
+  let key = (process.env[keyEnv] ?? process.env.PRIVATE_KEY) as Hex | undefined;
+  if (!key) {
+    // Audit R1: the public Anvil keys are a convenience for chain 31337 only; anywhere else fail closed.
+    if (id !== 31337) throw new Error(`${keyEnv} (or PRIVATE_KEY) must be set for chain ${id}`);
+    key = ANVIL_KEYS[1];
+  }
   const account = privateKeyToAccount(key);
-  const chain = viemChain(chainId(), rpc);
+  const chain = viemChain(id, rpc);
   const pub = createPublicClient({ chain, transport: http(rpc) });
   const wallet = createWalletClient({ account, chain, transport: http(rpc) });
   return { pub, wallet, account, chain };

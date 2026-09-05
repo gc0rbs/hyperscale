@@ -20,9 +20,11 @@ import {AllowlistEligibility} from "../src/adapters/AllowlistEligibility.sol";
 ///         Env: PRIVATE_KEY, BASE_URI (fragment metadata, `{id}` placeholder), DEPLOY_MOCKS.
 contract DeployFactory is Script {
     function run() external {
-        uint256 key = vm.envOr(
-            "PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
-        );
+        uint256 key = block.chainid == 31337
+            ? vm.envOr(
+                "PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+            )
+            : vm.envUint("PRIVATE_KEY"); // audit R1: the Anvil default key never leaves chain 31337
         string memory baseUri = vm.envOr("BASE_URI", string("http://localhost:3000/api/frag/{id}.json"));
         bool mocks = vm.envOr("DEPLOY_MOCKS", false);
         address deployer = vm.addr(key);
@@ -51,8 +53,8 @@ contract DeployFactory is Script {
             MockERC20 usdc = new MockERC20("USD Coin", "USDC", 6);
             MockPriceOracle oracle = new MockPriceOracle();
             AllowlistEligibility elig = new AllowlistEligibility(deployer);
-            string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
-            uint256[4] memory prices = [uint256(172e8), 350e8, 230e8, 767e8];
+            string[4] memory syms = ["NVDA", "MU", "SNDK", "QQQ"];
+            uint256[4] memory prices = [uint256(230e8), 999e8, 1719e8, 717e8];
             address[] memory stocks = new address[](4);
             for (uint256 i; i < 4; ++i) {
                 MockStockToken s = new MockStockToken(syms[i], syms[i]);

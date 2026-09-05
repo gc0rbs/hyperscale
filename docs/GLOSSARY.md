@@ -19,7 +19,7 @@
 | Heat | 0–100 per rig; rises with overclocks, falls at shift ends; blocks overclocks when full. |
 | Reward block | One of four pools, each with its own stock and difficulty. |
 | Fragment | ERC-1155 unit; 1,000,000 fragments = 1 Stock Token of that block's stock. Non-transferable in v1. |
-| Stock Token | Tokenized equity/ETF on Robinhood Chain (e.g. NVDAx). May carry transfer restrictions. |
+| Stock Token | Tokenized equity/ETF on Robinhood Chain (e.g. NVDA). May carry transfer restrictions. |
 | Redemption | Burning fragments for Stock Tokens (eligible wallets) or USDC (cash-out). |
 | Close | The instant block 4 is found, or the cap is reached. Staking and upgrades stop forever; withdrawals open. |
 | Exit | Leaving mid-season for a fee; deposit returned, rig stops, earned fragments kept. |

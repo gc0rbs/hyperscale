@@ -16,7 +16,7 @@ immutable; a new season is a new deployment.
                         ▼                                      ▼
 ┌──────────┐     ┌──────────────┐                     ┌────────────────────┐
 │ RIG      │◀────│ Treasury     │──fund──────────────▶│ RedemptionVault    │◀── players
-│ (ERC-20) │burn │ (multisig)   │  Stock Tokens, USDC │  redeem / cashOut  │
+│ (ERC-20) │burn │ (op. key)    │  Stock Tokens, USDC │  redeem / cashOut  │
 └──────────┘     └──────────────┘                     └───────┬────────────┘
                                                               │ burn on redeem
                                                               ▼
@@ -30,10 +30,11 @@ immutable; a new season is a new deployment.
 
 | Contract | Lifetime | Role |
 |---|---|---|
-| `RIG` | permanent | ERC-20, burnable, permit |
+| `RIG` | permanent | the Pons-launched ERC-20 (external). Burns are transfers to `SeasonMine.BURN_ADDRESS` (`0x…dEaD`); `contracts/src/tokens/RIG.sol` is the dev token |
 | `SeasonFactory` | permanent | deploys `SeasonMine` + `StockFragments` + `RedemptionVault` from a `SeasonParams` struct; registry |
 | `SeasonMine` | one season | staking, upgrades, hashrate, work accounting, block discovery, claims, exit, withdrawals |
 | `StockFragments` | one season | ERC-1155; id = block index; minter = `SeasonMine`; burner = `RedemptionVault`; transfers disabled in v1 |
+| `ChainlinkOracle` | permanent | `IPriceOracle` over the per-token Chainlink feeds (immutable stock → feed map); the vault's quote token is USDG (decimals read at construction) |
 | `RedemptionVault` | one season | holds Stock Tokens + USDC; `redeem`, `cashOut`, `sweep` |
 | `IEligibility` | pluggable | `isEligible(address)` for in-kind redemption (doc 07) |
 | `IPriceOracle` | pluggable | USD price of each underlying for cash-out |
@@ -245,7 +246,7 @@ Permission: `activate` is by `msg.sender`; other rig functions require `rigs[rig
 fund(usdcReserve)           operator; pulls poolTokens[b] of stocks[b] for each b, and USDC; funded = true.
 redeem(id, fragments)       require eligibility.isEligible(msg.sender); require mine closed;
                             tokens = fragments × 1e18 / fragPerToken; burn; transfer stock.
-cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 1h); usdc = tokens × price × (1 − fee);
+cashOut(id, fragments)      price = oracle.usdPrice(stocks[id]) (staleness ≤ 26h: 24h heartbeat + margin); usdc = tokens × price × (1 − fee);
                             require reserve ≥ usdc; burn; transfer USDC.
 sweep()                     after closeX + redemptionDays, or if cancelled: send all balances to treasury. Repeatable; an asset whose hook refuses the treasury stays and is retried.
 ```

@@ -131,6 +131,9 @@ interface ISeasonMine {
     function emergencyWithdraw(uint256 rigId) external;
 
     // ── admin (emergency only) ──────────────────────────────────────────────
+    /// @notice Guardian emergency stop; reverts once the season has closed. Claims and post-close
+    ///         withdrawals ignore a pause after the close is persisted, so earned fragments can never
+    ///         be stranded by a lost guardian key.
     function pause() external;
     function unpause() external;
 

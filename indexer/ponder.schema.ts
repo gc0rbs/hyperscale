@@ -20,7 +20,10 @@ export const season = onchainTable("season", (t) => ({
   shift: t.integer().notNull(),
   /** X-time of close; null while open. */
   closeX: t.bigint(),
+  /** Exact close time, closeX / 1e18 (audit B5). */
   closedAt: t.bigint(),
+  /** Block timestamp of the transaction that persisted the close. */
+  closedTxAt: t.bigint(),
   closedByFailSafe: t.boolean().notNull(),
   cancelledAt: t.bigint(),
 }));
@@ -38,7 +41,10 @@ export const shift = onchainTable("shift", (t) => ({
 export const rewardBlock = onchainTable("reward_block", (t) => ({
   id: t.integer().primaryKey(),
   endX: t.bigint().notNull(),
+  /** Exact discovery time, endX / 1e18 (audit B5). */
   foundAt: t.bigint().notNull(),
+  /** Block timestamp of the transaction that recorded the discovery (may be later). */
+  foundTxAt: t.bigint().notNull(),
   /** Seconds between the previous block's endX (or openTime) and this one's, in X units. */
   durationX: t.bigint().notNull(),
 }));

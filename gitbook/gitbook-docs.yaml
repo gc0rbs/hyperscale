@@ -1,0 +1,13 @@
+# GitBook Git Sync site configuration (project directory = gitbook/).
+# https://gitbook.com/docs/docs-as-code/git-sync/content-configuration
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: Stock Miner
+  structure:
+    - type: space
+      key: stock-miner
+      title: Stock Miner
+      path: docs
+      default: true
+      content:
+        directory: ./

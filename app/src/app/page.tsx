@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Btn, Label, Mono, Progress } from "@/components/ui";
-import { TICKERS } from "@/lib/contracts";
 import { formatEta, formatHash } from "@/lib/format";
 import { advance, blockProgressBps, eta as etaOf } from "@/lib/mine-math";
 import { useChainNow } from "@/lib/use-now";
@@ -35,11 +34,11 @@ function Landing({ snap }: { snap: SeasonSnapshot }) {
           <h1 className="font-display uppercase tracking-[0.02em] text-[96px] md:text-[150px] font-bold leading-[0.88]">Mine stock fragments</h1>
           <p className="text-mine-muted text-[18px] max-w-[520px]">Stake RIG. Run rigs. Four blocks, then the mine closes. Blocks are found by work, not by the clock; a season lasts a few hours.</p>
           <div className="flex gap-3"><Link href="/mine/new"><Btn tone="ember" className="h-12 px-6">Activate a rig</Btn></Link><Link href="/mine"><Btn className="h-12 px-6">Open the mine</Btn></Link></div>
-          <div className="flex flex-col gap-2 max-w-[520px]"><Progress pct={closed ? 100 : pct} ticks={8} head={!closed && !preOpen} /><div className="flex justify-between"><Mono className="text-mine-muted text-[12px]">{preOpen ? `opens in ${formatEta(Number(snap.params.openTime - now))}` : closed ? "mine sealed" : `block ${Math.floor(Math.min(g.shift, 31) / 8) + 1} of 4 · ${pct.toFixed(0)}%`}</Mono><Mono className="text-mine-muted text-[12px]">{preOpen || closed || e.idle ? "" : `est. ${formatEta(Number(e.toClose))} to close`}</Mono></div></div>
+          <div className="flex flex-col gap-2 max-w-[520px]"><Progress pct={closed ? 100 : pct} ticks={snap.params.shiftsPerBlock} head={!closed && !preOpen} /><div className="flex justify-between"><Mono className="text-mine-muted text-[12px]">{preOpen ? `opens in ${formatEta(Number(snap.params.openTime - now))}` : closed ? "mine sealed" : `block ${Math.min(Math.floor(g.shift / snap.params.shiftsPerBlock), snap.params.blocks - 1) + 1} of ${snap.params.blocks} · ${pct.toFixed(0)}%`}</Mono><Mono className="text-mine-muted text-[12px]">{preOpen || closed || e.idle ? "" : `est. ${formatEta(Number(e.toClose))} to close`}</Mono></div></div>
         </div>
       </section>
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3 -mt-6">
-        {TICKERS.map((t, i) => (
+        {snap.symbols.map((t, i) => (
           <div key={t} className="bg-mine-panel border border-mine-line rounded-md px-5 pt-4 pb-5 flex flex-col gap-1">
             <div className="flex justify-between"><Mono className="text-mine-dim text-[12px]">Block 0{i + 1}</Mono><Mono className="text-mine-dim text-[12px]">{Number((snap.params.difficulty[i] * 100n) / totalWork)}% of work</Mono></div>
             <div className="font-display leading-none uppercase text-[80px] font-bold text-ember">{t}</div>
@@ -52,9 +51,10 @@ function Landing({ snap }: { snap: SeasonSnapshot }) {
           <div key={n} className="flex gap-4"><Mono className="text-signal text-[56px] leading-none">{n}</Mono><div className="flex flex-col gap-2"><div className="font-display uppercase text-[40px] font-semibold">{h}</div><p className="text-mine-muted text-[14px]">{b}</p></div></div>
         ))}
       </section>
+      <section className="flex gap-6 text-[13px] text-mine-muted"><Link href="/how-it-works" className="hover:text-mine-fg">How rewards work</Link><Link href="/terms" className="hover:text-mine-fg">Terms</Link><span className="ml-auto text-mine-dim text-right">Not available in the US, Canada, the UK or Switzerland. Type: Humane by Rajesh Rajput, Readex Pro.</span></section>
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-mine-line pt-8">
         <div className="flex flex-col gap-1"><Label>Total hash</Label><Mono className="text-[22px]">{formatHash(g.totalHash)}</Mono></div>
-        <div className="flex flex-col gap-1"><Label>Shift</Label><Mono className="text-[22px]">{Math.min(g.shift, 32)} / 32</Mono></div>
+        <div className="flex flex-col gap-1"><Label>Shift</Label><Mono className="text-[22px]">{Math.min(g.shift, snap.totalShifts)} / {snap.totalShifts}</Mono></div>
         <div className="flex flex-col gap-1"><Label>Next block</Label><Mono className="text-[22px] text-signal">{preOpen || closed || e.idle ? "–" : formatEta(Number(e.toBlockFound))}</Mono><span className="text-mine-dim text-[11px]">est.</span></div>
         <div className="flex flex-col gap-1"><Label>Status</Label><Mono className="text-[22px]">{["Funding", "Pre-open", "Open", "Closed", "Cancelled"][snap.phase]}</Mono></div>
       </section>

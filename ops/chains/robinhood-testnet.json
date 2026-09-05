@@ -1,7 +1,7 @@
 {
   "name": "robinhood-testnet",
-  "chainId": 0,
-  "rpcUrl": "${ROBINHOOD_TESTNET_RPC}",
+  "chainId": 46630,
+  "rpcUrl": "${ROBINHOOD_TESTNET_RPC:-https://rpc.testnet.chain.robinhood.com}",
   "explorerApi": "${ROBINHOOD_EXPLORER_API}",
   "mocks": false,
   "rig": "0x0000000000000000000000000000000000000000",
@@ -17,5 +17,5 @@
     "AAPLx": "0x0000000000000000000000000000000000000000",
     "SPYx": "0x0000000000000000000000000000000000000000"
   },
-  "notes": "Placeholders. See ops/chains/README.md for what to fill in and which PRD §10 assumptions each value depends on."
+  "notes": "Robinhood Chain testnet, chain id 46630, RPC verified 2026-09-04. Explorer, faucet and test stock tokens / feeds still to confirm (Chainlink publishes no testnet feed file; use MockPriceOracle and mock stock tokens via DeployFactory DEPLOY_MOCKS=true on the testnet)."
 }

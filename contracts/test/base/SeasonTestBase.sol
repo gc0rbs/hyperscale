@@ -60,7 +60,7 @@ abstract contract SeasonTestBase is Test {
         md.init(address(factory));
         fd.init(address(factory));
         vd.init(address(factory));
-        string[4] memory syms = ["NVDAx", "TSLAx", "AAPLx", "SPYx"];
+        string[4] memory syms = ["NVDA", "MU", "SNDK", "QQQ"];
         for (uint256 i; i < 4; ++i) {
             stocks[i] = new MockStockToken(syms[i], syms[i]);
         }

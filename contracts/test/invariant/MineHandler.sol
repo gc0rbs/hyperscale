@@ -26,6 +26,11 @@ contract MineHandler is Test {
     bool internal wasClosed;
     uint256 public pauses;
     uint256 public emergencyWithdrawals;
+    // Invariant 10 (audit B4): global state frozen at the cancellation instant.
+    bool public cancelSnapshotTaken;
+    uint16 public cancelShift;
+    uint256 public cancelLastX;
+    uint256 public cancelWork;
 
     constructor(SeasonMine mine_, RIG rig_, MockERC20 lp_, uint64 openTime_) {
         mine = mine_;
@@ -151,7 +156,10 @@ contract MineHandler is Test {
         if (mine.paused()) return;
         address guardian = mine.params().treasury;
         vm.prank(guardian);
-        mine.pause();
+        try mine.pause() {}
+        catch { // reverts once closed (audit R2)
+            return;
+        }
         pauses++;
         dt = uint32(bound(dt, 1 hours, 12 hours));
         vm.warp(block.timestamp + dt);
@@ -178,6 +186,12 @@ contract MineHandler is Test {
         vm.prank(o);
         try mine.emergencyWithdraw(id) {
             emergencyWithdrawals++;
+            if (mine.cancelled() && !cancelSnapshotTaken) {
+                cancelSnapshotTaken = true;
+                cancelShift = mine.shift();
+                cancelLastX = mine.lastX();
+                cancelWork = mine.workInShift();
+            }
             if (r.asset == ISeasonMine.Asset.RIG) ghostRigDeposits -= r.amount;
             else ghostLpDeposits -= r.amount;
         } catch {}

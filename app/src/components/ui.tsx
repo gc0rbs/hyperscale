@@ -12,7 +12,7 @@ export const Mono = ({ children, className = "" }: { children: ReactNode; classN
 
 export const Chip = ({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "signal" | "ember" }) => {
   const tones = { muted: "border-mine-line text-mine-muted", signal: "border-signal-deep text-signal", ember: "border-ember-deep text-ember" };
-  return <span className={`text-[11px] tracking-[0.06em] uppercase px-[7px] py-[3px] border rounded-[3px] ${tones[tone]}`}>{children}</span>;
+  return <span className={`text-[11px] tracking-[0.06em] uppercase px-[7px] py-[3px] border rounded-[3px] whitespace-nowrap ${tones[tone]}`}>{children}</span>;
 };
 
 export const Panel = ({ children, className = "" }: { children: ReactNode; className?: string }) => (

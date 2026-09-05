@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Address } from "viem";
+import { isAddress, type Address } from "viem";
 
 export interface Deployment {
   chainId: number;
@@ -27,7 +27,14 @@ export function getDeployment(): Deployment | null {
   const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 31337);
   const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? "http://127.0.0.1:8545";
   if (process.env.NEXT_PUBLIC_MINE_ADDRESS) {
-    const env = (k: string) => process.env[k] as Address;
+    // Audit R3: a partial or malformed address set must fail at startup, not as undefined calls later.
+    const env = (k: string): Address => {
+      const v = process.env[k];
+      if (!v || !isAddress(v)) throw new Error(`${k} is missing or not an address (${v ?? "unset"})`);
+      return v as Address;
+    };
+    const stocks = (process.env.NEXT_PUBLIC_STOCK_ADDRESSES ?? "").split(",").map((s) => s.trim());
+    if (stocks.length !== 4 || stocks.some((s) => !isAddress(s))) throw new Error("NEXT_PUBLIC_STOCK_ADDRESSES must list four addresses");
     return {
       chainId,
       seasonId: Number(process.env.NEXT_PUBLIC_SEASON_ID ?? 0),
@@ -40,7 +47,7 @@ export function getDeployment(): Deployment | null {
       mine: env("NEXT_PUBLIC_MINE_ADDRESS"),
       fragments: env("NEXT_PUBLIC_FRAGMENTS_ADDRESS"),
       vault: env("NEXT_PUBLIC_VAULT_ADDRESS"),
-      stocks: (process.env.NEXT_PUBLIC_STOCK_ADDRESSES ?? "").split(",") as Address[],
+      stocks: stocks as Address[],
       openTime: Number(process.env.NEXT_PUBLIC_OPEN_TIME ?? 0),
       rpcUrl,
     };

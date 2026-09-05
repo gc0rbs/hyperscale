@@ -2,14 +2,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { parseEther } from "viem";
-import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useTx } from "@/lib/use-tx";
 import { useReads } from "@/lib/reads";
 import { useDeployment } from "@/app/providers";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Btn, Label, Mono, Panel, Stat } from "@/components/ui";
 import { erc20Abi, rigAbi, seasonMineAbi } from "@/lib/contracts";
 import { formatEta, formatHash, formatRig } from "@/lib/format";
-import { advance, eta as etaOf } from "@/lib/mine-math";
+import { advance, eta as etaOf, fragmentsPerSecond } from "@/lib/mine-math";
 import type { SeasonSnapshot } from "@/lib/season-model";
 import { useActiveAddress } from "@/lib/use-account";
 import { useChainNow } from "@/lib/use-now";
@@ -54,23 +54,20 @@ function Activate({ snap }: { snap: SeasonSnapshot }) {
   const lpAllow = (reads.data?.[3]?.result as bigint | undefined) ?? 0n;
   const needRigApprove = rigAllow < (asset === 0 ? amount + fee : fee);
   const needLpApprove = asset === 1 && lpAllow < amount;
-  const write = useWriteContract();
-  const rcpt = useWaitForTransactionReceipt({ hash: write.data });
-  const [step, setStep] = useState<"idle" | "approve" | "activate">("idle");
+  const tx = useTx();
   useEffect(() => {
-    if (!rcpt.isSuccess) return;
-    if (step === "approve") { reads.refetch(); write.reset(); setStep("idle"); }
-    if (step === "activate") router.push("/mine");
+    if (!tx.done?.ok) return;
+    if (tx.done.tag === "approve") { reads.refetch(); tx.reset(); }
+    if (tx.done.tag === "activate") router.push("/mine");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rcpt.isSuccess]);
+  }, [tx.done]);
   const go = () => {
     if (!account) return;
-    if (needRigApprove) { setStep("approve"); write.writeContract({ address: dep.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
-    if (needLpApprove) { setStep("approve"); write.writeContract({ address: token, abi: erc20Abi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
-    setStep("activate");
-    write.writeContract({ address: dep.mine, abi: seasonMineAbi, functionName: "activate", args: [asset, amount], account });
+    if (needRigApprove) { tx.send("approve", { address: dep.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
+    if (needLpApprove) { tx.send("approve", { address: token, abi: erc20Abi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
+    tx.send("activate", { address: dep.mine, abi: seasonMineAbi, functionName: "activate", args: [asset, amount], account });
   };
-  const busy = write.isPending || rcpt.isLoading;
+  const busy = tx.busy;
   const tooSmall = weight < p.minStakeWeight;
   const insufficient = asset === 0 ? rigBal < amount + fee : lpBal < amount || rigBal < fee;
 
@@ -79,20 +76,20 @@ function Activate({ snap }: { snap: SeasonSnapshot }) {
       <Panel className="flex flex-col gap-6" data-testid="activate">
         <div className="font-display leading-none uppercase tracking-[0.02em] text-[64px] font-medium">Activate a rig</div>
         <div className="flex gap-2">
-          {(["RIG", "RIG/USDC LP"] as const).map((l, i) => <button key={l} onClick={() => setAsset(i as 0 | 1)} className={`h-10 px-4 rounded-sm border text-[14px] font-semibold ${asset === i ? "border-ember text-ember bg-[var(--ember-tint)]" : "border-mine-line text-mine-muted"}`}>{l}</button>)}
+          {(p.lpWeightPerToken > 0n ? (["RIG", "RIG/USDC LP"] as const) : (["RIG"] as const)).map((l, i) => <button key={l} onClick={() => setAsset(i as 0 | 1)} className={`h-10 px-4 rounded-sm border text-[14px] font-semibold ${asset === i ? "border-ember text-ember bg-[var(--ember-tint)]" : "border-mine-line text-mine-muted"}`}>{l}</button>)}
         </div>
         <label className="flex flex-col gap-2"><Label>Amount</Label><input data-testid="amount" value={amountStr} onChange={(ev) => setAmountStr(ev.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-12 px-4 bg-mine-panel2 border border-mine-line rounded-sm font-data text-[22px] text-mine-fg outline-none focus:border-signal" /><Mono className="text-mine-muted text-[12px]">balance {formatRig(asset === 0 ? rigBal : lpBal)} {asset === 0 ? "RIG" : "LP"}{asset === 1 ? ` · 1 LP = ${Number(p.lpWeightPerToken) / 1e18} RIG-equivalent (bonus included)` : ""}</Mono></label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat label="Hashrate" value={formatHash(weight)} />
+          <Stat label="Hashrate" value={formatHash(weight)} sub={`${fragmentsPerSecond(snap.config, weight, Math.min(Math.floor(g.shift / p.shiftsPerBlock), p.blocks - 1)).toFixed(3)} frag/s now`} />
           <Stat label="Share at join" value={`${share.toFixed(2)}%`} />
           <Stat label="Activation fee" value={`${formatRig(fee)} RIG`} sub="to treasury, in RIG" />
           <Stat label="Stake locked" value="until close" sub={`exit any time, ${p.earlyExitFeeBps / 100}% fee`} />
         </div>
         <div className="text-mine-muted text-[13px]">Stake per rig is fixed for the season. To add capital later, activate another rig. Upgrades are priced as a share of this stake.</div>
-        {write.error && <div className="text-[12px] text-[var(--heat-hot)] font-data break-all">{write.error.message.split("\n")[0]}</div>}
+        {tx.error && <div className="text-[12px] text-[var(--heat-hot)] font-data break-all" data-testid="tx-error">{tx.error}</div>}
         <div className="flex gap-2 items-center">
           <Btn tone="ember" className="h-12 px-6" onClick={go} disabled={!account || busy || tooSmall || insufficient || !canJoin} data-testid="activate-submit">
-            {busy ? "Confirming…" : needRigApprove ? "Approve RIG" : needLpApprove ? "Approve LP" : "Activate rig"}
+            {tx.status === "wallet" ? "Confirm in wallet…" : tx.status === "mining" ? "Mining…" : needRigApprove ? "Approve RIG" : needLpApprove ? "Approve LP" : "Activate rig"}
           </Btn>
           {!account && <span className="text-mine-muted text-[13px]">Connect a wallet first.</span>}
           {tooSmall && <span className="text-mine-muted text-[13px]">Minimum stake weight is {formatRig(p.minStakeWeight)} RIG-equivalent.</span>}

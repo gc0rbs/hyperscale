@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ISeasonMine} from "./interfaces/ISeasonMine.sol";
@@ -17,8 +18,13 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
 
     uint256 internal constant WAD = 1e18;
     uint256 internal constant BPS = 10_000;
-    uint256 internal constant MAX_PRICE_AGE = 1 hours;
-    uint256 internal constant USDC_SCALE = 1e12; // 1e18 USD → 6-decimal USDC
+    /// @dev Robinhood's Chainlink equity feeds update on a 0.5% deviation or a 24 h heartbeat, so a quiet
+    ///      price legitimately carries a day-old timestamp. Heartbeat plus margin; over a weekend the feed
+    ///      goes quiet and cash-out pauses until Monday's first update, in-kind redemption unaffected.
+    uint256 internal constant MAX_PRICE_AGE = 26 hours;
+    /// @dev 1e18 USD → quote-token units; the quote token (USDG on Robinhood Chain, USDC elsewhere) is
+    ///      read for `decimals()` once at construction.
+    uint256 internal immutable USDC_SCALE;
 
     address public immutable mine;
     address public immutable fragments;
@@ -36,6 +42,7 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
     bool public swept;
 
     error NotOperator();
+    error InvalidParams();
     error NotClosed();
 
     struct Config {
@@ -57,6 +64,9 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
         mine = c.mine;
         fragments = c.fragments;
         usdc = c.usdc;
+        uint8 qd = IERC20Metadata(c.usdc).decimals();
+        if (qd > 18) revert InvalidParams();
+        USDC_SCALE = 10 ** (18 - qd);
         eligibility = c.eligibility;
         oracle = c.oracle;
         treasury = c.treasury;

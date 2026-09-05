@@ -50,9 +50,9 @@ that only allow movement between allowlisted addresses. Consequences for this pr
 
 | # | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|---|
-| 1 | Vault cannot be allowlisted for Stock Tokens | Medium | Blocks the core prize | Parallel path with a permissionless issuer; cash-only prize as last resort | Product / BD |
+| 1 | ~~Vault cannot be allowlisted for Stock Tokens~~ Resolved 2026-09-04: Robinhood Stock Tokens have no on-chain restriction; the legal restriction (no U.S., CA, UK, CH persons) is enforced by geo-fence and terms | Low | Regulatory if the fence fails | Geo-fence, terms, `OpenEligibility` on chain | Legal |
 | 2 | Accounting bug over-mints fragments | Low | Vault insolvent for some redeemers | Invariant tests, audit, `mintedFragments[b] ≤ supply` hard check in `claim` | Contracts |
-| 3 | Oracle staleness during cash-out | Medium | Wrong payouts | Staleness check (≤ 1h), pause cash-out only, in-kind unaffected | Contracts |
+| 3 | Oracle staleness during cash-out | Medium | Wrong payouts | Staleness check (≤ 26h: the feeds' 24 h heartbeat plus margin; 0.5% deviation triggers updates), pause cash-out only, in-kind unaffected | Contracts |
 | 4 | Sequencer downtime during season | Low | Players cannot overclock/claim; work keeps accruing by timestamp | Documented; pause grace path; consider Arbitrum-style delayed-inbox awareness | Ops |
 | 5 | RIG price crash mid-season | Medium | Pool becomes very generous; burn drops | Prize sizing rules, treasury policy; no in-season changes | Treasury |
 | 6 | LP token is v3-style (NFT) | Medium | LP staking impossible as specced | Confirm DEX in discovery; defer LP to v1.1 | Eng |

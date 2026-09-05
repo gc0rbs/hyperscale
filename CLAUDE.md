@@ -3,8 +3,8 @@
 Read this first. It is short on purpose; the detail lives in `docs/`.
 
 ## What this is
-A progress-based virtual mining game on Robinhood Chain (Arbitrum Orbit L2). Players stake $RIG or
-RIG/USDC LP to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments across four
+A progress-based virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake
+$RIG (a Pons-launched ERC-20; LP staking is off in v1) to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments across four
 reward blocks. Blocks are found by accumulated hash-work, not by time. The mine closes when block 4 is
 found. Spec set: `docs/01`–`09`, interfaces in `specs/contracts/`, params in `specs/params/`.
 
@@ -26,7 +26,8 @@ commit, and add a dated entry to `docs/DECISIONS.md` saying what changed and why
 - Rewards are `rigHash × seconds × ratePerWork[b]`, independent of other rigs. Do not reintroduce a
   reward-per-share accumulator.
 - `Σ minted fragments for block b ≤ poolTokens[b] × fragPerToken`, enforced in `claim`.
-- Upgrade spend is 100% burned. Stake per rig is immutable. Fragments are non-transferable in v1.
+- Upgrade spend is 100% burned: transferred to `0x…dEaD` (the token has no burn function). Stake per rig
+  is immutable. Fragments are non-transferable in v1.
 - No randomness, no oracles inside `SeasonMine`. Oracle use is confined to `RedemptionVault.cashOut`.
 - v1.1 items (rig NFTs, transferable fragments, browser boost) are out of scope; do not build them.
 
