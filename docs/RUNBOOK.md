@@ -229,6 +229,10 @@ The wallet button prompts a network switch when the wallet is on the wrong chain
 `NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
 rendered from live season state) and the WalletConnect metadata. `NEXT_PUBLIC_INDEXER_URL` (the
 Ponder API, §5) enables wallet rankings and mine history; without it those screens read the chain.
+The landing page's "Buy token" dialog shows "coming soon" until `NEXT_PUBLIC_RIG_ADDRESS` is set;
+with it the dialog shows the contract address (copyable), a Blockscout token link and, when
+`NEXT_PUBLIC_RIG_BUY_URL` is set, the official purchase link (the Pons token page after launch).
+Redeploy the app after setting either: both are inlined at build time.
 Security headers (nosniff, frame deny, referrer, permissions, HSTS) come from `next.config.ts`; a
 Content-Security-Policy is the edge's job because WalletConnect needs host-specific `connect-src` and
 `frame-src` allowances. Verify the live response headers after the first deploy. `/how-it-works`

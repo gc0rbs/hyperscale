@@ -394,6 +394,32 @@ build in CI but have not been run end to end on a host from this session.
 - Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
   real wallet extension, refresh during confirmation, visual regression.
 
+## 2026-09-05 – mainnet deployer, $RIG on the site, pre-open screen, header status
+
+Plan: get the contracts onto Robinhood Chain mainnet (4663) without Forge's forked simulation (the
+public RPC rate-limits it), make the site show the real token once Pons launches, and give the mine a
+proper face before it opens.
+
+What shipped:
+- `ops deploy-mainnet factory|adapters|season`: one transaction at a time with viem, same deployment
+  files as the Forge scripts. `season` simulates `SeasonFactory.create` first and refuses a plan whose
+  params changed after `plan` (paramsHash check). Rehearsed end to end on Anvil.
+- Landing "Buy token" dialog: contract address with copy, official purchase link and Blockscout link,
+  driven by `NEXT_PUBLIC_RIG_ADDRESS` / `NEXT_PUBLIC_RIG_BUY_URL`; "coming soon" until both exist.
+- `OpeningSoon`: the pre-open screen used both before a season exists (`/mine` without a deployment)
+  and between creation and `openTime` (countdown, pools, work shares, activate / get $RIG actions).
+- Header status cluster from the launch mockup (`design/launch/53`): live dot, season name, phase chip
+  in the shared chrome; the duplicate phase chip left the mine page.
+- Railway image runs the traced standalone server under plain `node` (crash traces reach the deploy
+  log; the earlier "Ready then dead" was the custom domain targeting port 8080, see RUNBOOK §10c).
+
+What's next: fund the deployer (`0x0F89…D0a2`) with ~0.05 ETH, get the $RIG address from the Pons
+launch, then factory → adapters → plan → season → fund on 4663; set the app's `NEXT_PUBLIC_*` and
+redeploy; put stockminer.fi behind Cloudflare so the geo-fence header exists.
+
+Known gaps: the Pons token page URL format is unverified, so the buy link is an env value rather
+than derived from the address; mainnet deployment JSONs must be force-added (gitignored).
+
 ## 2026-09-05 – Railway hosting live; testnet season; launch comms
 
 **What shipped**

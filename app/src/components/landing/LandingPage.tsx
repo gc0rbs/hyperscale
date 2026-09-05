@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Icon, LogoMark } from "@/components/Icons";
+import { RIG_ADDRESS, RIG_BUY_URL, RIG_EXPLORER_URL } from "@/lib/token";
 import { MineralScene } from "./MineralScene";
 import { useScrollChapters } from "./useScrollChapters";
 
@@ -37,6 +38,11 @@ export function LandingPage() {
   const [assembled, setAssembled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const purchaseDialog = useRef<HTMLDialogElement>(null);
+  const [copied, setCopied] = useState(false);
+  const copyAddress = async () => {
+    if (!RIG_ADDRESS) return;
+    try { await navigator.clipboard.writeText(RIG_ADDRESS); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* clipboard blocked: the address is selectable */ }
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -59,13 +65,27 @@ export function LandingPage() {
       <a className="lp-skip" href="#main-content">Skip to content</a>
       <header className="lp-header">
         <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={34} /></Link>
-        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button></nav>
+        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a>{RIG_BUY_URL ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">Buy $RIG</a> : <button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy $RIG</button>}</nav>
         <div className="lp-header-actions"><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
-        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a><button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy token</button></nav>}
+        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a>{RIG_BUY_URL ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">Buy $RIG</a> : <button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy $RIG</button>}</nav>}
       </header>
       <dialog ref={purchaseDialog} className="lp-purchase-dialog" aria-labelledby="purchase-title" aria-describedby="purchase-description" onClick={(event) => { if (event.target === event.currentTarget) purchaseDialog.current?.close(); }}>
-        <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>$RIG.</span></h2><p id="purchase-description">Coming soon. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-gold">Got it <Arrow /></button></form></div>
+        <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>$RIG.</span></h2>
+          {RIG_ADDRESS ? (
+            <>
+              <p id="purchase-description">$RIG is the only token the mine accepts. Check the contract address before you buy; anything else with the name is not it.</p>
+              <div className="lp-ca" data-testid="rig-ca"><span className="lp-ca-label">Contract address · Robinhood Chain</span><code className="lp-ca-address">{RIG_ADDRESS}</code><button type="button" className="lp-ca-copy" onClick={copyAddress} aria-live="polite">{copied ? "Copied" : "Copy"}</button></div>
+              <div className="lp-purchase-actions">
+                {RIG_BUY_URL && <a className="lp-button lp-button-gold" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" data-testid="rig-buy">Buy $RIG <Arrow diagonal /></a>}
+                {RIG_EXPLORER_URL && <a className="lp-button lp-button-outline" href={RIG_EXPLORER_URL} target="_blank" rel="noopener noreferrer">View on Blockscout <Arrow diagonal /></a>}
+                <form method="dialog"><button className="lp-text-link lp-purchase-close">Close</button></form>
+              </div>
+            </>
+          ) : (
+            <><p id="purchase-description">Coming soon. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-gold">Got it <Arrow /></button></form></>
+          )}
+        </div>
       </dialog>
 
       <main id="main-content">
@@ -109,7 +129,7 @@ export function LandingPage() {
           <div id="questions" className="lp-questions lp-reveal"><div><h3>A FEW GOOD<br />QUESTIONS.</h3></div><div className="lp-faq-list"><details><summary>Do I need a mining computer?<span>+</span></summary><p>No. Your rig is virtual and runs through the game’s contracts. Your browser doesn’t mine cryptocurrency or use your computer’s processing power to earn rewards. You can close the page and your active rig keeps working.</p></details><details><summary>What happens to the tokens I deposit?<span>+</span></summary><p>Your deposited stake can be withdrawn when the season closes. Leaving early has a fee. Activation also has a fee, and $RIG spent on optional upgrades is permanently burned. Review the current season’s costs before joining.</p></details><details><summary>How do I collect my rewards?<span>+</span></summary><p>Claim fragments from completed blocks, then redeem them during the season’s redemption window. Eligible wallets can receive the matching stock token; a USDC cash-out may be available subject to reserves and fees. Rewards depend on your rig’s work and the season’s funded pool.</p></details></div></div>
         </section>
       </main>
-      <footer className="lp-footer"><div className="lp-footer-top"><Link href="/" className="lp-logo"><LogoMark size={36} /><span>STOCK MINER</span></Link><span>A LITTLE STRATEGY. A NEW FRONTIER.</span><a href="#main-content">BACK TO THE SURFACE ↑</a></div><div className="lp-footer-bottom"><span>© {new Date().getFullYear()} STOCK MINER</span><span>A VIRTUAL MINING GAME. REAL DECISIONS.</span><Link href="/seasons">Explore seasons <Arrow diagonal /></Link></div></footer>
+      <footer className="lp-footer"><div className="lp-footer-top"><Link href="/" className="lp-logo"><LogoMark size={36} /><span>STOCK MINER</span></Link><span>A LITTLE STRATEGY. A NEW FRONTIER.</span><a href="#main-content">BACK TO THE SURFACE ↑</a></div>{RIG_ADDRESS && <div className="lp-footer-ca" data-testid="footer-ca"><span>$RIG CONTRACT · ROBINHOOD CHAIN</span><code>{RIG_ADDRESS}</code><button type="button" onClick={copyAddress}>{copied ? "COPIED" : "COPY"}</button>{RIG_EXPLORER_URL && <a href={RIG_EXPLORER_URL} target="_blank" rel="noopener noreferrer">BLOCKSCOUT ↗</a>}{RIG_BUY_URL && <a href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">BUY $RIG ↗</a>}</div>}<div className="lp-footer-bottom"><span>© {new Date().getFullYear()} STOCK MINER</span><span>A VIRTUAL MINING GAME. REAL DECISIONS.</span><Link href="/seasons">Explore seasons <Arrow diagonal /></Link></div></footer>
     </div>
   );
 }

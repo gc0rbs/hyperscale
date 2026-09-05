@@ -57,7 +57,7 @@ test.beforeEach(async ({ page }) => {
 test("pre-open: activate a rig and buy a GPU tier", async ({ page }) => {
   await page.goto("/mine");
   await connectDev(page, 1);
-  await expect(page.getByText("Pre-open")).toBeVisible();
+  await expect(page.getByTestId("season-status")).toContainText("Pre-open");
   await page.goto("/mine/new");
   await connectDev(page, 1);
   await page.getByTestId("amount").fill("200000");
