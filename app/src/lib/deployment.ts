@@ -5,6 +5,8 @@ import { isAddress, type Address } from "viem";
 export interface Deployment {
   chainId: number;
   seasonId: number;
+  /** Player-facing season number when it differs from seasonId + 1 (an earlier index never opened). */
+  seasonNumber?: number;
   rig: Address;
   lp: Address;
   usdc: Address;
@@ -38,6 +40,7 @@ export function getDeployment(): Deployment | null {
     return {
       chainId,
       seasonId: Number(process.env.NEXT_PUBLIC_SEASON_ID ?? 0),
+      seasonNumber: process.env.NEXT_PUBLIC_SEASON_NUMBER ? Number(process.env.NEXT_PUBLIC_SEASON_NUMBER) : undefined,
       rig: env("NEXT_PUBLIC_RIG_ADDRESS"),
       lp: env("NEXT_PUBLIC_LP_ADDRESS"),
       usdc: env("NEXT_PUBLIC_USDC_ADDRESS"),

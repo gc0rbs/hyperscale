@@ -20,5 +20,6 @@
   "block": 54759164,
   "seasonFile": "/home/user/stock-miner/ops/seasons/season-1.json",
   "paramsHash": "0x094b1d748e14004bd8b7b2ac99cf6e8100cf7bc58d26f4a49611d6a8bf72ac70",
-  "difficultyTotal": "108000000000000000000000000000"
+  "difficultyTotal": "108000000000000000000000000000",
+  "seasonNumber": 1
 }

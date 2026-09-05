@@ -44,7 +44,7 @@ function SeasonStatus() {
   return (
     <div className={`lp-status lp-status-${tone}`} data-testid="season-status" data-phase={phase ?? ""}>
       <span className="lp-status-dot" aria-hidden />
-      <span className="lp-status-name">Season {dep.seasonId + 1}</span>
+      <span className="lp-status-name">Season {dep.seasonNumber ?? dep.seasonId + 1}</span>
       <span className="lp-status-chip">{phase === undefined ? "Reading" : PHASES[phase] ?? "Unknown"}</span>
     </div>
   );

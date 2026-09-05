@@ -70,7 +70,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
       <div className="p-4 md:px-8 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
         <div className="flex flex-col gap-5">
           <div className="flex justify-between items-center flex-wrap gap-y-2">
-            <div className="flex items-center gap-3.5 flex-wrap gap-y-2"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold whitespace-nowrap">Season {dep.seasonId + 1}</div>{phaseChip}{!closed && <NotifyToggle pref={notifyPref} />}</div>
+            <div className="flex items-center gap-3.5 flex-wrap gap-y-2"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold whitespace-nowrap">Season {dep.seasonNumber ?? dep.seasonId + 1}</div>{phaseChip}{!closed && <NotifyToggle pref={notifyPref} />}</div>
             <Mono className="text-mine-muted text-[12px] hidden md:block">{closed ? `closed · redemption open` : `block ${curBlock + 1} pays ${(Number(snap.config.ratePerWork[curBlock]) / 1e18).toExponential(3)} frag per hash-second · ends at block 4 or ${capClock(snap)} at the latest`}</Mono>
           </div>
 
