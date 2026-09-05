@@ -2,13 +2,13 @@
   "name": "season-1",
   "chain": "robinhood",
   "chainId": 4663,
-  "createdAt": "2026-09-05T01:55:12.000Z",
+  "createdAt": "2026-09-05T02:20:30.000Z",
   "paramsTemplate": "/home/user/stock-miner/specs/params/season-default.json",
   "params": {
     "rig": "0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f",
     "lpToken": "0x0000000000000000000000000000000000000000",
     "lpWeightPerToken": "0",
-    "openTime": 1788587712,
+    "openTime": 1788582030,
     "maxDurationSeconds": 21600,
     "blocks": 4,
     "shiftsPerBlock": 8,
@@ -19,10 +19,10 @@
       "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68"
     ],
     "poolTokens": [
-      "6514941000000000000",
-      "1970851000000000000",
-      "1445379000000000000",
-      "5558721000000000000"
+      "990271000000000000",
+      "299569000000000000",
+      "219698000000000000",
+      "844926000000000000"
     ],
     "difficulty": [
       "21600000000000000000000000000",
@@ -80,8 +80,8 @@
   "oracle": "0x1f3c31dd21928fcd846a51a5edfa116d4fe250d7",
   "usdc": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
   "transfersEnabled": false,
-  "usdcReserve": "10000000000",
-  "paramsHash": "0x1e3f524475361563d2798dedb18b1bed6af7a6dfea9951dd5e87705ac0052971",
+  "usdcReserve": "800000000",
+  "paramsHash": "0x094b1d748e14004bd8b7b2ac99cf6e8100cf7bc58d26f4a49611d6a8bf72ac70",
   "plan": {
     "expectedTotalHash": "10000000",
     "plannedSeconds": "10800",
@@ -95,7 +95,7 @@
       "SNDK",
       "QQQ"
     ],
-    "poolUsd": 10000,
+    "poolUsd": 1520,
     "poolPrices": {
       "NVDA": 230.24,
       "MU": 1014.79,
@@ -103,8 +103,8 @@
       "QQQ": 719.59
     },
     "lpSamples": [],
-    "openTimeIso": "2026-09-05T05:55:12.000Z",
-    "capIso": "2026-09-05T11:55:12.000Z",
+    "openTimeIso": "2026-09-05T04:20:30.000Z",
+    "capIso": "2026-09-05T10:20:30.000Z",
     "capWarning": null,
     "problems": []
   }
