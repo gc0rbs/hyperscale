@@ -29,6 +29,7 @@
   --signal:          #45DCE4;   /* progress: ETA, found, claimable */
   --signal-deep:     #1E97AD;
   --signal-tint:     rgba(69, 220, 228, 0.14);
+  --live:            #3FE28B;   /* header status dot only: the mine is open */
   --heat-hot:        #E5533D;   /* heat gauge top end and errors only */
 
   /* ── Type ──────────────────────────────────────────────────── */

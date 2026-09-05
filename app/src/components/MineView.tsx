@@ -14,6 +14,7 @@ import { PurchaseSheet } from "./PurchaseSheet";
 import { HashStream } from "./HashStream";
 import { RigRoom } from "./RigRoom";
 import { FoundBanner } from "./FoundBanner";
+import { OpeningSoon } from "./OpeningSoon";
 import { NotifyToggle } from "./NotifyToggle";
 import { useMineNotifications, useNotifyPref } from "@/lib/use-notify";
 import { useTx } from "@/lib/use-tx";
@@ -60,7 +61,8 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
   const notifyPref = useNotifyPref();
   useMineNotifications(notifyPref.on, blocksFound, closed, g.shift, longHaul, snap.symbols);
 
-  const phaseChip = snap.phase === 1 ? <Chip tone="signal">Pre-open</Chip> : closed ? <Chip>Mine sealed</Chip> : snap.phase === 4 ? <Chip tone="ember">Cancelled</Chip> : <Chip tone="signal">{longHaul ? "Mine open · long haul" : "Mine open"}</Chip>;
+  // The phase itself is in the header (Nav → SeasonStatus); only the long-haul state is called out here.
+  const phaseChip = !closed && snap.phase !== 1 && longHaul ? <Chip tone="signal">Long haul</Chip> : null;
 
   return (
     <>
@@ -121,27 +123,20 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
 }
 
 function PreOpenCard({ snap, now }: { snap: SeasonSnapshot; now: bigint }) {
-  const secs = Number(snap.params.openTime - now);
   const totalWork = snap.params.difficulty.reduce((a, b) => a + b, 0n);
   const estLen = snap.global.totalHash > 0n ? Number(totalWork / snap.global.totalHash) : 0;
   return (
-    <Panel className="flex flex-col gap-6 p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-1"><Label>Mine opens in</Label><div className="font-display uppercase text-[72px] md:text-[96px] font-bold leading-none">{formatEta(secs)}</div><div className="text-mine-muted text-[13px]">Rigs activated now start working the moment it opens.</div></div>
-        <div className="flex flex-col gap-1"><Label>If it opened now, the season would run</Label><div className="font-display uppercase text-[72px] md:text-[96px] font-bold leading-none text-signal">{estLen ? `~${formatEta(estLen)}` : "–"}</div><div className="text-mine-muted text-[13px]">estimate from {formatHash(snap.global.totalHash)} staked so far</div></div>
-      </div>
-      <div className="h-px bg-mine-line" />
-      <div className="flex flex-col">
-        <div className="flex justify-between"><Label>Four blocks, four stocks</Label></div>
-        {snap.symbols.map((t, i) => (
-          <div key={t} className="flex justify-between items-center py-3 border-t border-mine-line first:border-0">
-            <div className="flex gap-3.5 items-center"><Mono className="text-mine-dim text-[12px]">0{i + 1}</Mono><div className="font-display leading-none uppercase text-[40px] font-semibold">{t}</div></div>
-            <Mono className="text-mine-muted text-[13px]">{Number(snap.params.poolTokens[i] / 10n ** 14n) / 10_000} {t}</Mono>
-            <Mono className="text-mine-dim text-[12px]">{Number((snap.params.difficulty[i] * 10_000n) / totalWork) / 100}% of work</Mono>
-          </div>
-        ))}
-      </div>
-    </Panel>
+    <OpeningSoon
+      embedded
+      canActivate
+      openTime={Number(snap.params.openTime)}
+      now={Number(now)}
+      symbols={snap.symbols}
+      pool={snap.params.poolTokens.map((t) => String(Number(t / 10n ** 14n) / 10_000))}
+      workShare={snap.params.difficulty.map((d) => Number((d * 10_000n) / totalWork) / 100)}
+      staked={`${formatHash(snap.global.totalHash)} staked`}
+      estRun={estLen ? `~${formatEta(estLen)}` : undefined}
+    />
   );
 }
 

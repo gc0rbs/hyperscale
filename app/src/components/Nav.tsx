@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useContext, useState } from "react";
 import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { useDeployment } from "@/app/providers";
+import { useSeason } from "@/lib/use-season";
 import { DevAccountContext, useActiveAddress } from "@/lib/use-account";
 import { short } from "@/lib/format";
 import { LogoMark } from "./Icons";
@@ -22,12 +23,29 @@ export function Nav() {
   return (
     <div className="lp-chrome">
       <header className="lp-header">
-        <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={34} /></Link>
+        <div className="lp-brand"><Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={34} /></Link><SeasonStatus /></div>
         <nav className="lp-desktop-nav" aria-label="Main navigation">{links()}</nav>
         <div className="lp-header-actions"><WalletButton /></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
         {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation">{links(() => setMenuOpen(false))}</nav>}
       </header>
+    </div>
+  );
+}
+
+const PHASES = ["Funding", "Pre-open", "Mine open", "Mine sealed", "Cancelled"] as const;
+
+/** Header status cluster from the launch mockup (design/launch/53): live dot, season name, phase chip. */
+function SeasonStatus() {
+  const dep = useDeployment();
+  const { snapshot } = useSeason(dep.mine, dep.vault, dep.stocks);
+  const phase = snapshot?.phase;
+  const tone = phase === 2 ? "live" : phase === 1 ? "soon" : phase === undefined ? "idle" : "done";
+  return (
+    <div className={`lp-status lp-status-${tone}`} data-testid="season-status" data-phase={phase ?? ""}>
+      <span className="lp-status-dot" aria-hidden />
+      <span className="lp-status-name">Season {dep.seasonId + 1}</span>
+      <span className="lp-status-chip">{phase === undefined ? "Reading" : PHASES[phase] ?? "Unknown"}</span>
     </div>
   );
 }

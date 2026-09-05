@@ -10,6 +10,20 @@
 .lp-chrome .lp-nav-cta { padding: 9px 14px; gap: 14px; font-size: 12px; background: var(--lp-gold); border-color: transparent; box-shadow: none; color: #1a1408; }
 .lp-chrome .lp-nav-cta::before, .lp-chrome .lp-nav-cta::after { display: none; }
 .lp-chrome .lp-nav-cta:hover { transform: none; background: #ffd187; box-shadow: none; }
+/* Season status cluster next to the logo (launch mockup design/launch/53): dot, season, phase chip. */
+.lp-brand { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.lp-status { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.lp-status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--mine-dim, #6a6c74); flex-shrink: 0; }
+.lp-status-live .lp-status-dot { background: var(--live); box-shadow: 0 0 0 0 rgba(63, 226, 139, 0.55); animation: lp-status-pulse 2s ease-out infinite; }
+.lp-status-soon .lp-status-dot { background: var(--ember); box-shadow: 0 0 10px rgba(255, 179, 62, 0.5); }
+.lp-status-done .lp-status-dot { background: var(--mine-dim, #6a6c74); }
+.lp-status-name { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1; letter-spacing: .02em; text-transform: uppercase; }
+.lp-status-chip { font-family: var(--font-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--lp-line); color: var(--lp-muted); }
+.lp-status-live .lp-status-chip { border-color: var(--signal-deep, #1e97ad); color: var(--signal, #45dce4); background: var(--signal-tint, rgba(69, 220, 228, .14)); }
+.lp-status-soon .lp-status-chip { border-color: var(--ember-deep, #c9821b); color: var(--ember, #ffb33e); background: var(--ember-tint, rgba(255, 179, 62, .14)); }
+@keyframes lp-status-pulse { 0% { box-shadow: 0 0 0 0 rgba(63, 226, 139, 0.55); } 70% { box-shadow: 0 0 0 9px rgba(63, 226, 139, 0); } 100% { box-shadow: 0 0 0 0 rgba(63, 226, 139, 0); } }
+@media (prefers-reduced-motion: reduce) { .lp-status-live .lp-status-dot { animation: none; } }
+@media (max-width: 767px) { .lp-brand { gap: 12px; } .lp-status-name, .lp-status-chip { display: none; } }
 .lp-chrome .lp-nav-cta svg { width: 16px; height: 16px; }
 .lp-account-select { height: 40px; padding: 0 10px; font: 400 12px var(--font-data); color: var(--lp-fg); background: transparent; border: 1px solid var(--lp-line); border-radius: 0; }
 .lp-account-select:focus-visible { outline: 2px solid var(--lp-cyan); outline-offset: 2px; }

@@ -7,3 +7,17 @@
 @tailwind utilities;
 
 body { background: var(--shell-bg); color: var(--shell-fg); font-family: var(--font-ui); }
+
+/* Pre-open screen (components/OpeningSoon.tsx) */
+.opening-glow { position: absolute; inset: -30% -10% auto -10%; height: 90%; background: radial-gradient(ellipse at 22% 20%, rgba(255, 179, 62, 0.16), transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(69, 220, 228, 0.09), transparent 50%); pointer-events: none; }
+.opening-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--mine-line) 1px, transparent 1px), linear-gradient(90deg, var(--mine-line) 1px, transparent 1px); background-size: 96px 96px; opacity: 0.28; mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 85%); pointer-events: none; }
+.opening-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 12px var(--ember); animation: opening-pulse 1.6s ease-in-out infinite; }
+.opening-cell { position: relative; }
+.opening-cell::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--ember), transparent); opacity: 0.6; }
+.opening-block { animation: opening-rise 700ms var(--ease-out) both; }
+.opening-bar { height: 3px; background: var(--mine-line); overflow: hidden; }
+.opening-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--ember-deep), var(--ember)); animation: opening-fill 1.4s var(--ease-out) both; transform-origin: left; }
+@keyframes opening-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+@keyframes opening-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes opening-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .opening-dot, .opening-block, .opening-bar > span { animation: none; } }
