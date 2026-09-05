@@ -305,3 +305,12 @@ neither is load-bearing for the accounting. Changes:
 - **No pills anywhere.** The wallet chip and dev-account controls drop `rounded-full` for the 4px
   radius; "Connect wallet" is a gold button like the landing's primary actions.
 - **Brief §1 and §2.8 updated**; `specs/design/tokens.{css,json}` are the source of truth as before.
+
+## 2026-09-05 – Geo-fence off for launch (client decision)
+
+- The client decided season 1 launches without the geo-fence. `NEXT_PUBLIC_GEOFENCE=0` on the
+  production app; the middleware and `/restricted` page stay in the code. docs/07 §1/§4 still
+  describe the fence as the front-end control for Stock Token jurisdictions; the risk is the
+  client's, recorded here so the launch checklist item reads "off by decision", not "missing".
+- Consequence: no Cloudflare proxy is required. `stockminer.fi` points straight at Railway
+  (custom domain on `app`, target port 3000). Turning the fence on later needs the proxy first.
