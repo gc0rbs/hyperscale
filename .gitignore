@@ -30,6 +30,6 @@ ops/seasons/*.json
 *.tsbuildinfo
 app/test-results/
 app/playwright-report/
-.playwright-cli/
-output/playwright/
-.herenow/
+
+# Mainnet deployment records are tracked (Railway snapshots honor this file, so they must not be ignored)
+!contracts/deployments/4663*.json
