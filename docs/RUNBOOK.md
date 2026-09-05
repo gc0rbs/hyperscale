@@ -207,7 +207,9 @@ dry run with `NEXT_PUBLIC_DEV_ACCOUNTS=1 pnpm --filter @stock-miner/app dev`; it
 The app is a Next.js site (Vercel or any Node host). Copy `app/.env.example` and fill the season
 addresses from `contracts/deployments/<chainId>.json`, or commit that file and leave the addresses
 unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
-WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
+WalletConnect (mobile wallets); injected wallets work without it. The project (type App, Reown
+dashboard) is `88a3136a4e95ed0e552697cd35d54650`, a public identifier shipped in the client bundle;
+set its allowed domain to the app's public origin. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
 returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
 The wallet button prompts a network switch when the wallet is on the wrong chain. Set
