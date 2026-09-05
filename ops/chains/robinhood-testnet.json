@@ -2,20 +2,9 @@
   "name": "robinhood-testnet",
   "chainId": 46630,
   "rpcUrl": "${ROBINHOOD_TESTNET_RPC:-https://rpc.testnet.chain.robinhood.com}",
-  "explorerApi": "${ROBINHOOD_EXPLORER_API}",
-  "mocks": false,
-  "rig": "0x0000000000000000000000000000000000000000",
-  "lpToken": "0x0000000000000000000000000000000000000000",
+  "explorerApi": "https://explorer.testnet.chain.robinhood.com/api",
+  "mocks": true,
   "lpPairKind": "uniswap-v2",
-  "usdc": "0x0000000000000000000000000000000000000000",
-  "oracle": "0x0000000000000000000000000000000000000000",
-  "eligibility": "0x0000000000000000000000000000000000000000",
-  "treasury": "0x0000000000000000000000000000000000000000",
-  "stocks": {
-    "NVDAx": "0x0000000000000000000000000000000000000000",
-    "TSLAx": "0x0000000000000000000000000000000000000000",
-    "AAPLx": "0x0000000000000000000000000000000000000000",
-    "SPYx": "0x0000000000000000000000000000000000000000"
-  },
-  "notes": "Robinhood Chain testnet, chain id 46630, RPC verified 2026-09-04. Explorer, faucet and test stock tokens / feeds still to confirm (Chainlink publishes no testnet feed file; use MockPriceOracle and mock stock tokens via DeployFactory DEPLOY_MOCKS=true on the testnet)."
+  "notes": "Robinhood Chain testnet, chain id 46630 (docs.robinhood.com/chain/connecting), RPC verified 2026-09-04; faucet at faucet.testnet.chain.robinhood.com. mocks: true because Chainlink publishes no testnet feeds and the faucet's test Stock Tokens have unverified hooks: DeployFactory with DEPLOY_MOCKS=true writes rig/usdc/oracle/eligibility/stocks into deployments/46630-factory.json and `plan` reads them from there. Explorer is Blockscout (--verifier blockscout --verifier-url <explorerApi>).",
+  "explorer": "https://explorer.testnet.chain.robinhood.com"
 }

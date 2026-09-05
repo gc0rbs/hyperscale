@@ -228,6 +228,48 @@ them in the same commit as any player-visible change: parameters in `reference/s
 addresses in `reference/contracts-and-addresses.md`, and the audit link in `safety/testing-and-audits.md`
 once the report exists.
 
+## 10c. Hosting on Railway (current deployment)
+
+Everything off-chain runs in one Railway project behind Cloudflare's proxy (DECISIONS 2026-09-04). This
+is the compose stack of §5 split into Railway services plus the app; each service builds from its
+Dockerfile with the repo root as context and is described by a config file in `railway/`.
+
+| Service | Config | Image | Variables |
+|---|---|---|---|
+| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000` (the public domain targets 3000), `NEXT_PUBLIC_GEOFENCE=0` on the testnet |
+| `indexer` | `railway/indexer.json` | `indexer/Dockerfile` | `DATABASE_URL` (Railway Postgres reference), `DATABASE_SCHEMA` (one per season), `CHAIN_ID`, `PONDER_RPC_URL_<chainId>`, `SEASON_MINE_ADDRESS`, `STOCK_FRAGMENTS_ADDRESS`, `REDEMPTION_VAULT_ADDRESS`, `START_BLOCK` |
+| `keeper` | `railway/keeper.json` | `ops/Dockerfile` | `CHAIN_ID`, `RPC_URL`, `KEEPER_KEY`, `MINE_ADDRESS` |
+| `watch` | `railway/watch.json` | `ops/Dockerfile` | as keeper without the key, plus `VAULT_ADDRESS`, `ALERT_WEBHOOK_URL` |
+| `Postgres` | Railway database | – | attached to `indexer` |
+
+Railway has no volume mount for `contracts/deployments/<chainId>.json`, so the ops scripts accept
+`MINE_ADDRESS` (and the other `*_ADDRESS` names) from the environment when the file is absent; the
+indexer and app already did. A Railway start command replaces the image's `ENTRYPOINT` and `CMD`, so
+the keeper and watch services spell out the whole command (`pnpm --filter @stock-miner/ops keeper --interval 30`).
+
+Project `shimmering-inspiration`, environment `production`, was set up on 2026-09-04 with a project
+token through the CLI and the GraphQL API. A project token cannot connect GitHub, delete services or
+run `railway add`; those are dashboard actions. Until GitHub is connected, deploys are
+`railway up --service <name>` from a checkout of the repo root. Service settings (Dockerfile path,
+health check, start command, restart policy) were applied with `serviceInstanceUpdate`; the
+`railway/*.json` files record them and apply automatically once each service's config-as-code path
+points at its file. The app's Railway domain is `https://app-production-8f29.up.railway.app` until
+the custom domain is added.
+
+Steps for a new environment or season:
+
+1. Create the services and Postgres, set each config-as-code path, give `app` (and `indexer`, if the
+   app should read it) a public domain. Pin `PORT=3000` on `app`.
+2. After §3 (`create-season`) copy the addresses from `contracts/deployments/<chainId>.json` into the
+   variables of all four services. `NEXT_PUBLIC_*` are inlined at build time, so redeploy `app`.
+3. Cloudflare (free plan): add the domain, point nameservers at Cloudflare, add a proxied CNAME from the
+   app hostname to the Railway domain, SSL Full (strict), and add the same hostname as a custom domain
+   on `app`. The geo-fence reads `cf-ipcountry`, which Cloudflare sets on every proxied request;
+   nothing else to configure. Behind the proxy the visitor IP is `cf-connecting-ip`.
+4. Verify: `GET /api/health` on the app returns `{"ok":true}`; with the fence on,
+   `curl -H 'cf-ipcountry: US'` returns 451 and `/restricted`; `GET /health` on the indexer is 200 and
+   `/ready` flips to 200 once caught up; keeper logs show `[keeper] ok shift=…`.
+
 ## 11. Release checklist
 
 See the last entry of `docs/BUILD-LOG.md` for the docs/08 §4 checklist with the current status of

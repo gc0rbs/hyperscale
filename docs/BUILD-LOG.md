@@ -393,3 +393,242 @@ build in CI but have not been run end to end on a host from this session.
   commit; its result is recorded in the next entry.
 - Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
   real wallet extension, refresh during confirmation, visual regression.
+
+## 2026-09-05 – Railway hosting live; testnet season; launch comms
+
+**What shipped**
+- `docs/LAUNCH-SOCIAL-GUIDE.md`: 72-hour launch post plan, token-only, with copy guardrails from docs/07.
+- Railway: `app/Dockerfile` (Next.js), `railway/{app,indexer,keeper,watch}.json`, `/api/health`
+  liveness route. Project `shimmering-inspiration` runs `app`, `indexer`, `keeper`, `Postgres`;
+  app at `https://app-production-8f29.up.railway.app`. RUNBOOK §10c is the procedure.
+- Ops: chain profiles accept `${VAR:-default}` (the Robinhood profiles already used it, but `expand`
+  only handled `${VAR}`); `loadDeployment` falls back to `MINE_ADDRESS` env; `fund --mint-mocks`
+  allowed only with a DEPLOY_MOCKS factory deployment (the logo-mark branch's check, adopted on merge); `robinhood-testnet.json` set to `mocks: true` with
+  the Blockscout explorer API.
+- Main merged (PR #3) with the audit remediation branch; this branch rebuilt on top of it, dropping
+  its duplicates of the geo-fence, Dockerfiles, chain profile and Next upgrade in favour of the
+  remediated versions.
+
+**Testnet season 1 (chain 46630)**: factory + mocks, season sized 1M hash / 1h / 2h cap, funded,
+Railway pointed at it. Re-created on the remediated contracts after the merge (addresses in the Railway
+variables and `contracts/deployments/46630.json`, not in git).
+
+**Known gaps**: Railway services still deploy from `railway up`, not from GitHub (dashboard step);
+three stray Postgres services and the five empty `@stock-miner/*` services from the original import
+need deleting in the dashboard; Cloudflare zone pending the domain; the mock oracle's timestamps are
+fixed at deploy time, so cash-out on the testnet needs an `oracle.set` refresh before use.
+
+## 2026-09-04 – Interactive public landing page
+
+Plan: replace the chain-dependent home screen with four accessible editorial sections explaining
+activation, upgrades, reward blocks and redemption in plain language. Build original real-time 3D
+mineral, rig and token scenes inspired by the supplied palette and materials; do not embed reference
+images. Isolate the existing wallet/game routes in their own layout, preserve their URLs, and verify
+the production build plus desktop/mobile interactions, reduced motion and unavailable WebGL.
+
+The user requests a new landing-page art direction; previous static mockup/motion constraints apply
+to the game UI, not this new marketing experience. Issue tracker `bd` is unavailable on this machine;
+implementation and follow-up notes are recorded here.
+
+Shipped: four public landing chapters with original Three.js scenes, a GPU configurator, selectable
+reward blocks, token assembly, and native FAQ disclosures. Wallet/game providers now live in a route
+group; existing game URLs and page implementations are preserved. The public page renders without a
+season deployment. All section eyebrows were removed following review. A separate full-width black
+starfield extends behind the hero; the original illustration viewport remains unchanged. Core
+expansion follows scroll progress from the top of the page through the hero's exit and reverses on
+scrolling back; its former button is removed.
+
+Verification: app lint, typecheck and six unit tests pass. Production build passes (public home is
+statically rendered; 115 kB first-load JS with Three.js deferred). Desktop controls and 390 px mobile
+navigation, GPU switching, reward selection, token assembly and FAQ work. Mobile has no horizontal
+overflow; all four scenes initialize under reduced motion. Browser measurements confirm the hero
+illustration's original dimensions and position, with a viewport-wide starfield. Existing game pages
+are moved without content changes. Local preview remains on port 3010. WebGL has a vector fallback;
+real-season operations still require the existing deployment and chain services.
+
+### Hero entrance refinement
+
+The hero now plays a one-time entrance: the central mineral appears first, then stones and shards
+burst from the center with overlapping short delays and a small overshoot, settling within about
+0.9 seconds of visible animation. The existing scroll expansion is composed independently, and the
+final mesh positions/scales are preserved. Reduced motion skips the entrance. The hero's vector
+fallback appears only when rendering fails, avoiding a static-image flash before the entrance.
+Rounded star radii/opacities prevent server/browser floating-point hydration differences.
+
+Validation: app lint, typecheck and six tests pass. Fresh browser loads and reduced-motion reloads
+return HTTP 200 with no console errors; scroll interaction remains available. Disabling WebGL
+shows the vector illustration and keeps the heading visible. Preview server restarted cleanly.
+
+### Static landing-page publishing
+
+Prepared a separate static export for the user's requested here.now deployment. The export builds
+from the existing landing components and fonts, retains 3D interactions, and shares the unavailable-
+season component for game destinations. Generated output and private publishing state are ignored.
+The normal Next.js app and its active local preview keep their server routes. Build and publishing
+instructions are in docs/HOSTING.md.
+
+Published the landing-page export at https://witty-breeze-ggxj.here.now/ on 2026-09-04.
+The publish was finalized successfully in anonymous mode (24-hour expiry). Private claim details
+remain exclusively in ignored local publisher state and the user handoff.
+Validation: production static export, lint/typecheck and six unit tests pass. The public site loads
+its 3D canvas, changes GPU power to 2.0×, switches reward selection and assembles the token. Game CTA
+and the return link work. At 390 px the page has no horizontal overflow. Browser console is clean.
+
+### Hero material realism
+
+Plan: preserve the hero composition, entrance and scroll choreography while replacing uniform
+surfaces with fractured basalt, translucent amber, fine mineral detail and animated cyan seams.
+Use controlled lighting and restrained bloom, then verify desktop/mobile rendering, scroll reversal,
+reduced motion and fallback before updating the existing here.now publish. The installed `bd` CLI
+has no database for this checkout; record this scoped work and any follow-ups here.
+
+Scope extension: remove the hero edge mask; float the rig directly on the page without its preview
+frame, annotation text or controls. Drive the rig's three builds and the four reward blocks from
+native scrolling. Give the four main chapters at least a viewport of space, introduce staggered
+text entrances, and verify sticky scenes on small/short viewports without trapping content.
+
+The user supplied the final gold pickaxe logo during review. Preserve the original transparent PNG
+and use it for the shared brand mark and browser icon; include it in the isolated static export.
+
+Shipped: the hero now uses individually fractured/bevelled basalt meshes, object-space surface
+shaders, transmissive amber with internal inclusions, studio reflections, soft shadows, animated
+cyan seams and fine dust. Its original camera, composition and entrance/scroll layering remain.
+Transparent rendering replaces the hero edge mask. The rig and reward scenes also render directly
+over the page, with restrained lighting/bloom and no rectangular backdrop.
+
+Rig preview annotations and buttons are removed. Native scroll drives three builds with resting
+intervals between smooth upgrades; four reward blocks advance and reverse with scroll. Sticky
+stages allow every state to be read, adapt to tall content on short screens, and fill at least one
+viewport. Text fades/lifts in with small staggered delays. Mobile uses a compact reward sequence;
+at 390×844 both scroll chapters fit their text and illustration in one viewport. Reduced motion
+shows text immediately and skips decorative motion while retaining scroll-dependent states.
+
+Validation: app lint, typecheck and all six tests pass; isolated production export passes at 115 kB
+initial JS with 3D deferred. Desktop screenshots verify all three rig states; the public site cycles
+NVDAx → TSLAx → AAPLx → SPYx and back. The hero has no edge mask, mobile has no horizontal overflow,
+and the live browser reports no console errors. A local desktop sample maintained ~16.5 ms frame
+cadence. At 375×667, reduced motion and disabled WebGL preserve visible fallback art and all reward
+states. The supplied PNG is byte-for-byte preserved and used in the header, footer and browser icon.
+
+Updated https://witty-breeze-ggxj.here.now/ successfully on 2026-09-04 (anonymous 24-hour preview).
+Known gaps: gameplay still requires a live season/backend. Next 15's existing development hot-reload
+manifest issue recurred during edits; restarting the local preview restored normal rendering. The
+production export and hosted version are unaffected. No remaining work in this visual scope.
+
+### Continuous section scrolling
+
+Plan: remove sticky positioning and extra scroll distance from the rig/reward chapters. Map their
+animation progress directly from section entry at the viewport bottom to section exit at the top,
+retain each chapter's viewport-height minimum, and verify forward/reverse scrolling before updating
+the existing publish. Keep the hero's already unpinned entrance/exit behavior.
+Also vertically center the hero's copy and illustration within its available area. The rig/reward
+stage contents and redemption columns retain their middle alignment; tall mobile content flows
+naturally without clipping or forced centering beyond the viewport.
+
+Shipped: rig and reward sections now flow directly with the page. Removed sticky positioning,
+extra section travel and the rig's held animation intervals. Progress spans first section entry
+through complete exit; reward rotation is continuous while the active token advances through four
+states. The hero copy and illustration are centered on the same vertical axis within the usable
+section area. Full-viewport minimum heights, text entrances and reduced-motion support remain.
+
+Verification: full app check (lint, types, six tests) and production static export pass. At 1440×1000
+the rig/reward sections are each 1000 px, and a 200 px scroll moves the content exactly 200 px. At
+390×844 they are each 844 px, with a matching 180 px movement and no horizontal overflow. The four
+rewards advance and reverse correctly; browser errors are empty. Hero copy and art centers both
+measure 564 px in a usable area centered at 564 px. No remaining work in this refinement.
+
+### 2026-09-04 — Uninterrupted section transitions
+
+Plan: remove the decorative horizontal dividers between page sections, including the header,
+hero/reward strip, mine, FAQ introduction and footer. Preserve internal list/control borders and
+the current spacing, middle alignment and native scroll animations. Check desktop/mobile styles,
+run the app checks and static export, and update the existing here.now publish.
+
+Scope update: retain only the pickaxe in the header, extend the hero starfield behind it, add a
+full amber metallic treatment to Enter the mine and an orange Buy token text action. The official
+purchase URL is pending; show a clear purchase-link placeholder until provided. Restore native
+sticky stages for the rig/reward sections, with measured tall-screen handling and continuous,
+gently eased scene progress rather than abrupt state jumps. Keep centered content and reduced
+motion support. The hero composition and its unpinned scroll behavior remain intact.
+
+Shipped: removed section divider rules, retained the standalone pickaxe in the header and extended
+the same starfield behind the transparent navigation. Enter the mine has an amber metallic fill,
+subtle moving sheen and hover lift. The orange Buy token action opens an accessible Coming soon
+dialog because the user confirmed the purchase page is not live. Escape/backdrop dismissal and
+focus return work. Rig/reward stages are sticky again, centered with 110/150 viewport-percent travel.
+Rig upgrades ease into each build with a continuous smootherstep curve and existing frame-rate
+independent scene damping; reward rotation remains continuous. Reduced motion removes pinning.
+
+Verification: app lint, types and six tests pass; static export succeeds at 116 kB initial JS.
+Desktop section borders compute to zero; both stages remain fixed through their entire scroll
+range, and rewards advance/reverse correctly. At 390×844 header controls fit without horizontal
+overflow. At 375×667 the taller reward stage uses a -61 px sticky offset so its bottom remains
+reachable. Browser errors are empty. The existing beads database remains unavailable (`bd sync`);
+this log records the work. Remaining dependency: wire the official purchase URL once it is live.
+
+### 2026-09-04 — Buy token navigation placement
+
+Plan: move the orange Buy token action to fourth position in the central navigation and mobile
+menu. Keep the mine button separate on the right and retain the existing Coming soon dialog.
+Verify both menu layouts, run the app checks/export, and update the same public preview.
+
+Shipped: Buy token is fourth in the central desktop navigation and the mobile menu, with its
+orange styling and Coming soon dialog preserved. The mine button remains separate on the right.
+Desktop menu text shares the same vertical center; mobile has no horizontal overflow, and dialog
+Escape dismissal restores focus to Buy token. App lint, types, six tests and static export pass.
+No additional work in this placement change; the purchase URL dependency remains as noted above.
+
+### 2026-09-04 — Reference-aligned mineral art direction
+
+Plan: align the header, page palette and all four procedural scenes with the supplied amber/cyan
+references. Replace the olive cast with warm mineral black, emphasize luminous faceted amber and
+ivory highlights, use cyan on crystal silhouettes and cooling accents, and replace the heavy
+hero rock halo with finer golden fragments and an orbital dust trail. Apply one material/lighting
+language to gems, rig and coin, including vector fallbacks. Preserve typography, layout, header
+navigation, entrance timing and pinned scroll interactions. Inspect rendered desktop/mobile scenes,
+reduced motion and WebGL fallback, then run app checks/export and update the existing preview.
+
+Shipped: warm mineral black now carries through the header, chapters, redemption and FAQ. Amber,
+ivory and cyan replace the olive cast in text, controls and illustrations. The mine CTA includes
+faceted highlights. The hero's heavy rock halo is now smaller golden mineral fragments surrounding
+a brighter transmissive amber core. A depth-tested cyan silhouette replaces the line across the
+crystal face; both hero and reward crystals share the faceted geometry and optical treatment.
+All scenes use the same studio environment, restrained bloom and warm/cool lighting. The rig has
+amber processors and cyan cooling, and the coin floats on the dark page without an edge mask.
+Orbital dust uses one points draw per scene (1100/680/180/400 points for core/reward/rig/token).
+The existing logo, layout, navigation order, introduction, scroll mapping and text entrances remain.
+
+Verification: app lint, typecheck and six tests pass. Desktop/mobile rendered screenshots cover all
+four scenes. Rewards advance NVDAx → TSLAx → AAPLx → SPYx and reverse; the coin still assembles.
+At 390×844 there is no horizontal overflow, and all four canvases have no CSS mask. Reduced motion
+removes both pinned stages and reveals all text; disabling WebGL displays the amber/cyan vector
+fallback. Normal rendering reports no shader or page errors. No new assets or packages were added.
+The beads database remains unavailable; this log records the completed work. The existing purchase
+URL dependency is unchanged.
+## 2026-09-04 – first testnet deployment (Robinhood Chain testnet, chain 46630)
+
+Rehearsal season with the mock token set, deployed from a throwaway key. Explorer:
+https://explorer.testnet.chain.robinhood.com
+
+| Contract | Address |
+|---|---|
+| SeasonFactory | `0xF98f1De589D1fdDCAdd62500373B807B07720A2a` |
+| SeasonMine (season 0) | `0xcA24Ea657371E27B3281a1DfF5A1e8119De71D40` |
+| StockFragments | `0xdd2712C6457E15993D1d0ab30c3719F30c757621` |
+| RedemptionVault | `0x776E7993c4527EA5EB834ce1fdB61580f41497Bc` |
+| RIG (mock) | `0x6E323a6B2De8c3Df127b5FD0E253b73AEb270264` |
+| LP, USDC (mocks) | `0x0E5A6F524e8cD877B8Ae71047dE9E957500928a0`, `0x127bc68E1DfCa3f6Ea512Ed391F7CfBEB934f2f2` |
+| Oracle, eligibility (mocks) | `0xC74779bB0cC5b77BADD2B9F68D8D4Bd133D48893`, `0x14B4767E4984E8178F175e81BC7E363c54895E09` |
+| Stocks NVDAx/TSLAx/AAPLx/SPYx (mocks) | `0x50EC…ffA1`, `0xaaF1…B2e6`, `0xF9e6…278c`, `0x51e9…F387` |
+
+Season `testnet-rehearsal-1`: planned 3600s at 1,000,000 RIG-eq, cap 7200s, open 2026-09-04T21:06:35Z,
+paramsHash `0xb93674952af9d14b02e8346eeadace7e72063b9a062dd902240b88b3eff257cb`, vault funded, phase PreOpen.
+Deployer/operator/treasury are all the throwaway key (`0xa5b712ba714118CB75615AD5103E14c8F4680939`).
+
+What shipped: `ops/chains/robinhood-testnet.json` filled in, `robinhood-testnet-mocks.json` profile, the
+`robinhood_testnet` RPC alias, and `fund --mint-mocks` now works on any chain whose factory deployment
+recorded mocks. Gas for factory + season + funding was ~0.0005 ETH.
+
+Known gaps: contracts are not verified on the explorer (`--verify --verifier blockscout` not run); no LP
+pair exists so `plan` used `--rig-per-lp 2`; the deployment JSONs are gitignored and live only in this
+session, so re-run `create-season` dry-run or copy them from here before deploying the app.

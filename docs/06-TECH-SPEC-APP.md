@@ -10,7 +10,7 @@
 | Indexer | Ponder (preferred) or a subgraph | Leaderboards, history, per-wallet summaries, shift/block timeline |
 | Keeper | Small cron worker calling `poke()` | Keeps the global catch-up loop short; not required for correctness |
 | Notifications | Web push (opt-in) | Blocks are found on no schedule; players need to be told |
-| Hosting | Vercel (app), Railway/Fly (Ponder + Postgres + keeper) | |
+| Hosting | Railway for everything (app, Ponder + Postgres, keeper, watcher) behind Cloudflare's proxy | One platform; Cloudflare supplies the country header. `docs/RUNBOOK.md` §10c; `docker-compose.yml` remains for a single VM |
 | Analytics | PostHog (EU) | Funnel; wallet address only |
 | Geo-fencing | Edge middleware | Compliance requirement, doc 07 |
 
