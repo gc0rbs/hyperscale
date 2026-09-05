@@ -51,7 +51,7 @@ async function main() {
   }
 
   if (hasFlag("--mint-mocks")) {
-    if (dep.chainId !== 31337) throw new Error("--mint-mocks is for Anvil only");
+    if (dep.chainId !== 31337 && process.env.ALLOW_MOCK_MINT !== "1") throw new Error("--mint-mocks is for Anvil only (ALLOW_MOCK_MINT=1 on a testnet deployed with DEPLOY_MOCKS=true)");
     for (let b = 0; b < 4; b++) {
       await tx(dep.stocks[b], stockAbi, "setAllowed", [dep.vault, true]);
       await tx(dep.stocks[b], stockAbi, "setAllowed", [account.address, true]);

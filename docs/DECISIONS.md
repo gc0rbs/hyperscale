@@ -276,3 +276,16 @@ neither is load-bearing for the accounting. Changes:
 - **Dependencies**: Next 15.5.25, React 19.2.8; pnpm overrides for vulnerable transitive packages;
   `pnpm audit --prod --audit-level high` in CI. Foundry pinned to v1.5.1 in CI.
 - Full mapping in `docs/AUDIT-RESPONSE-2026-09-04.md`.
+
+## 2026-09-04 – Hosting: everything on Railway, Cloudflare in front (user decision)
+
+- **Railway hosts every off-chain service**: the Next.js app, the Ponder indexer with Railway
+  Postgres, the keeper and the watcher, each from its Dockerfile with a `railway/*.json` config.
+  docs/06 had the app on Vercel; the user chose one platform. `docker-compose.yml` stays as the
+  single-VM alternative.
+- **Cloudflare proxies the app's domain** and supplies the visitor's country (`cf-ipcountry`) to the
+  existing geo-fence middleware, which already reads that header. Free plan, no Workers or rules.
+- **Ops scripts read addresses from env when the deployments file is absent** (`MINE_ADDRESS` and
+  friends), since Railway has no read-only mount for `contracts/deployments/`.
+- **Token-only staking for launch comms** (same day): `docs/LAUNCH-SOCIAL-GUIDE.md` drops LP, matching
+  the Pons decision (LP off in v1).

@@ -74,8 +74,23 @@ export function chainId(): number {
 
 export function loadDeployment(id = chainId()): Deployment {
   const p = join(DEPLOYMENTS, `${id}.json`);
-  if (!existsSync(p)) throw new Error(`no season deployment for chain ${id} (${p}); run CreateSeason first`);
-  return JSON.parse(readFileSync(p, "utf8")) as Deployment;
+  if (existsSync(p)) return JSON.parse(readFileSync(p, "utf8")) as Deployment;
+  // No deployments file (a host without the mount, e.g. the Railway keeper/watch services): the mine
+  // address comes from env; the other addresses are optional and only some scripts need them.
+  const mine = process.env.MINE_ADDRESS as Address | undefined;
+  if (!mine) throw new Error(`no season deployment for chain ${id} (${p}); run CreateSeason first or set MINE_ADDRESS`);
+  const zero = "0x0000000000000000000000000000000000000000" as Address;
+  const env = (k: string) => (process.env[k] as Address | undefined) ?? zero;
+  return {
+    chainId: id,
+    seasonId: Number(process.env.SEASON_ID ?? 0),
+    rig: env("RIG_ADDRESS"), lp: zero, usdc: env("USDC_ADDRESS"), oracle: env("ORACLE_ADDRESS"),
+    eligibility: env("ELIGIBILITY_ADDRESS"), factory: env("FACTORY_ADDRESS"), mine,
+    fragments: env("FRAGMENTS_ADDRESS"), vault: env("VAULT_ADDRESS"),
+    stocks: (process.env.STOCK_ADDRESSES ?? "").split(",").filter(Boolean) as Address[],
+    openTime: Number(process.env.OPEN_TIME ?? 0),
+    difficultyTotal: "0",
+  };
 }
 
 /** deployments/<chainId>-adapters.json from DeployAdapters.s.sol, if present. */
@@ -93,7 +108,8 @@ export function loadFactoryDeployment(id = chainId()): FactoryDeployment {
 /** Expands `${ENV}` placeholders in a profile string. */
 function expand(s: string | null | undefined): string | null {
   if (s == null) return null;
-  return s.replace(/\$\{([A-Z0-9_]+)\}/g, (_, k: string) => process.env[k] ?? "");
+  // `${VAR}` and `${VAR:-default}` (the chain profiles use the latter for public RPCs)
+  return s.replace(/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/g, (_, k: string, d?: string) => process.env[k] || d || "");
 }
 
 export function loadChainProfile(name: string): ChainProfile {

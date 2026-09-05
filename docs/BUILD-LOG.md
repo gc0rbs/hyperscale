@@ -393,3 +393,27 @@ build in CI but have not been run end to end on a host from this session.
   commit; its result is recorded in the next entry.
 - Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
   real wallet extension, refresh during confirmation, visual regression.
+
+## 2026-09-05 – Railway hosting live; testnet season; launch comms
+
+**What shipped**
+- `docs/LAUNCH-SOCIAL-GUIDE.md`: 72-hour launch post plan, token-only, with copy guardrails from docs/07.
+- Railway: `app/Dockerfile` (Next.js), `railway/{app,indexer,keeper,watch}.json`, `/api/health`
+  liveness route. Project `shimmering-inspiration` runs `app`, `indexer`, `keeper`, `Postgres`;
+  app at `https://app-production-8f29.up.railway.app`. RUNBOOK §10c is the procedure.
+- Ops: chain profiles accept `${VAR:-default}` (the Robinhood profiles already used it, but `expand`
+  only handled `${VAR}`); `loadDeployment` falls back to `MINE_ADDRESS` env; `fund --mint-mocks`
+  allowed on a testnet with `ALLOW_MOCK_MINT=1`; `robinhood-testnet.json` set to `mocks: true` with
+  the Blockscout explorer API.
+- Main merged (PR #3) with the audit remediation branch; this branch rebuilt on top of it, dropping
+  its duplicates of the geo-fence, Dockerfiles, chain profile and Next upgrade in favour of the
+  remediated versions.
+
+**Testnet season 1 (chain 46630)**: factory + mocks, season sized 1M hash / 1h / 2h cap, funded,
+Railway pointed at it. Re-created on the remediated contracts after the merge (addresses in the Railway
+variables and `contracts/deployments/46630.json`, not in git).
+
+**Known gaps**: Railway services still deploy from `railway up`, not from GitHub (dashboard step);
+three stray Postgres services and the five empty `@stock-miner/*` services from the original import
+need deleting in the dashboard; Cloudflare zone pending the domain; the mock oracle's timestamps are
+fixed at deploy time, so cash-out on the testnet needs an `oracle.set` refresh before use.
