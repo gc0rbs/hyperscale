@@ -39,6 +39,16 @@ PRIVATE_KEY=0x… BASE_URI="https://<app>/api/frag/{id}.json" pnpm deploy-factor
 Writes `contracts/deployments/<chainId>-factory.json`. On Anvil add `DEPLOY_MOCKS=true` to also
 deploy RIG, mock LP/USDC, a mock oracle, an allowlist eligibility adapter and four mock Stock Tokens.
 
+**Rate-limited RPC (the public Robinhood Chain endpoint returns 429 to Forge's forked simulation):**
+use the sequential viem deployer instead. It sends one transaction at a time and writes the same files.
+
+```
+export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://rpc.mainnet.chain.robinhood.com
+pnpm deploy-mainnet factory [--base-uri https://stockminer.fi/api/frag/{id}.json]   # step 1
+pnpm deploy-mainnet adapters --chain robinhood                                      # step 1b, prints every feed's live price
+pnpm deploy-mainnet season --season seasons/season-1.json [--dry-run]               # step 3, simulates create first
+```
+
 ## 1b. Deploy the adapters (once per chain, or when the stock set changes)
 
 ```
@@ -83,7 +93,8 @@ SEASON_FILE=../ops/seasons/season-1.json PRIVATE_KEY=0x… pnpm create-season --
 ```
 
 Writes `contracts/deployments/<chainId>.json` (mine, fragments, vault, tokens, `openTime`,
-`paramsHash`). The app reads this file server-side; commit it for the app deployment, or set the
+`paramsHash`). `pnpm deploy-mainnet season --season <file>` does the same over a rate-limited RPC
+and refuses a file whose params were edited after `plan` (hash mismatch). The app reads this file server-side; commit it for the app deployment, or set the
 app's `NEXT_PUBLIC_*` addresses from it. Confirm the emitted `paramsHash` equals the published one.
 
 ## 4. Fund the vault
@@ -207,7 +218,9 @@ dry run with `NEXT_PUBLIC_DEV_ACCOUNTS=1 pnpm --filter @stock-miner/app dev`; it
 The app is a Next.js site (Vercel or any Node host). Copy `app/.env.example` and fill the season
 addresses from `contracts/deployments/<chainId>.json`, or commit that file and leave the addresses
 unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
-WalletConnect (mobile wallets); injected wallets work without it. The geo-fence
+WalletConnect (mobile wallets); injected wallets work without it. The project (type App, Reown
+dashboard) is `88a3136a4e95ed0e552697cd35d54650`, a public identifier shipped in the client bundle;
+set its allowed domain to the app's public origin, `https://stockminer.fi`. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
 returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
 The wallet button prompts a network switch when the wallet is on the wrong chain. Set
