@@ -244,8 +244,8 @@ Dockerfile with the repo root as context and is described by a config file in `r
 
 Railway has no volume mount for `contracts/deployments/<chainId>.json`, so the ops scripts accept
 `MINE_ADDRESS` (and the other `*_ADDRESS` names) from the environment when the file is absent; the
-indexer and app already did. The ops image has an `ENTRYPOINT`, so a service's start command is the
-subcommand only (`keeper --interval 30`).
+indexer and app already did. A Railway start command replaces the image's `ENTRYPOINT` and `CMD`, so
+the keeper and watch services spell out the whole command (`pnpm --filter @stock-miner/ops keeper --interval 30`).
 
 Project `shimmering-inspiration`, environment `production`, was set up on 2026-09-04 with a project
 token through the CLI and the GraphQL API. A project token cannot connect GitHub, delete services or

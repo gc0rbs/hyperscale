@@ -5,7 +5,7 @@
     "dockerfilePath": "ops/Dockerfile"
   },
   "deploy": {
-    "startCommand": "keeper --interval 30",
+    "startCommand": "pnpm --filter @stock-miner/ops keeper --interval 30",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

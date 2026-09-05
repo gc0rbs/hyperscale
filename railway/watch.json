@@ -5,7 +5,7 @@
     "dockerfilePath": "ops/Dockerfile"
   },
   "deploy": {
-    "startCommand": "watch --interval 60 --planned-seconds 3600",
+    "startCommand": "pnpm --filter @stock-miner/ops watch --interval 60 --planned-seconds 3600",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
