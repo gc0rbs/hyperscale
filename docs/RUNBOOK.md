@@ -222,7 +222,9 @@ WalletConnect (mobile wallets); injected wallets work without it. The project (t
 dashboard) is `88a3136a4e95ed0e552697cd35d54650`, a public identifier shipped in the client bundle;
 set its allowed domain to the app's public origin, `https://stockminer.fi`. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
-returning the `/restricted` page with HTTP 451; set `NEXT_PUBLIC_GEOFENCE=0` for testnet rehearsals.
+returning the `/restricted` page with HTTP 451. **Season 1 runs with the fence off** (`NEXT_PUBLIC_GEOFENCE=0`,
+client decision, DECISIONS 2026-09-05); the country header it would read needs Cloudflare in front, so
+turning it on later means adding the Cloudflare proxy first (§10c step 3).
 The wallet button prompts a network switch when the wallet is on the wrong chain. Set
 `NEXT_PUBLIC_APP_URL` to the public origin: it is the base for the share card (`/opengraph-image`,
 rendered from live season state) and the WalletConnect metadata. `NEXT_PUBLIC_INDEXER_URL` (the
@@ -249,7 +251,7 @@ Dockerfile with the repo root as context and is described by a config file in `r
 
 | Service | Config | Image | Variables |
 |---|---|---|---|
-| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (stockminer.fi was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` on the testnet |
+| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (stockminer.fi was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` (fence off for season 1, client decision) |
 | `indexer` | `railway/indexer.json` | `indexer/Dockerfile` | `DATABASE_URL` (Railway Postgres reference), `DATABASE_SCHEMA` (one per season), `CHAIN_ID`, `PONDER_RPC_URL_<chainId>`, `SEASON_MINE_ADDRESS`, `STOCK_FRAGMENTS_ADDRESS`, `REDEMPTION_VAULT_ADDRESS`, `START_BLOCK` |
 | `keeper` | `railway/keeper.json` | `ops/Dockerfile` | `CHAIN_ID`, `RPC_URL`, `KEEPER_KEY`, `MINE_ADDRESS` |
 | `watch` | `railway/watch.json` | `ops/Dockerfile` | as keeper without the key, plus `VAULT_ADDRESS`, `ALERT_WEBHOOK_URL` |
@@ -277,10 +279,10 @@ Steps for a new environment or season:
    import created are empty shells and fail to build; delete them.
 2. After §3 (`create-season`) copy the addresses from `contracts/deployments/<chainId>.json` into the
    variables of all four services. `NEXT_PUBLIC_*` are inlined at build time, so redeploy `app`.
-3. Cloudflare (free plan): add the domain, point nameservers at Cloudflare, add a proxied CNAME from the
-   app hostname to the Railway domain, SSL Full (strict), and add the same hostname as a custom domain
-   on `app`. The geo-fence reads `cf-ipcountry`, which Cloudflare sets on every proxied request;
-   nothing else to configure. Behind the proxy the visitor IP is `cf-connecting-ip`.
+3. Domain: add the custom domain on `app` (target port 3000) and point a CNAME at the Railway
+   domain it shows. `stockminer.fi` is set up this way, straight to Railway. Cloudflare is only needed
+   if the geo-fence is ever turned on: proxied CNAME (orange cloud), SSL Full (strict); the fence reads
+   `cf-ipcountry`, and behind the proxy the visitor IP is `cf-connecting-ip`.
 4. Verify: `GET /api/health` on the app returns `{"ok":true}`; with the fence on,
    `curl -H 'cf-ipcountry: US'` returns 451 and `/restricted`; `GET /health` on the indexer is 200 and
    `/ready` flips to 200 once caught up; keeper logs show `[keeper] ok shift=…`.
