@@ -26,21 +26,24 @@ export interface Deployment {
  * contracts/deployments/<chainId>.json written by `pnpm --filter @stock-miner/ops deploy-demo`.
  */
 export function getDeployment(): Deployment | null {
-  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 31337);
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? "http://127.0.0.1:8545";
-  if (process.env.NEXT_PUBLIC_MINE_ADDRESS) {
+  // Read through a computed key so Next.js does not inline these at build time: the hosting env
+  // (Railway variables) is read at request time and a season change needs no rebuild.
+  const rt = (k: string) => process.env[k];
+  const chainId = Number(rt("NEXT_PUBLIC_CHAIN_ID") ?? 31337);
+  const rpcUrl = rt("NEXT_PUBLIC_RPC_URL") ?? "http://127.0.0.1:8545";
+  if (rt("NEXT_PUBLIC_MINE_ADDRESS")) {
     // Audit R3: a partial or malformed address set must fail at startup, not as undefined calls later.
     const env = (k: string): Address => {
       const v = process.env[k];
       if (!v || !isAddress(v)) throw new Error(`${k} is missing or not an address (${v ?? "unset"})`);
       return v as Address;
     };
-    const stocks = (process.env.NEXT_PUBLIC_STOCK_ADDRESSES ?? "").split(",").map((s) => s.trim());
+    const stocks = (rt("NEXT_PUBLIC_STOCK_ADDRESSES") ?? "").split(",").map((s) => s.trim());
     if (stocks.length !== 4 || stocks.some((s) => !isAddress(s))) throw new Error("NEXT_PUBLIC_STOCK_ADDRESSES must list four addresses");
     return {
       chainId,
-      seasonId: Number(process.env.NEXT_PUBLIC_SEASON_ID ?? 0),
-      seasonNumber: process.env.NEXT_PUBLIC_SEASON_NUMBER ? Number(process.env.NEXT_PUBLIC_SEASON_NUMBER) : undefined,
+      seasonId: Number(rt("NEXT_PUBLIC_SEASON_ID") ?? 0),
+      seasonNumber: rt("NEXT_PUBLIC_SEASON_NUMBER") ? Number(rt("NEXT_PUBLIC_SEASON_NUMBER")) : undefined,
       rig: env("NEXT_PUBLIC_RIG_ADDRESS"),
       lp: env("NEXT_PUBLIC_LP_ADDRESS"),
       usdc: env("NEXT_PUBLIC_USDC_ADDRESS"),
@@ -51,11 +54,11 @@ export function getDeployment(): Deployment | null {
       fragments: env("NEXT_PUBLIC_FRAGMENTS_ADDRESS"),
       vault: env("NEXT_PUBLIC_VAULT_ADDRESS"),
       stocks: stocks as Address[],
-      openTime: Number(process.env.NEXT_PUBLIC_OPEN_TIME ?? 0),
+      openTime: Number(rt("NEXT_PUBLIC_OPEN_TIME") ?? 0),
       rpcUrl,
     };
   }
-  const dir = process.env.DEPLOYMENTS_DIR ?? join(process.cwd(), "..", "contracts", "deployments");
+  const dir = rt("DEPLOYMENTS_DIR") ?? join(process.cwd(), "..", "contracts", "deployments");
   const file = join(dir, `${chainId}.json`);
   if (!existsSync(file)) return null;
   const j = JSON.parse(readFileSync(file, "utf8"));
