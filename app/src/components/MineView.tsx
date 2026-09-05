@@ -62,7 +62,7 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
   useMineNotifications(notifyPref.on, blocksFound, closed, g.shift, longHaul, snap.symbols);
 
   // The phase itself is in the header (Nav → SeasonStatus); only the long-haul state is called out here.
-  const phaseChip = !closed && snap.phase !== 1 && longHaul ? <Chip tone="signal">Long haul</Chip> : null;
+  const phaseChip = !closed && snap.phase > 1 && longHaul ? <Chip tone="signal">Long haul</Chip> : null;
 
   return (
     <>
@@ -74,9 +74,9 @@ export function MineView({ snap }: { snap: SeasonSnapshot }) {
             <Mono className="text-mine-muted text-[12px] hidden md:block">{closed ? `closed · redemption open` : `block ${curBlock + 1} pays ${(Number(snap.config.ratePerWork[curBlock]) / 1e18).toExponential(3)} frag per hash-second · ends at block 4 or ${capClock(snap)} at the latest`}</Mono>
           </div>
 
-          {snap.phase === 1 && <PreOpenCard snap={snap} now={now} />}
+          {(snap.phase === 0 || snap.phase === 1) && <PreOpenCard snap={snap} now={now} />}
           {closed && <ClosedCard snap={snap} now={now} closeX={g.closeX} shift={g.shift} />}
-          {snap.phase !== 1 && !closed && (
+          {snap.phase !== 0 && snap.phase !== 1 && !closed && (
             longHaul ? <LongHaulCard snap={snap} now={now} myHash={myHash} /> : <BlockCard snap={snap} now={now} myHash={myHash} />
           )}
 
@@ -128,7 +128,8 @@ function PreOpenCard({ snap, now }: { snap: SeasonSnapshot; now: bigint }) {
   return (
     <OpeningSoon
       embedded
-      canActivate
+      canActivate={snap.phase === 1}
+      funding={snap.phase === 0}
       openTime={Number(snap.params.openTime)}
       now={Number(now)}
       symbols={snap.symbols}
