@@ -658,3 +658,13 @@ recorded mocks. Gas for factory + season + funding was ~0.0005 ETH.
 Known gaps: contracts are not verified on the explorer (`--verify --verifier blockscout` not run); no LP
 pair exists so `plan` used `--rig-per-lp 2`; the deployment JSONs are gitignored and live only in this
 session, so re-run `create-season` dry-run or copy them from here before deploying the app.
+
+## 2026-09-06 – rebrand concept: AI compute / inference fiction
+
+What shipped: `docs/12-REBRAND-AI-INFERENCE.md`, a proposal to re-skin the game as an AI-compute
+cluster (nodes, throughput in TFLOPS, four inference jobs, epochs, shards) over the unchanged
+`SeasonMine` contracts and params. Includes a full term map, renamed upgrade tree, visual deltas to
+doc 11, copy samples and the list of decisions (name, token symbol) that gate an app/docs PR.
+
+What's next: pick name and symbol (doc 12 §9), then one app copy/units PR and one docs/social PR.
+Known gaps: no contract or param changes proposed; NVIDIA trademarks deliberately avoided in tier names.
