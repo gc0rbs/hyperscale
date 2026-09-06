@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FramedIcon } from "@/components/Icons";
 
-export const metadata = { title: "Stock Miner · How rewards work" };
+export const metadata = { title: "Hyperscale · How rewards work" };
 
 const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="flex flex-col gap-3 max-w-[720px]">
@@ -16,7 +16,7 @@ export default function HowItWorks() {
     <main className="min-h-screen bg-mine-bg text-mine-fg px-4 md:px-8 py-16 flex flex-col gap-14 max-w-[1100px] mx-auto">
       <div className="flex flex-col gap-4">
         <h1 className="font-display leading-[0.9] uppercase text-[80px] md:text-[128px] font-bold">How rewards work</h1>
-        <p className="text-mine-muted text-[17px] max-w-[640px]">Stock Miner is a game of work, not time. This page explains exactly what pays, what burns, and what ends a season. It is the reference the terms point to.</p>
+        <p className="text-mine-muted text-[17px] max-w-[640px]">Hyperscale is a game of work, not time. This page explains exactly what pays, what burns, and what ends a season. It is the reference the terms point to.</p>
       </div>
 
       <Sec title="Work finds blocks">
@@ -50,7 +50,7 @@ export default function HowItWorks() {
       </Sec>
 
       <Sec title="Who can play">
-        <p>Robinhood Stock Tokens are not available to persons in the United States, Canada, the United Kingdom or Switzerland, and neither is Stock Miner. Stock Tokens are tokenized debt instruments that track a share price; they carry no voting or ownership rights. Nothing here is investment advice, and every duration shown in the app is an estimate.</p>
+        <p>Robinhood Stock Tokens are not available to persons in the United States, Canada, the United Kingdom or Switzerland, and neither is Hyperscale. Stock Tokens are tokenized debt instruments that track a share price; they carry no voting or ownership rights. Nothing here is investment advice, and every duration shown in the app is an estimate.</p>
       </Sec>
 
       <div className="flex gap-4 text-[14px]"><Link href="/terms" className="text-signal inline-block py-2">Terms</Link><Link href="/" className="text-signal inline-block py-2">Back to the mine</Link></div>

@@ -11,7 +11,7 @@ import { seasonMineAbi, TICKERS } from "@/lib/contracts";
  * static card when there is no deployment or the RPC does not answer within 1.5 s.
  */
 export const runtime = "nodejs";
-export const alt = "Stock Miner: four blocks, one mine, closes forever";
+export const alt = "Hyperscale: four jobs, one cluster, shuts down forever";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -57,7 +57,7 @@ export default async function Image() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <div style={{ width: 44, height: 44, border: `3px solid ${EMBER}`, display: "flex", alignItems: "center", justifyContent: "center", transform: "rotate(45deg)" }}><div style={{ width: 14, height: 14, background: EMBER }} /></div>
-            <div style={{ fontSize: 64, letterSpacing: 2, textTransform: "uppercase" }}>Stock Miner</div>
+            <div style={{ fontSize: 64, letterSpacing: 2, textTransform: "uppercase" }}>Hyperscale</div>
           </div>
           <div style={{ display: "flex", gap: 14 }}>
             {TICKERS.map((t) => <div key={t} style={{ fontSize: 40, color: MUTED, border: `2px solid #2a2622`, padding: "2px 16px", textTransform: "uppercase" }}>{t}</div>)}

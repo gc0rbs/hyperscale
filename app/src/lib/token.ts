@@ -13,7 +13,7 @@ const EXPLORERS: Record<number, string> = {
 
 /** Launched token per chain, so the site shows the address even before the hosting env is updated. */
 const KNOWN_RIG: Record<number, Address> = {
-  4663: "0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f", // Stock Miner (RIG), Pons launch 2026-09-05
+  4663: "0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f", // Hyperscale (RIG), Pons launch 2026-09-05
 };
 
 const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 31337);

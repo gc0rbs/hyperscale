@@ -5,7 +5,7 @@ const KEY = "sm.notify";
 
 /**
  * Opt-in browser notifications (docs/06 §2, design brief §6 "long haul offers notifications").
- * Local `Notification`s only: they fire while a Stock Miner tab is open, which covers a ≤6h season
+ * Local `Notification`s only: they fire while a Hyperscale tab is open, which covers a ≤6h season
  * without a push server. The preference lives in localStorage; permission is the browser's.
  */
 export function useNotifyPref() {

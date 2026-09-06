@@ -1,4 +1,10 @@
-# Stock Miner
+# Hyperscale
+
+**Run the compute. Own the chips.** An AI-compute game on Robinhood Chain, forked from
+[stock-miner](https://github.com/gc0rbs/stock-miner) on 2026-09-06. Same contracts and math; the
+fiction is a GPU cluster serving four inference jobs, paid in shards of NVDA, MU, SNDK and QQQ.
+The rebrand concept and term map live in `docs/12-REBRAND-AI-INFERENCE.md`; the app and docs are
+still being moved to the new vocabulary, so the mining terms below remain accurate in the code.
 
 A progress-based "virtual mining" game on Robinhood Chain. Players stake **$RIG** (a Pons-launched
 ERC-20) to activate virtual rigs, burn $RIG on GPU / cooling / overclock upgrades to raise their

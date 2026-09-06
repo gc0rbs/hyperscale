@@ -314,3 +314,10 @@ neither is load-bearing for the accounting. Changes:
   client's, recorded here so the launch checklist item reads "off by decision", not "missing".
 - Consequence: no Cloudflare proxy is required. `stockminer.fi` points straight at Railway
   (custom domain on `app`, target port 3000). Turning the fence on later needs the proxy first.
+
+## 2026-09-06 – Rebrand to Hyperscale; fork to gc0rbs/hyperscale
+
+Product renamed Stock Miner → **Hyperscale** (AI-compute fiction, `docs/12-REBRAND-AI-INFERENCE.md`).
+The token stays **$RIG**: it launched on Pons on 2026-09-05, so only copy changes. Contract
+identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
+`gc0rbs/stock-miner` is frozen at the fork point.

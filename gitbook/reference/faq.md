@@ -37,7 +37,7 @@ In kind gives you the Stock Token at exactly one token per million fragments wit
 Either the Chainlink price is older than 26 hours (markets closed for a long stretch) or the USDG reserve is spent. In-kind redemption is unaffected.
 
 **I am in the US / Canada / UK / Switzerland. Can I play?**
-No. Robinhood Stock Tokens are not available to persons in those jurisdictions and neither is Stock Miner.
+No. Robinhood Stock Tokens are not available to persons in those jurisdictions and neither is Hyperscale.
 
 **Is this gambling?**
 There is no randomness. Outcomes are a deterministic function of stake, spend and everyone else's participation. Whether a prize competition without chance is regulated depends on your jurisdiction; the terms govern.

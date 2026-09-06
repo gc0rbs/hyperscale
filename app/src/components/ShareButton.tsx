@@ -8,7 +8,7 @@ export function ShareButton({ text, className = "" }: { text: string; className?
     const url = typeof window !== "undefined" ? window.location.origin : "";
     try {
       if (typeof navigator.share === "function") {
-        await navigator.share({ title: "Stock Miner", text, url });
+        await navigator.share({ title: "Hyperscale", text, url });
         setState("shared");
       } else {
         await navigator.clipboard.writeText(`${text} ${url}`);

@@ -4,7 +4,7 @@ The binding terms of use are published in the app at [stockminer.fi/terms](https
 
 ## Eligibility
 
-You may not use Stock Miner if you are located in, incorporated in or resident of the United States, Canada, the United Kingdom or Switzerland, or any other jurisdiction where Robinhood Stock Tokens or this service are restricted. Compliance with your local law is your responsibility.
+You may not use Hyperscale if you are located in, incorporated in or resident of the United States, Canada, the United Kingdom or Switzerland, or any other jurisdiction where Robinhood Stock Tokens or this service are restricted. Compliance with your local law is your responsibility.
 
 ## What the game is
 
@@ -28,7 +28,7 @@ Fragments may be redeemed for Stock Tokens or cashed out for USDG only during th
 
 ## Stock Tokens
 
-Robinhood Stock Tokens are tokenised instruments that track the price of an underlying security. They confer no ownership, voting or dividend rights in the underlying company. Their availability and transferability are determined by their issuer, not by Stock Miner.
+Robinhood Stock Tokens are tokenised instruments that track the price of an underlying security. They confer no ownership, voting or dividend rights in the underlying company. Their availability and transferability are determined by their issuer, not by Hyperscale.
 
 ## No advice, no guarantee
 

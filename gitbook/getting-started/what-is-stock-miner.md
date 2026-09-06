@@ -1,6 +1,6 @@
-# What is Stock Miner?
+# What is Hyperscale?
 
-Stock Miner is a **season**. A season is one deployment of the mine with fixed rules: four reward blocks, each paying fragments of one Robinhood Stock Token, and a fixed amount of **work** needed to find each block. Players point hashrate at the mine by staking $RIG. When the total work reaches a block's difficulty, the block is found and the next one starts. When block 4 is found, the mine closes permanently.
+Hyperscale is a **season**. A season is one deployment of the mine with fixed rules: four reward blocks, each paying fragments of one Robinhood Stock Token, and a fixed amount of **work** needed to find each block. Players point hashrate at the mine by staking $RIG. When the total work reaches a block's difficulty, the block is found and the next one starts. When block 4 is found, the mine closes permanently.
 
 ## The loop
 

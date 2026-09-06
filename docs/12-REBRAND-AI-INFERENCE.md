@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposal, 2026-09-06. Nothing below is decided; §9 lists the choices. |
+| Status | **Adopted 2026-09-06**: name = Hyperscale; token stays $RIG (already launched on Pons 2026-09-05). Repo forked to `gc0rbs/hyperscale`. Remaining choices in §9. |
 | Scope | Same contracts, same math, same params. New fiction, names, copy and art. |
 | Companion | 02 (mining model), 03 (game design), 11 (design brief), LAUNCH-SOCIAL-GUIDE |
 

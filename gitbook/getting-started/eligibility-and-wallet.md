@@ -2,7 +2,7 @@
 
 ## Who can play
 
-Stock Miner pays out Robinhood Stock Tokens. Those tokens are not available to persons in the **United States, Canada, the United Kingdom or Switzerland**, and neither is Stock Miner. The site blocks those regions by network location, and the [terms](../reference/terms.md) make eligibility your responsibility. The contracts themselves are permissionless. The restriction is legal, not technical, and you should treat it as binding.
+Hyperscale pays out Robinhood Stock Tokens. Those tokens are not available to persons in the **United States, Canada, the United Kingdom or Switzerland**, and neither is Hyperscale. The site blocks those regions by network location, and the [terms](../reference/terms.md) make eligibility your responsibility. The contracts themselves are permissionless. The restriction is legal, not technical, and you should treat it as binding.
 
 ## Network
 

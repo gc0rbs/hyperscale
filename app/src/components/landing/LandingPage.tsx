@@ -64,7 +64,7 @@ export function LandingPage() {
     <div className="stock-landing">
       <a className="lp-skip" href="#main-content">Skip to content</a>
       <header className="lp-header">
-        <Link href="/" className="lp-logo" aria-label="Stock Miner home"><LogoMark size={34} /></Link>
+        <Link href="/" className="lp-logo" aria-label="Hyperscale home"><LogoMark size={34} /></Link>
         <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a>{RIG_BUY_URL ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">Buy $RIG</a> : <button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy $RIG</button>}</nav>
         <div className="lp-header-actions"><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>

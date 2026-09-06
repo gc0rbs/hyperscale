@@ -40,7 +40,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const fragPerToken = info?.fragPerToken ?? 1_000_000;
   return NextResponse.json({
     name: `${ticker} fragment`,
-    description: `1/${fragPerToken.toLocaleString("en-US")} of one ${ticker} Stock Token, mined in block ${idx + 1} of a Stock Miner mine. Non-transferable; redeem at the mine's vault.`,
+    description: `1/${fragPerToken.toLocaleString("en-US")} of one ${ticker} Stock Token, mined in block ${idx + 1} of a Hyperscale mine. Non-transferable; redeem at the mine's vault.`,
     decimals: 0,
     properties: { block: idx + 1, ticker, fragPerToken },
   });

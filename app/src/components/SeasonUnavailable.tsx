@@ -7,7 +7,7 @@ import { TICKERS } from "@/lib/contracts";
 export function SeasonUnavailable() {
   return (
     <main className="min-h-screen bg-mine-bg text-mine-fg">
-      <header className="h-[var(--lp-header-height)] flex items-center px-6 md:px-12 border-b border-mine-line"><Link href="/" aria-label="Stock Miner home" className="inline-flex"><LogoMark size={34} /></Link></header>
+      <header className="h-[var(--lp-header-height)] flex items-center px-6 md:px-12 border-b border-mine-line"><Link href="/" aria-label="Hyperscale home" className="inline-flex"><LogoMark size={34} /></Link></header>
       <OpeningSoon symbols={TICKERS} />
     </main>
   );

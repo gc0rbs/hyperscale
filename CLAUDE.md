@@ -1,8 +1,12 @@
-# Stock Miner – project memory for Claude Code sessions
+# Hyperscale – project memory for Claude Code sessions
 
 Read this first. It is short on purpose; the detail lives in `docs/`.
 
 ## What this is
+This repo is **Hyperscale**, forked from `gc0rbs/stock-miner` on 2026-09-06. The product fiction is an
+AI-compute cluster (nodes, throughput, inference jobs, epochs, shards); see `docs/12-REBRAND-AI-INFERENCE.md`
+for the term map. Contract identifiers and the docs below still use the mining vocabulary on purpose.
+
 A progress-based virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake
 $RIG (a Pons-launched ERC-20; LP staking is off in v1) to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments across four
 reward blocks. Blocks are found by accumulated hash-work, not by time. The mine closes when block 4 is

@@ -21,7 +21,7 @@
 
 ## Legal risk
 
-Stock Tokens are regulated instruments not available in some jurisdictions, and Stock Miner is offered under the same restriction. Using the site through a VPN from a restricted region breaks the terms and may break your local law. Nothing in these docs or the app is investment advice.
+Stock Tokens are regulated instruments not available in some jurisdictions, and Hyperscale is offered under the same restriction. Using the site through a VPN from a restricted region breaks the terms and may break your local law. Nothing in these docs or the app is investment advice.
 
 ## What we ask of you
 
