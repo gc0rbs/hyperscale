@@ -349,11 +349,6 @@
         "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
-      },
-      {
-        "name": "rounds",
-        "type": "uint64",
-        "internalType": "uint64"
       }
     ],
     "outputs": [],
@@ -878,30 +873,6 @@
   },
   {
     "type": "function",
-    "name": "scheduled",
-    "inputs": [
-      {
-        "name": "s",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "r",
-        "type": "uint64",
-        "internalType": "uint64"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "totalHash",
     "inputs": [],
     "outputs": [
@@ -918,30 +889,6 @@
     "name": "unpause",
     "inputs": [],
     "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "unschedule",
-    "inputs": [
-      {
-        "name": "s",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "fromRound",
-        "type": "uint64",
-        "internalType": "uint64"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -1081,13 +1028,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "firstRound",
-        "type": "uint64",
-        "indexed": false,
-        "internalType": "uint64"
-      },
-      {
-        "name": "rounds",
+        "name": "round",
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
@@ -1291,31 +1232,6 @@
   },
   {
     "type": "event",
-    "name": "Unscheduled",
-    "inputs": [
-      {
-        "name": "stock",
-        "type": "uint8",
-        "indexed": true,
-        "internalType": "uint8"
-      },
-      {
-        "name": "fromRound",
-        "type": "uint64",
-        "indexed": false,
-        "internalType": "uint64"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Withdrawn",
     "inputs": [
       {
@@ -1437,11 +1353,6 @@
   {
     "type": "error",
     "name": "RigInactive",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "RoundStarted",
     "inputs": []
   },
   {

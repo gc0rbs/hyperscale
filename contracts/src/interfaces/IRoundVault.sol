@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 /// @title IRoundVault – holds the mine's Stock Tokens and USDG reserve, redeems fragments any time
 interface IRoundVault {
-    error NotMine();
     error NotOperator();
     error NotEligible();
     error ReserveInsufficient();
@@ -13,11 +12,8 @@ interface IRoundVault {
     event Redeemed(address indexed user, uint256 indexed id, uint256 fragments, uint256 tokens);
     event CashedOut(address indexed user, uint256 indexed id, uint256 fragments, uint256 usdc, uint256 fee);
     event ReserveToppedUp(address indexed from, uint256 amount);
-    event Released(address indexed to, uint256 indexed id, uint256 amount);
     event Rescued(address indexed to, uint256[] tokens, uint256 usdc);
 
-    /// @notice Mine only: send `amount` of stock `id` to `to` (unscheduling).
-    function release(uint256 id, address to, uint256 amount) external;
     /// @notice Burn `fragments` of stock `id` and receive `fragments * 1e18 / fragPerToken` Stock Tokens.
     function redeem(uint256 id, uint256 fragments) external returns (uint256 tokens);
     /// @notice Burn fragments and receive USDG at oracle price minus cashOutFeeBps.

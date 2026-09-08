@@ -30,14 +30,14 @@ not claimed rolls into the next pot.
   global settlement accumulates `totalHash × dt` per round and applies overclock expiry at round
   boundaries; rig settlement is piecewise-constant arithmetic over the boundaries it crossed.
 - **Pot.** Four stocks, one pot per stock per round.
-  `pot[r][s] = scheduled[s][r] + pot[r-1][s] − claimed[r-1][s]` (the rollover), finalised by the first
+  `pot[r][s] = funded during r + pot[r-1][s] − claimed[r-1][s]` (the rollover), finalised by the first
   settlement after round `r` closes, which is always after round `r-1`'s claim window has ended
   (`claimSeconds < roundSeconds` is enforced). A round nobody mined rolls its whole pot forward.
-- **Funding.** Anyone calls `fund(s, amount, rounds)`: the stock moves into the vault and `amount/rounds`
-  is scheduled into each of the next `rounds` rounds, starting with the round after the current one.
-  The fee wallet does this in bulk (a day's worth at a time). The operator can `unschedule(s, fromRound)`
-  to take back what has not started paying yet (the escape hatch, any time, only for rounds that have
-  not begun). Nothing scheduled = the pot for that hour is only the rollover; the site says so.
+- **Funding.** Anyone calls `fund(s, amount)` as often as fees arrive: the stock moves into the vault
+  and into the running round's pot at once; the pot is locked the moment the round closes. So the
+  first hour pays out whatever accrued during it, a bot can push fees in every few minutes, and a
+  project can run for two hours or two weeks with no funding calendar. Nothing is ever scheduled
+  ahead, so there is nothing to unschedule; the operator's only way out is `halt` (below).
 - **Claim.** After round `r` closes, each rig that worked in it can `claim` during
   `[close, close + claimSeconds)` (900 s) and receives `pot[r][s] × rigWork[r] / roundWork[r]` of each
   stock as fragments (whole fragments; dust stays in the pot). Only the latest closed round is ever
@@ -46,10 +46,10 @@ not claimed rolls into the next pot.
 - **Fragments.** One permanent ERC-1155, id = stock index, `fragPerToken` fragments per whole Stock
   Token, non-transferable. Redeem in kind (eligibility-gated) or cash out (oracle, USDG reserve) at any
   time while the vault holds the stock; there is no redemption window. The vault always holds at least
-  the stock behind every un-redeemed fragment plus every scheduled and unclaimed pot, because the only
-  things that ever leave it are redemptions, cash-out-freed stock, unscheduling and a halt rescue.
+  the stock behind every un-redeemed fragment plus every unclaimed and running pot, because the only
+  things that ever leave it are redemptions, cash-out-freed stock and a halt rescue.
 - **Pre-token deployment.** The mine can be deployed with `rig = 0` and `genesis = 0` before the
-  token exists. Funding works (scheduled from round 0); every player action reverts `NotLaunched`.
+  token exists. Funding works (into round 0); every player action reverts `NotLaunched`.
   The operator calls `launch(rig, genesis)` exactly once (genesis not in the past); both are then
   fixed for good. This lets the contracts be verified, funded and wired to the site days ahead, and
   go live with one transaction the moment the token is live (client requirement 2026-09-08).
@@ -63,7 +63,7 @@ not claimed rolls into the next pot.
 - **Halt.** The guardian (treasury key) can `pause`; players `emergencyWithdraw` after the grace period,
   which halts the mine for good. The operator can `halt()` at any time (client decision: they are a
   known team and the site says so). A halted mine never closes another round: stakes come back in full,
-  unclaimed pots and everything scheduled return to the operator through `RoundVault.rescue()`,
+  the unclaimed and running pots return to the operator through `RoundVault.rescue()`,
   fragments already claimed stay redeemable.
 
 ## 3. Parameters (`RoundParams`, immutable)
@@ -80,12 +80,12 @@ not claimed rolls into the next pot.
 
 ## 4. Invariants (tests encode these)
 
-1. `Σ_r Σ_rigs claimed[r][s] + unclaimed pots + scheduled future ≤ stock funded` per stock, always;
+1. `Σ_r Σ_rigs claimed[r][s] + unclaimed pots + the running pot ≤ stock funded` per stock, always;
    `pot[r][s] ≥ Σ claims of round r`.
 2. `totalHash == Σ live rig hash` after every settlement; expiring buckets match live overclock hash.
 3. A rig's work in a closed round never changes afterwards; a round's work never changes after close.
 4. `Σ_rigs rigWork[r] == roundWork[r]` up to one work unit of rounding per rig per segment.
-5. Vault stock balance ≥ (minted − redeemed) × 1e18 / fragPerToken + unclaimed pots + scheduled.
+5. Vault stock balance ≥ (minted − redeemed) × 1e18 / fragPerToken + unclaimed pots + the running pot.
 6. Mine RIG balance == Σ outstanding deposits.
 7. `heat ≤ heatMax`, `activeOc ≤ maxActiveOc`.
 8. After a halt nothing accrues, no round closes, deposits return in full.
@@ -97,4 +97,4 @@ not claimed rolls into the next pot.
 - "Rewards independent of other rigs" becomes a per-round share: the pot is whatever the fee stream
   brought, so it has to be split. There is still no reward-per-share accumulator: each round is settled
   in isolation from exact per-rig and global work.
-- Admin power: `pause` (guardian) plus `halt` and `unschedule` (operator), both public on the site.
+- Admin power: `pause` (guardian) plus `launch` (once) and `halt` (operator), all public on the site.

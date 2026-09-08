@@ -14,8 +14,7 @@ export interface RoundsDeploymentLike { mine: Address; stocks: readonly Address[
 
 /**
  * One multicall for the whole mine state (docs/13): params, round indices, the current pot per
- * stock with its rollover, the previous round's pot and claims, work in both rounds and what is
- * scheduled next. The round index is derived from the block timestamp so the calls can be built
+ * stock with its rollover, the previous round's pot and claims, and work in both rounds. The round index is derived from the block timestamp so the calls can be built
  * in the same render; the contract's own `currentRound()` is read alongside as a check.
  */
 export function useRounds(dep: RoundsDeploymentLike) {
@@ -36,7 +35,6 @@ export function useRounds(dep: RoundsDeploymentLike) {
       { address: mine, abi: roundMineAbi, functionName: "paused" },
       ...S.map((s) => ({ address: mine, abi: roundMineAbi, functionName: "pot", args: [c, s] })),
       { address: mine, abi: roundMineAbi, functionName: "roundWork", args: [c] },
-      ...S.map((s) => ({ address: mine, abi: roundMineAbi, functionName: "scheduled", args: [s, c + 1n] })),
     ];
     if (cur > 0) {
       out.push(
@@ -58,7 +56,7 @@ export function useRounds(dep: RoundsDeploymentLike) {
   const snapshot: RoundSnapshot | undefined = useMemo(() => {
     if (cur === undefined || chainTs === undefined) return undefined;
     const d = q.data;
-    if (!d || d.length < 15 || d.some((r) => r.status !== "success")) return undefined;
+    if (!d || d.length < 11 || d.some((r) => r.status !== "success")) return undefined;
     const big = (i: number) => BigInt(d[i].result as bigint);
     const zeros = S.map(() => 0n);
     return {
@@ -71,10 +69,9 @@ export function useRounds(dep: RoundsDeploymentLike) {
       paused: Boolean(d[5].result),
       pot: S.map((s) => big(6 + s)),
       roundWork: big(10),
-      nextScheduled: S.map((s) => big(11 + s)),
-      prevPot: cur > 0 ? S.map((s) => big(15 + s)) : zeros,
-      prevClaimed: cur > 0 ? S.map((s) => big(19 + s)) : zeros,
-      prevRoundWork: cur > 0 ? big(23) : 0n,
+      prevPot: cur > 0 ? S.map((s) => big(11 + s)) : zeros,
+      prevClaimed: cur > 0 ? S.map((s) => big(15 + s)) : zeros,
+      prevRoundWork: cur > 0 ? big(19) : 0n,
       fetchedAt: Date.now(),
       chainTime: chainTs,
       chainOffset: chainTs - BigInt(Math.floor(Date.now() / 1000)),

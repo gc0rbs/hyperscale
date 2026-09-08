@@ -4,8 +4,9 @@ pragma solidity ^0.8.24;
 /// @title IRoundMine – the continuous mine with hourly rounds (docs/13-ROUNDS.md)
 /// @notice Rounds close on the clock. Each round's pot (per stock) is split among rigs by the work
 ///         they did in that round, is claimable for `claimSeconds` after the round closes, and rolls
-///         into the next round if unclaimed. Funding is a schedule of stock per round, filled by
-///         anyone (the fee wallet) and taken back by the operator only for rounds that have not begun.
+///         into the next round if unclaimed. Funding goes straight into the running round's pot
+///         (anyone may fund, as often as fees arrive) and the pot is locked the moment the round
+///         closes.
 interface IRoundMine {
     struct RoundParams {
         address rig;
@@ -62,7 +63,6 @@ interface IRoundMine {
     error ClaimWindowClosed();
     error PauseGraceNotElapsed();
     error InvalidParams(string reason);
-    error RoundStarted();
     /// @dev More rounds elapsed than one call records (`MAX_ROUNDS_PER_UPDATE`): call `poke` first.
     error NotCaughtUp();
     /// @dev The mine was deployed before the token existed and `launch` has not been called yet.
@@ -80,8 +80,7 @@ interface IRoundMine {
     event Claimed(uint256 indexed rigId, uint64 indexed round, uint256[] fragments);
     event Exited(uint256 indexed rigId, uint256 returned, uint256 fee);
     event Withdrawn(uint256 indexed rigId, uint256 amount);
-    event Funded(address indexed from, uint8 indexed stock, uint256 amount, uint64 firstRound, uint64 rounds);
-    event Unscheduled(uint8 indexed stock, uint64 fromRound, uint256 amount);
+    event Funded(address indexed from, uint8 indexed stock, uint256 amount, uint64 round);
     event MineHalted(uint64 at, address by);
     event Launched(address indexed rig, uint64 genesis);
 
@@ -93,12 +92,10 @@ interface IRoundMine {
     function poke() external;
 
     // ── funding ─────────────────────────────────────────────────────────────
-    /// @notice Pull `amount` of stock `s` into the vault and schedule `amount / rounds` into each of the
-    ///         next `rounds` rounds, starting with the round after the current one. Anyone may fund.
-    function fund(uint8 s, uint256 amount, uint64 rounds) external;
-    /// @notice Operator: remove everything scheduled for stock `s` from `fromRound` (which must not have
-    ///         started) onwards and send it from the vault to the operator.
-    function unschedule(uint8 s, uint64 fromRound) external returns (uint256 amount);
+    /// @notice Pull `amount` of stock `s` into the vault and add it to the running round's pot (round 0
+    ///         before genesis or launch). Anyone may fund, as often as fees arrive; the pot is locked
+    ///         when the round closes.
+    function fund(uint8 s, uint256 amount) external;
 
     // ── player actions ──────────────────────────────────────────────────────
     function activate(uint256 amount) external returns (uint256 rigId);
@@ -119,12 +116,12 @@ interface IRoundMine {
     // ── admin ───────────────────────────────────────────────────────────────
     /// @notice Operator, once: set the $RIG address and genesis on a mine deployed before the token
     ///         existed (`rig == 0` and `genesis == 0` at construction). Until then the mine accepts
-    ///         funding (scheduled from round 0) and nothing else; after it both values are fixed for
+    ///         funding (into round 0) and nothing else; after it both values are fixed for
     ///         good. Genesis must not be in the past. Client decision 2026-09-08: deploy, verify, fund
     ///         and wire the site days ahead, then go live with one transaction.
     function launch(address rig, uint64 genesis) external;
     /// @notice Operator: stop the mine for good. No round closes after this; the vault's `rescue`
-    ///         returns unclaimed pots and everything scheduled to the operator. Client decision
+    ///         returns the unclaimed and running pots to the operator. Client decision
     ///         2026-09-08, stated on the site.
     function halt() external;
     function pause() external;
@@ -147,11 +144,11 @@ interface IRoundMine {
     function totalHash() external view returns (uint256);
     /// @notice Work recorded for round `r` (final once closed; live otherwise, simulated to now).
     function roundWork(uint64 r) external view returns (uint256);
-    /// @notice Pot of stock `s` in round `r`: final once closed; for the current round the scheduled
-    ///         amount plus the rollover known so far.
+    /// @notice Pot of stock `s` in round `r`: final once closed; for the running round what has been
+    ///         funded into it so far plus the rollover known so far (for later rounds, the same value:
+    ///         nothing is ever scheduled ahead).
     function pot(uint64 r, uint8 s) external view returns (uint256);
     function claimedOf(uint64 r, uint8 s) external view returns (uint256);
-    function scheduled(uint8 s, uint64 r) external view returns (uint256);
     function rigs(uint256 rigId) external view returns (Rig memory);
     function rigCount() external view returns (uint256);
     function rigsOf(address owner) external view returns (uint256[] memory);

@@ -5,18 +5,17 @@
  *   ALERT_WEBHOOK_URL=https://… pnpm --filter @stock-miner/ops rounds-watch [--interval 60] [--once]
  *
  * Per tick: round, seconds to close, pot per stock for the current round, totalHash, rig count.
- * Warns when the next round's pot is zero for every stock ("nothing scheduled"), when a stock's
- * schedule runs out within 6 rounds, when the vault USDG reserve is below 1,000, and when
- * totalHash == 0 for over an hour. Pages when the mine is paused or halted.
+ * Warns when the running round's pot is still zero for every stock past half the round (no fees
+ * arrived), when the vault USDG reserve is below 1,000, and when totalHash == 0 for over an hour.
+ * Pages when the mine is paused or halted.
  */
 import { formatUnits } from "viem";
 import { createAlert } from "./lib/alert.js";
-import { loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, scheduleRunsOutIn, syncLaunchFromChain } from "./lib/rounds.js";
+import { loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const interval = Number(arg("--interval", "60")) * 1000;
 const once = hasFlag("--once");
-const LOOKAHEAD = 6;
 const alert = createAlert("rounds-watch");
 let idleSince: number | null = null;
 
@@ -46,19 +45,15 @@ async function tick() {
   if (behind > 1) alert("warn", `mine is ${behind} rounds behind (closedRounds=${closedRounds}, currentRound=${r}); players' actions revert with NotCaughtUp until the keeper pokes`);
 
   const pots: string[] = [];
-  let nextPotAllZero = true;
+  let potAllZero = true;
   for (let s = 0; s < dep.stocks.length; s++) {
     const decimals = (await pub.readContract({ abi: erc20Abi, address: dep.stocks[s], functionName: "decimals" })) as number;
     const pot = (await pub.readContract({ ...mine, functionName: "pot", args: [BigInt(r), s] })) as bigint;
-    const nextPot = (await pub.readContract({ ...mine, functionName: "pot", args: [BigInt(r + 1), s] })) as bigint;
-    if (nextPot > 0n) nextPotAllZero = false;
+    if (pot > 0n) potAllZero = false;
     pots.push(`${dep.symbols[s]}=${formatUnits(pot, decimals)}`);
-    const ahead: bigint[] = [];
-    for (let k = 1; k <= LOOKAHEAD; k++) ahead.push((await pub.readContract({ ...mine, functionName: "scheduled", args: [s, BigInt(r + k)] })) as bigint);
-    const runsOut = scheduleRunsOutIn(ahead);
-    if (runsOut !== null && !halted) alert("warn", `${dep.symbols[s]}: nothing scheduled from round ${r + runsOut} (in ${runsOut} round${runsOut === 1 ? "" : "s"})`);
   }
-  if (nextPotAllZero && !halted) alert("warn", `nothing scheduled: round ${r + 1} pot is zero for every stock`);
+  const halfway = now >= dep.genesis && clock.secondsToClose < dep.roundSeconds / 2;
+  if (potAllZero && halfway && !halted) alert("warn", `no fees in yet: round ${r} pot is zero for every stock with ${clock.secondsToClose}s to go (nothing to pay out unless funding arrives before the close)`);
 
   if (reserve < 1_000n * 10n ** BigInt(udec)) alert("warn", `USDG reserve below 1,000 (${formatUnits(reserve, udec)})`);
 

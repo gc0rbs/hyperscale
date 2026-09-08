@@ -41,7 +41,7 @@ export interface RoundSnapshot {
   totalHash: bigint;
   halted: boolean;
   paused: boolean;
-  /** pot(round, s): scheduled plus the rollover known so far. Stock-token wei. */
+  /** pot(round, s): funded into the running round so far plus the rollover known so far. Stock-token wei. */
   pot: bigint[];
   /** pot(round - 1, s) and claimedOf(round - 1, s); zeros when round is 0. */
   prevPot: bigint[];
@@ -49,8 +49,6 @@ export interface RoundSnapshot {
   /** roundWork(round) simulated to the fetch time, and roundWork(round - 1). */
   roundWork: bigint;
   prevRoundWork: bigint;
-  /** scheduled(s, round + 1). */
-  nextScheduled: bigint[];
   fetchedAt: number; // ms
   chainTime: bigint; // seconds, block timestamp at fetch
   chainOffset: bigint; // chainTime - wall clock at fetch

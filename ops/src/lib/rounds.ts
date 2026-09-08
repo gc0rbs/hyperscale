@@ -130,28 +130,6 @@ export function roundClock(genesis: number, roundSeconds: number, claimSeconds: 
   };
 }
 
-export interface FundSchedule {
-  perRound: bigint;
-  /** what `fund` actually pulls: perRound × rounds (the remainder never leaves the funder) */
-  total: bigint;
-  remainder: bigint;
-  firstRound: number;
-  lastRound: number;
-}
-
-/**
- * Mirror of RoundMine.fund's arithmetic: `amount / rounds` per round, starting with the round after the
- * current one (round 0 before genesis).
- */
-export function fundSchedule(amount: bigint, rounds: number, currentRound: number, beforeGenesis: boolean): FundSchedule {
-  if (!Number.isInteger(rounds) || rounds < 1 || rounds > 720) throw new Error(`rounds must be 1..720 (got ${rounds})`);
-  const perRound = amount / BigInt(rounds);
-  if (perRound === 0n) throw new Error("amount / rounds is zero: nothing would be scheduled");
-  const total = perRound * BigInt(rounds);
-  const firstRound = beforeGenesis ? 0 : currentRound + 1;
-  return { perRound, total, remainder: amount - total, firstRound, lastRound: firstRound + rounds - 1 };
-}
-
 /** `--stock NVDA|0|all` → stock indices. */
 export function resolveStocks(spec: string | undefined, symbols: string[]): number[] {
   if (!spec) throw new Error("--stock <symbol|index|all> is required");
@@ -164,13 +142,4 @@ export function resolveStocks(spec: string | undefined, symbols: string[]): numb
   const i = symbols.findIndex((s) => s.toLowerCase() === spec.toLowerCase());
   if (i < 0) throw new Error(`unknown stock ${spec}; symbols are ${symbols.join(", ")}`);
   return [i];
-}
-
-/**
- * Given the scheduled amounts for rounds current+1 .. current+n, the number of rounds until the first
- * empty one (1 = next round is empty), or null when every one is funded.
- */
-export function scheduleRunsOutIn(ahead: readonly bigint[]): number | null {
-  const i = ahead.findIndex((a) => a === 0n);
-  return i < 0 ? null : i + 1;
 }

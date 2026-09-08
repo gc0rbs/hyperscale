@@ -127,13 +127,13 @@ abstract contract RoundTestBase is Test {
         id = mine.activate(amount);
     }
 
-    /// @dev The fee wallet funds `perRound` of every stock for `rounds` rounds.
-    function fundRounds(uint256 perRound, uint64 rounds) internal {
+    /// @dev The fee wallet funds `amount` of every stock into the running round.
+    function fundNow(uint256 amount) internal {
         for (uint8 s; s < 4; ++s) {
-            stocks[s].mint(feeWallet, perRound * rounds);
+            stocks[s].mint(feeWallet, amount);
             vm.startPrank(feeWallet);
-            stocks[s].approve(address(mine), perRound * rounds);
-            mine.fund(s, perRound * rounds, rounds);
+            stocks[s].approve(address(mine), amount);
+            mine.fund(s, amount);
             vm.stopPrank();
         }
     }

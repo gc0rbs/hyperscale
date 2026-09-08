@@ -5,9 +5,8 @@ import Link from "next/link";
  * on the mine screen footer and repeated in /how-it-works and /terms. Short and plain on purpose.
  */
 export const ROUND_NOTICES = [
-  "Pots are funded by the Pons trading tax on $RIG, swapped into Stock Tokens and scheduled into the coming rounds. Nothing scheduled means the pot for that hour is only the rollover.",
-  "The operator can halt the mine at any time and take back the unclaimed pots and everything scheduled. Stakes always come back in full, and shards you have already claimed stay redeemable.",
-  "The operator can unschedule rounds that have not started yet.",
+  "Pots are funded by the Pons trading tax on $RIG, swapped into Stock Tokens and added to the running round as fees arrive. A round with no fees pays only what rolled over.",
+  "The operator can halt the mine at any time and take back the unclaimed and running pots. Stakes always come back in full, and shards you have already claimed stay redeemable.",
 ] as const;
 
 export function RoundNotices({ compact = false }: { compact?: boolean }) {

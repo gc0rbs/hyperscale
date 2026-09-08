@@ -25,33 +25,32 @@ contract RoundInvariantTest is RoundTestBase {
         usdc.approve(address(vault), 1_000_000e6);
         vault.topUpReserve(1_000_000e6);
         targetContract(address(h));
-        bytes4[] memory sel = new bytes4[](14);
+        bytes4[] memory sel = new bytes4[](13);
         sel[0] = h.warp.selector;
         sel[1] = h.fund.selector;
-        sel[2] = h.unschedule.selector;
-        sel[3] = h.activate.selector;
-        sel[4] = h.upgradeGpu.selector;
-        sel[5] = h.upgradeCooling.selector;
-        sel[6] = h.overclock.selector;
-        sel[7] = h.claim.selector;
-        sel[8] = h.claimAll.selector;
-        sel[9] = h.exitRig.selector;
-        sel[10] = h.redeem.selector;
-        sel[11] = h.pauseCycle.selector;
-        sel[12] = h.halt.selector;
-        sel[13] = h.emergencyWithdraw.selector;
+        sel[2] = h.activate.selector;
+        sel[3] = h.upgradeGpu.selector;
+        sel[4] = h.upgradeCooling.selector;
+        sel[5] = h.overclock.selector;
+        sel[6] = h.claim.selector;
+        sel[7] = h.claimAll.selector;
+        sel[8] = h.exitRig.selector;
+        sel[9] = h.redeem.selector;
+        sel[10] = h.pauseCycle.selector;
+        sel[11] = h.halt.selector;
+        sel[12] = h.emergencyWithdraw.selector;
         targetSelector(FuzzSelector({addr: address(h), selectors: sel}));
     }
 
-    /// Invariant 1: claims never exceed a closed round's pot, and every pot is scheduled plus the
-    /// previous round's unclaimed remainder.
+    /// Invariant 1: claims never exceed a closed round's pot, and every pot is what was funded while
+    /// the round ran plus the previous round's unclaimed remainder.
     function invariant_1_claims_within_pot_and_rollover_exact() public view {
         uint64 closed = mine.closedRounds();
         for (uint64 r = closed > 3 ? closed - 3 : 0; r < closed; ++r) {
             for (uint8 s; s < 4; ++s) {
                 uint256 p = mine.pot(r, s);
                 assertLe(mine.claimedOf(r, s), p, "claims exceed pot");
-                uint256 expect = mine.scheduled(s, r);
+                uint256 expect = h.roundFunded(r, s);
                 if (r > 0) expect += mine.pot(r - 1, s) - mine.claimedOf(r - 1, s);
                 assertEq(p, expect, "rollover");
             }
@@ -90,13 +89,13 @@ contract RoundInvariantTest is RoundTestBase {
     }
 
     /// Invariant 5: the vault holds what it owes: the stock behind un-redeemed fragments, the open
-    /// round's pot (with its rollover), the latest closed round's unclaimed remainder while its window
-    /// is open, and everything scheduled ahead. Equivalently, its balance is exactly what was funded
-    /// minus what was unscheduled and redeemed in kind (cash-outs pay USDG, leaving the stock).
+    /// round's pot (with its rollover) and the latest closed round's unclaimed remainder while its
+    /// window is open. Equivalently, its balance is exactly what was funded minus what was redeemed in
+    /// kind (cash-outs pay USDG, leaving the stock).
     function invariant_5_vault_backing() public view {
         for (uint8 s; s < 4; ++s) {
             uint256 bal = stocks[s].balanceOf(address(vault));
-            assertEq(bal, h.ghostFunded(s), "vault balance != funded - unscheduled - redeemed");
+            assertEq(bal, h.ghostFunded(s), "vault balance != funded - redeemed");
             assertGe(bal, vault.requiredOf(s), "under-backed fragments");
         }
     }

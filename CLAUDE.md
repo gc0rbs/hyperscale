@@ -28,14 +28,15 @@ commit, and add a dated entry to `docs/DECISIONS.md` saying what changed and why
 ## Hard rules (never relax without an explicit user decision)
 - Mine contracts are immutable: no proxies, no parameter setters. The one exception is the one-shot
   `launch(rig, genesis)` on a pre-token `RoundMine` (client requirement 2026-09-08). Admin power is
-  exactly `pause` (guardian), `halt`, `unschedule` and that `launch` (operator; stated on the site)
+  exactly `pause` (guardian), `halt` and that `launch` (operator; stated on the site)
   and, for the legacy seasons, `abort` inside the rescue window.
 - Rounds are wall-clock (`roundSeconds`), and within a round every reward is by exact work share:
   `pot[r] × rigWork[r] / roundWork[r]`, settled per round from piecewise-constant hash. No
   reward-per-share accumulator, no difficulty, no randomness. (Season era: rewards were
   `rigHash × seconds × ratePerWork[b]`; keep that code as is.)
 - `Σ claimed fragments for round r ≤ pot[r]`, enforced in `claim`; the vault always holds the stock
-  behind every unredeemed fragment, every unclaimed pot and everything scheduled.
+  behind every unredeemed fragment, every unclaimed pot and the running pot. Funding lands in the
+  running round and is locked at its close; nothing is scheduled ahead.
 - Upgrade spend is 100% burned: transferred to `0x…dEaD` (the token has no burn function). Stake per rig
   is immutable. Fragments are non-transferable in v1.
 - No randomness, no oracles inside `SeasonMine`. Oracle use is confined to `RedemptionVault.cashOut`.

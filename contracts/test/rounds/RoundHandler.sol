@@ -11,7 +11,7 @@ import {MockStockToken} from "../../src/mocks/MockStockToken.sol";
 import {MockPriceOracle} from "../../src/mocks/MockPriceOracle.sol";
 
 /// @dev Random players activate, upgrade, overclock, claim, exit and redeem; the fee wallet funds;
-///      the operator unschedules and (rarely) halts; the guardian pauses; time warps. Ghost state
+///      the operator (rarely) halts; the guardian pauses; time warps. Ghost state
 ///      tracks deposits, funded stock and the claims of every closed round for docs/13 §4.
 contract RoundHandler is Test {
     RoundMine public mine;
@@ -26,7 +26,9 @@ contract RoundHandler is Test {
     address[] public actors;
     uint256[] public rigIds;
     uint256 public ghostDeposits;
-    uint256[4] public ghostFunded; // stock moved into the vault minus unscheduled minus redeemed in kind
+    uint256[4] public ghostFunded; // stock moved into the vault minus redeemed in kind
+    /// @dev Stock funded while round r was running, per stock: what its pot holds before rollover.
+    mapping(uint64 => uint256[4]) public ghostRoundFunded;
     uint256 public calls;
     uint256 public claims;
     uint256 public halts;
@@ -77,26 +79,21 @@ contract RoundHandler is Test {
         }
     }
 
-    function fund(uint8 s, uint256 amount, uint64 rounds) external track {
+    function fund(uint8 s, uint256 amount) external track {
         s = s % 4;
         amount = bound(amount, 1e15, 100e18);
-        rounds = uint64(bound(rounds, 1, 48));
         stocks[s].mint(feeWallet, amount);
         vm.startPrank(feeWallet);
         stocks[s].approve(address(mine), amount);
-        try mine.fund(s, amount, rounds) {
-            ghostFunded[s] += (amount / rounds) * rounds;
+        try mine.fund(s, amount) {
+            ghostFunded[s] += amount;
+            ghostRoundFunded[mine.currentRound()][s] += amount; // fund is caught up, so this is its round
         } catch {}
         vm.stopPrank();
     }
 
-    function unschedule(uint8 s, uint64 ahead) external track {
-        s = s % 4;
-        ahead = uint64(bound(ahead, 1, 48));
-        vm.prank(operator);
-        try mine.unschedule(s, mine.currentRound() + ahead) returns (uint256 out) {
-            ghostFunded[s] -= out;
-        } catch {}
+    function roundFunded(uint64 r, uint8 s) external view returns (uint256) {
+        return ghostRoundFunded[r][s];
     }
 
     function activate(uint8 who, uint256 amount) external track {

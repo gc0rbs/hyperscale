@@ -13,7 +13,7 @@ Only the latest closed round can be claimed. There is no catching up on older ro
 
 ## Where the pot comes from
 
-The pots are funded by the trading tax on $RIG (set on Pons by the team) which the team swaps into Stock Tokens and schedules into upcoming rounds, usually a day at a time. The site shows the current pot, how much of it rolled over from the last round, and whether the next round has anything scheduled. When nothing is scheduled the pot is only the rollover, and the site says so.
+The pots are funded by the trading tax on $RIG (set on Pons by the team). The team swaps the fees into Stock Tokens and adds them to the running round's pot as they arrive, so you can watch the pot grow during the hour. The pot is locked the moment the round closes. The site shows the current pot and how much of it rolled over from the last round; a round with no fees pays only the rollover, and the site says so.
 
 ## Fragments
 

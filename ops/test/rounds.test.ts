@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fundSchedule, resolveStocks, roundClock, scheduleRunsOutIn } from "../src/lib/rounds.js";
+import { resolveStocks, roundClock } from "../src/lib/rounds.js";
 import { roundKeeperDecision, type RoundKeeperView } from "../src/lib/rounds-keeper-logic.js";
 
 const G = 1_000_000;
@@ -35,31 +35,6 @@ describe("roundClock (docs/13 §2 Time)", () => {
   });
 });
 
-describe("fundSchedule (mirror of RoundMine.fund)", () => {
-  it("splits amount / rounds and starts with the round after the current one", () => {
-    const p = fundSchedule(24n * 10n ** 18n, 24, 5, false);
-    expect(p.perRound).toBe(10n ** 18n);
-    expect(p.total).toBe(24n * 10n ** 18n);
-    expect(p.remainder).toBe(0n);
-    expect(p.firstRound).toBe(6);
-    expect(p.lastRound).toBe(29);
-  });
-  it("keeps the integer-division remainder with the funder", () => {
-    const p = fundSchedule(10n, 3, 0, false);
-    expect(p.perRound).toBe(3n);
-    expect(p.total).toBe(9n);
-    expect(p.remainder).toBe(1n);
-  });
-  it("starts at round 0 before genesis", () => {
-    expect(fundSchedule(100n, 4, 0, true)).toMatchObject({ firstRound: 0, lastRound: 3 });
-  });
-  it("refuses a zero per-round amount and out-of-range round counts", () => {
-    expect(() => fundSchedule(2n, 3, 0, false)).toThrow(/zero/);
-    expect(() => fundSchedule(100n, 0, 0, false)).toThrow(/1\.\.720/);
-    expect(() => fundSchedule(100n, 721, 0, false)).toThrow(/1\.\.720/);
-  });
-});
-
 describe("resolveStocks", () => {
   const syms = ["NVDA", "MU", "SNDK", "QQQ"];
   it("accepts a symbol (any case), an index, or all", () => {
@@ -71,14 +46,6 @@ describe("resolveStocks", () => {
     expect(() => resolveStocks("TSLA", syms)).toThrow(/unknown stock/);
     expect(() => resolveStocks("4", syms)).toThrow(/out of range/);
     expect(() => resolveStocks(undefined, syms)).toThrow(/--stock/);
-  });
-});
-
-describe("scheduleRunsOutIn", () => {
-  it("reports the first empty round ahead", () => {
-    expect(scheduleRunsOutIn([1n, 1n, 1n, 1n, 1n, 1n])).toBeNull();
-    expect(scheduleRunsOutIn([1n, 1n, 0n, 1n, 1n, 1n])).toBe(3);
-    expect(scheduleRunsOutIn([0n, 0n])).toBe(1);
   });
 });
 

@@ -1,20 +1,21 @@
 /**
  * Fund the round mine (docs/13 §2 "Funding"): approves and calls RoundMine.fund for each requested
- * stock, which pulls the stock into the vault and schedules `amount / rounds` into each of the next
- * `rounds` rounds, starting with the round after the current one. Anyone may fund; the fee wallet
- * does it in bulk (a day at a time).
+ * stock, which pulls the stock into the vault and adds it to the running round's pot. The pot is
+ * locked when the round closes. Anyone may fund, as often as fees arrive (a bot every few minutes is
+ * fine); `--loop <seconds>` keeps funding the wallet's whole balance of each stock on an interval.
  *
- *   FUNDER_KEY=0x… pnpm --filter @stock-miner/ops fund-rounds --stock NVDA|0|all --amount 24 --rounds 24 [--dry-run] [--key-env FUNDER_KEY]
+ *   FUNDER_KEY=0x… pnpm --filter @stock-miner/ops fund-rounds --stock NVDA|0|all --amount 0.5 [--dry-run] [--key-env FUNDER_KEY]
+ *   FUNDER_KEY=0x… pnpm --filter @stock-miner/ops fund-rounds --stock all --amount balance --loop 300   # sweep the wallet into the pot every 5 min
  *   FUNDER_KEY=0x… pnpm --filter @stock-miner/ops fund-rounds --reserve 5000        # RoundVault.topUpReserve (USDG)
  *
- * --amount is whole Stock Tokens per stock (so `--stock all --amount 24` moves 24 of each of the four).
- * The key comes from --key-env, else FUNDER_KEY, else OPERATOR_KEY, else PRIVATE_KEY. The script
- * refuses when the wallet does not hold the amount, and prints the schedule (current + next 3 rounds)
- * per stock afterwards.
+ * --amount is whole Stock Tokens per stock (so `--stock all --amount 2` moves 2 of each of the four), or
+ * `balance` for everything the wallet holds. The key comes from --key-env, else FUNDER_KEY, else
+ * OPERATOR_KEY, else PRIVATE_KEY. The script refuses when the wallet does not hold the amount, and
+ * prints the running round's pot per stock afterwards.
  */
 import { formatUnits, parseUnits, type Address } from "viem";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
-import { catchUp, fundSchedule, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundsBehind, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
+import { catchUp, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundsBehind, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 
 const TAG = "[fund-rounds]";
 
@@ -27,6 +28,15 @@ function keyEnv(): string {
 }
 
 async function main() {
+  const loopSec = Number(arg("--loop", "0"));
+  for (;;) {
+    await runOnce();
+    if (!(loopSec > 0)) return;
+    await new Promise((r) => setTimeout(r, loopSec * 1000));
+  }
+}
+
+async function runOnce() {
   const dep = loadRoundsDeployment();
   const { pub, wallet, account } = clients(keyEnv());
   await syncLaunchFromChain(dep, pub);
@@ -34,7 +44,7 @@ async function main() {
   const stockSpec = arg("--stock");
   const amountArg = arg("--amount");
   const reserveArg = arg("--reserve");
-  if (!stockSpec && !reserveArg) throw new Error("usage: fund-rounds --stock <symbol|index|all> --amount <tokens> --rounds <n> [--reserve <usdg>] [--dry-run]");
+  if (!stockSpec && !reserveArg) throw new Error("usage: fund-rounds --stock <symbol|index|all> --amount <tokens|balance> [--loop <seconds>] [--reserve <usdg>] [--dry-run]");
 
   const halted = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "halted" })) as boolean;
   if (halted) throw new Error("mine is halted; fund would revert");
@@ -61,24 +71,23 @@ async function main() {
 
   if (stockSpec) {
     if (!amountArg) throw new Error("--amount <tokens> is required with --stock");
-    const rounds = Number(arg("--rounds", "24"));
     const indices = resolveStocks(stockSpec, dep.symbols);
     for (const s of indices) {
       const token = dep.stocks[s];
       const sym = dep.symbols[s];
       const decimals = (await pub.readContract({ abi: erc20Abi, address: token, functionName: "decimals" })) as number;
-      const amount = parseUnits(amountArg, decimals);
-      const plan = fundSchedule(amount, rounds, current, now < dep.genesis);
       const fmt = (v: bigint) => formatUnits(v, decimals);
       const bal = (await pub.readContract({ abi: erc20Abi, address: token, functionName: "balanceOf", args: [account.address] })) as bigint;
-      console.log(`${TAG} ${sym} (${token}): ${fmt(plan.total)} over ${rounds} rounds = ${fmt(plan.perRound)}/round, rounds ${plan.firstRound}..${plan.lastRound}${plan.remainder > 0n ? ` (remainder ${fmt(plan.remainder)} stays with the funder)` : ""}; wallet holds ${fmt(bal)}`);
-      if (bal < plan.total) {
-        if (!dry) throw new Error(`${sym}: wallet holds ${fmt(bal)}, needs ${fmt(plan.total)}`);
+      const amount = amountArg === "balance" ? bal : parseUnits(amountArg, decimals);
+      if (amount === 0n) { console.log(`${TAG} ${sym}: nothing to fund`); continue; }
+      console.log(`${TAG} ${sym} (${token}): ${fmt(amount)} into round ${current}; wallet holds ${fmt(bal)}`);
+      if (bal < amount) {
+        if (!dry) throw new Error(`${sym}: wallet holds ${fmt(bal)}, needs ${fmt(amount)}`);
         console.log(`${TAG} ${sym}: WARNING wallet would be short (dry run continues)`);
       }
       const allowance = (await pub.readContract({ abi: erc20Abi, address: token, functionName: "allowance", args: [account.address, dep.mine] })) as bigint;
-      if (allowance < plan.total) await send(token, erc20Abi, "approve", [dep.mine, plan.total], `approve ${sym} ${fmt(plan.total)} to the mine`);
-      await send(dep.mine, roundMineAbi, "fund", [s, plan.total, BigInt(rounds)], `fund ${sym} ${fmt(plan.total)} × ${rounds} rounds`);
+      if (allowance < amount) await send(token, erc20Abi, "approve", [dep.mine, amount], `approve ${sym} ${fmt(amount)} to the mine`);
+      await send(dep.mine, roundMineAbi, "fund", [s, amount], `fund ${sym} ${fmt(amount)} into round ${current}`);
     }
   }
 
@@ -95,16 +104,12 @@ async function main() {
     console.log(`${TAG} vault reserve now ${formatUnits(after, udec)} USDG`);
   }
 
-  // Schedule: pot for the current and next 3 rounds per stock (pot = scheduled + rollover known so far).
-  console.log(`${TAG} pots (round ${current}..${current + 3}):`);
+  // The running round's pot per stock (funded so far + rollover), locked at its close.
+  console.log(`${TAG} round ${current} pot so far (closes in ${clock.secondsToClose}s):`);
   for (let s = 0; s < dep.stocks.length; s++) {
     const decimals = (await pub.readContract({ abi: erc20Abi, address: dep.stocks[s], functionName: "decimals" })) as number;
-    const pots: string[] = [];
-    for (let r = current; r <= current + 3; r++) {
-      const p = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "pot", args: [BigInt(r), s] })) as bigint;
-      pots.push(`r${r}=${formatUnits(p, decimals)}`);
-    }
-    console.log(`${TAG}   ${dep.symbols[s].padEnd(6)} ${pots.join("  ")}`);
+    const p = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "pot", args: [BigInt(current), s] })) as bigint;
+    console.log(`${TAG}   ${dep.symbols[s].padEnd(6)} ${formatUnits(p, decimals)}`);
   }
 }
 

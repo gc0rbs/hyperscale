@@ -6,17 +6,14 @@
  *   pnpm --filter @stock-miner/ops rounds-admin status
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin launch --token 0x… [--genesis next-hour] --yes   # pre-token deployments, once
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin halt [--yes]
- *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin unschedule --stock NVDA|0 --from-round N [--yes]
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin rescue [--yes]       # after halt
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
  */
 import { decodeEventLog, formatUnits, type Address } from "viem";
-import { catchUp, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
+import { catchUp, loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const TAG = "[rounds-admin]";
-const MAX_FUND_ROUNDS = 720; // RoundMine.MAX_FUND_ROUNDS
-const SCAN_BATCH = 24;
 
 async function main() {
   const cmd = process.argv[2];
@@ -44,7 +41,7 @@ async function main() {
   async function broadcast(label: string, address: Address, abi: typeof roundMineAbi, fn: string, args: unknown[] = []) {
     // Everything but poke/halt reverts with NotCaughtUp while boundaries are unrecorded (docs/13 §2):
     // poke first when broadcasting (a dry run only reports it, since the simulation would fail).
-    if (fn !== "halt" && fn !== "rescue") {
+    if (fn !== "halt" && fn !== "rescue" && fn !== "launch") {
       if (yes) await catchUp(pub, wallet, dep.mine, TAG);
       else if (now >= dep.genesis && closed < current) console.log(`${TAG} mine is ${current - closed} rounds behind; the real run pokes first`);
     }
@@ -77,21 +74,11 @@ async function main() {
     console.log(`${TAG} totalHash=${formatUnits(totalHash, 18)} rigs=${rigCount}`);
     for (let s = 0; s < dep.stocks.length; s++) {
       const pot = await read<bigint>("pot", [current, s]);
-      const nextPot = await read<bigint>("pot", [current + 1n, s]);
-      // Scheduled total from the next round on: scan in batches until a whole batch is empty (or 720 rounds).
-      let scheduledTotal = 0n;
-      let lastScheduled = -1;
-      for (let from = cur + 1; from <= cur + MAX_FUND_ROUNDS; from += SCAN_BATCH) {
-        const batch = await Promise.all(Array.from({ length: SCAN_BATCH }, (_, i) => read<bigint>("scheduled", [s, BigInt(from + i)])));
-        let any = false;
-        batch.forEach((v, i) => { if (v > 0n) { any = true; scheduledTotal += v; lastScheduled = from + i; } });
-        if (!any) break;
-      }
       const [bal, required] = await Promise.all([
         pub.readContract({ abi: erc20Abi, address: dep.stocks[s], functionName: "balanceOf", args: [dep.vault] }) as Promise<bigint>,
         readVault<bigint>("requiredOf", [BigInt(s)]),
       ]);
-      console.log(`${TAG} ${dep.symbols[s].padEnd(6)} pot r${cur}=${formatUnits(pot, decimals[s])} r${cur + 1}=${formatUnits(nextPot, decimals[s])} scheduled=${formatUnits(scheduledTotal, decimals[s])}${lastScheduled >= 0 ? ` (through round ${lastScheduled})` : ""} vault=${formatUnits(bal, decimals[s])} requiredOf=${formatUnits(required, decimals[s])}`);
+      console.log(`${TAG} ${dep.symbols[s].padEnd(6)} pot r${cur} so far=${formatUnits(pot, decimals[s])} vault=${formatUnits(bal, decimals[s])} requiredOf=${formatUnits(required, decimals[s])}`);
     }
     console.log(`${TAG} vault USDG reserve ${formatUnits(reserve, udec)}`);
     return;
@@ -100,20 +87,8 @@ async function main() {
   if (cmd === "halt") {
     requireKey(operator, "operator", "OPERATOR_KEY");
     if (halted) throw new Error("already halted");
-    console.log(`${TAG} HALT: the mine stops for good. No round closes after this (round ${cur} will never pay out); stakes come back in full via emergencyWithdraw; unclaimed pots and everything scheduled return to the operator through 'rounds-admin rescue'; claimed fragments stay redeemable. IRREVERSIBLE.`);
+    console.log(`${TAG} HALT: the mine stops for good. No round closes after this (round ${cur} will never pay out); stakes come back in full via emergencyWithdraw; the unclaimed and running pots return to the operator through 'rounds-admin rescue'; claimed fragments stay redeemable. IRREVERSIBLE.`);
     await broadcast("halt()", dep.mine, roundMineAbi, "halt");
-    return;
-  }
-
-  if (cmd === "unschedule") {
-    requireKey(operator, "operator", "OPERATOR_KEY");
-    const [s] = resolveStocks(arg("--stock"), dep.symbols);
-    const fromArg = arg("--from-round");
-    if (!fromArg) throw new Error("--from-round <N> is required");
-    const from = Number(fromArg);
-    if (now >= dep.genesis && from <= cur) throw new Error(`round ${from} has started (current round ${cur}); only rounds > ${cur} can be unscheduled`);
-    const { result } = await broadcast(`unschedule(${s} ${dep.symbols[s]}, fromRound=${from})`, dep.mine, roundMineAbi, "unschedule", [s, BigInt(from)]);
-    console.log(`${TAG} unschedule ${dep.symbols[s]} from round ${from}: ${fmt(s, result as bigint)} ${yes ? "moved" : "would move"} from the vault to the operator ${operator}`);
     return;
   }
 
@@ -179,12 +154,12 @@ async function main() {
       pub.readContract({ abi: erc20Abi, address: token, functionName: "decimals" }) as Promise<number>,
     ]);
     if (dec !== 18) throw new Error(`${sym} has ${dec} decimals; the mine expects 18`);
-    console.log(`${TAG} LAUNCH: token ${token} (${sym}) genesis ${genesis} (${new Date(genesis * 1000).toISOString()}, round 0 opens then). Both are fixed for good after this. Anything already scheduled pays from round 0.`);
+    console.log(`${TAG} LAUNCH: token ${token} (${sym}) genesis ${genesis} (${new Date(genesis * 1000).toISOString()}, round 0 opens then). Both are fixed for good after this. Anything already funded is in round 0's pot.`);
     await broadcast(`launch(${token}, ${genesis})`, dep.mine, roundMineAbi, "launch", [token, BigInt(genesis)]);
     return;
   }
 
-  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | unschedule --stock X --from-round N | rescue | pause | unpause  [--yes]");
+  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause  [--yes]");
 }
 
 main().catch((e: Error) => { console.error(`${TAG} failed:`, e.message ?? e); process.exit(1); });

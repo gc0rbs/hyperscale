@@ -264,29 +264,6 @@
   },
   {
     "type": "function",
-    "name": "release",
-    "inputs": [
-      {
-        "name": "id",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "requiredOf",
     "inputs": [
       {
@@ -439,31 +416,6 @@
   },
   {
     "type": "event",
-    "name": "Released",
-    "inputs": [
-      {
-        "name": "to",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "id",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Rescued",
     "inputs": [
       {
@@ -519,11 +471,6 @@
   {
     "type": "error",
     "name": "NotHalted",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotMine",
     "inputs": []
   },
   {

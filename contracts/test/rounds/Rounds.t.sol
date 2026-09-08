@@ -8,7 +8,7 @@ import {RoundMine} from "../../src/rounds/RoundMine.sol";
 import {RoundVault} from "../../src/rounds/RoundVault.sol";
 
 /// @dev docs/13 §2: rounds close on the clock, pots split by work share, 15-minute claims, rollover,
-///      scheduled funding, unschedule, halt and rescue.
+///      live funding locked at close, halt and rescue.
 contract RoundsTest is RoundTestBase {
     function test_round_clock() public {
         assertEq(mine.currentRound(), 0, "before genesis counts as round 0");
@@ -33,34 +33,31 @@ contract RoundsTest is RoundTestBase {
         assertEq(mine.currentRound(), 31);
     }
 
-    function test_fund_schedules_the_next_rounds() public {
+    function test_fund_lands_in_the_running_round_and_locks_at_close() public {
         vm.warp(GENESIS + 10);
-        stocks[0].mint(feeWallet, 25e18);
+        stocks[0].mint(feeWallet, 3e18);
         vm.startPrank(feeWallet);
-        stocks[0].approve(address(mine), 25e18);
-        uint256 per = uint256(25e18) / 24;
+        stocks[0].approve(address(mine), 3e18);
         vm.expectEmit(true, true, true, true);
-        emit IRoundMine.Funded(feeWallet, 0, per * 24, 1, 24);
-        mine.fund(0, 25e18, 24); // 25 / 24 does not divide: 24 × 1.0416 is pulled, the rest stays
+        emit IRoundMine.Funded(feeWallet, 0, 1e18, 0);
+        mine.fund(0, 1e18);
+        assertEq(mine.pot(0, 0), 1e18, "in the running round at once");
+        assertEq(stocks[0].balanceOf(address(vault)), 1e18);
+        // Fees keep arriving during the hour; every deposit grows the same pot.
+        vm.warp(GENESIS + 1800);
+        mine.fund(0, 2e18);
         vm.stopPrank();
-        assertEq(mine.scheduled(0, 0), 0, "the current round is never funded");
-        assertEq(mine.scheduled(0, 1), per, "per round");
-        assertEq(mine.scheduled(0, 24), mine.scheduled(0, 1));
-        assertEq(mine.scheduled(0, 25), 0);
-        assertEq(
-            stocks[0].balanceOf(address(vault)),
-            mine.scheduled(0, 1) * 24,
-            "exactly the scheduled amount moved"
-        );
-        assertEq(stocks[0].balanceOf(feeWallet), 25e18 - mine.scheduled(0, 1) * 24);
-        // Anyone can fund; a second deposit adds to the same rounds.
-        stocks[0].mint(address(this), 24e18);
-        stocks[0].approve(address(mine), 24e18);
-        mine.fund(0, 24e18, 24);
-        assertEq(mine.scheduled(0, 1), per + 1e18);
-        assertEq(mine.pot(1, 0), mine.scheduled(0, 1), "next round's pot is what is scheduled");
-        vm.expectRevert(abi.encodeWithSelector(IRoundMine.InvalidParams.selector, "rounds"));
-        mine.fund(0, 1e18, 0);
+        assertEq(mine.pot(0, 0), 3e18);
+        vm.expectRevert(abi.encodeWithSelector(IRoundMine.InvalidParams.selector, "amount"));
+        mine.fund(0, 0);
+        // Locked at the close: the next deposit belongs to round 1.
+        closeRound(0);
+        assertEq(mine.pot(0, 0), 3e18, "final");
+        stocks[0].mint(address(this), 1e18);
+        stocks[0].approve(address(mine), 1e18);
+        mine.fund(0, 1e18); // anyone may fund
+        assertEq(mine.pot(0, 0), 3e18, "the closed round did not move");
+        assertEq(mine.pot(1, 0), 1e18 + 3e18, "round 1: new funding plus the whole unclaimed round 0");
     }
 
     function test_work_share_claim_and_window() public {
@@ -70,7 +67,6 @@ contract RoundsTest is RoundTestBase {
         uint256 a = activateRig(ann, 1_000e18);
         uint256 b = activateRig(bo, 3_000e18);
         assertEq(mine.totalHash(), 4_000e18);
-        fundRounds(4e18, 24); // 4 tokens of each stock per round from round 1
         assertEq(mine.pot(0, 0), 0, "round 0 was never funded");
 
         closeRound(0);
@@ -82,6 +78,7 @@ contract RoundsTest is RoundTestBase {
         vm.expectRevert(IRoundMine.NothingToClaim.selector);
         mine.claim(a);
 
+        fundNow(4e18); // 4 tokens of each stock arrive during round 1
         closeRound(1);
         assertEq(mine.pot(1, 0), 4e18);
         uint256[] memory q = mine.claimable(a);
@@ -105,8 +102,10 @@ contract RoundsTest is RoundTestBase {
         vm.expectRevert(IRoundMine.ClaimWindowClosed.selector);
         mine.claim(b);
         assertEq(mine.claimable(b)[0], 0, "nothing claimable outside the window");
-        // ...and bo's 3 NVDA roll into round 2's pot.
-        assertEq(mine.pot(2, 0), 4e18 + 3e18, "scheduled plus rollover");
+        // ...and bo's 3 NVDA roll into round 2's pot, on top of what arrives during round 2.
+        assertEq(mine.pot(2, 0), 3e18, "rollover so far");
+        fundNow(4e18);
+        assertEq(mine.pot(2, 0), 4e18 + 3e18, "funded plus rollover");
         closeRound(2);
         assertEq(mine.pot(2, 0), 7e18, "final at close");
         vm.prank(bo);
@@ -116,13 +115,18 @@ contract RoundsTest is RoundTestBase {
     }
 
     function test_rollover_when_nobody_mines_and_dust_stays_in_the_pot() public {
-        fundRounds(1e18, 10); // before genesis: rounds 0..9
-        assertEq(mine.scheduled(0, 0), 1e18, "round 0 can be funded before genesis");
-        // No rigs: rounds 0..3 roll their pots forward untouched.
+        fundNow(1e18); // before genesis: lands in round 0
+        assertEq(mine.pot(0, 0), 1e18, "round 0 can be funded before genesis");
+        // No rigs: one token arrives every round and rounds 0..3 roll their pots forward untouched.
+        for (uint64 r = 1; r <= 3; ++r) {
+            vm.warp(roundStart(r));
+            fundNow(1e18);
+        }
         closeRound(3);
         assertEq(mine.roundWork(2), 0);
         assertEq(mine.pot(3, 0), 4e18);
-        assertEq(mine.pot(4, 0), 5e18, "keeps accumulating while nobody mines: 1 scheduled + 4 rolled");
+        fundNow(1e18); // round 4's own fees
+        assertEq(mine.pot(4, 0), 5e18, "keeps accumulating while nobody mines: 1 funded + 4 rolled");
         // Three rigs with awkward shares: 1/3 each of 5 tokens; floors leave dust in the pot.
         fundPlayer(ann, 1_000e18);
         fundPlayer(bo, 1_000e18);
@@ -144,15 +148,15 @@ contract RoundsTest is RoundTestBase {
         uint256 paid = each * (WAD / FPT) * 3;
         assertEq(mine.claimedOf(4, 0), paid);
         assertLt(paid, 5e18, "dust stays");
+        fundNow(1e18);
         assertEq(mine.pot(5, 0), 1e18 + (5e18 - paid), "and rolls forward");
     }
 
     function test_mid_round_activation_exit_fee_and_late_claim_after_exit() public {
         fundPlayer(ann, 1_000e18);
         fundPlayer(bo, 1_000e18);
-        vm.warp(GENESIS); // round 0 is running: the schedule starts at round 1
-        fundRounds(2e18, 10);
         vm.warp(roundStart(1));
+        fundNow(2e18);
         uint256 a = activateRig(ann, 1_000e18);
         vm.warp(roundStart(1) + 1800); // bo joins half-way through
         uint256 b = activateRig(bo, 1_000e18);
@@ -229,37 +233,16 @@ contract RoundsTest is RoundTestBase {
         assertEq(mine.rigHash(a), 14_000e18 + 21_000e18);
     }
 
-    function test_unschedule_only_rounds_that_have_not_started() public {
-        vm.warp(roundStart(3));
-        fundRounds(1e18, 5); // rounds 4..8
-        vm.prank(ann);
-        vm.expectRevert(IRoundMine.NotOperator.selector);
-        mine.unschedule(0, 4);
-        vm.expectRevert(IRoundMine.RoundStarted.selector);
-        mine.unschedule(0, 3);
-        vm.warp(roundStart(5) + 1);
-        uint256 before = stocks[0].balanceOf(address(this));
-        vm.expectEmit(true, true, true, true);
-        emit IRoundMine.Unscheduled(0, 6, 3e18);
-        uint256 out = mine.unschedule(0, 6);
-        assertEq(out, 3e18);
-        assertEq(stocks[0].balanceOf(address(this)) - before, 3e18, "released from the vault");
-        assertEq(mine.scheduled(0, 5), 1e18, "the running round keeps its pot");
-        assertEq(mine.scheduled(0, 6), 0);
-        assertEq(mine.scheduled(0, 8), 0);
-        assertEq(mine.unschedule(0, 6), 0, "repeat finds nothing");
-    }
-
     function test_halt_returns_stakes_and_rescues_everything_unclaimed() public {
         fundPlayer(ann, 1_000e18);
-        vm.warp(GENESIS); // round 0 is running: the schedule starts at round 1
-        fundRounds(2e18, 10);
         vm.warp(roundStart(1));
+        fundNow(2e18);
         uint256 a = activateRig(ann, 1_000e18);
         closeRound(1);
         vm.prank(ann);
         mine.claim(a); // 2 NVDA worth of fragments, backed by the vault
         vm.warp(roundStart(2) + 100);
+        fundNow(18e18); // fees keep arriving into round 2 until the halt
         vm.expectRevert(IRoundVault.NotHalted.selector);
         vault.rescue();
         vm.prank(ann);
@@ -319,10 +302,9 @@ contract RoundsTest is RoundTestBase {
 
     function test_redeem_and_cash_out_any_time() public {
         fundPlayer(ann, 1_000e18);
-        vm.warp(GENESIS); // round 0 is running: the schedule starts at round 1
-        fundRounds(2e18, 3);
         fundReserve(10_000e6);
         vm.warp(roundStart(1));
+        fundNow(2e18);
         uint256 a = activateRig(ann, 1_000e18);
         closeRound(1);
         vm.prank(ann);
@@ -375,9 +357,8 @@ contract RoundsTest is RoundTestBase {
 
     function test_claim_all_covers_every_rig_of_the_caller() public {
         fundPlayer(ann, 2_000e18);
-        vm.warp(GENESIS); // round 0 is running: the schedule starts at round 1
-        fundRounds(2e18, 3);
         vm.warp(roundStart(1));
+        fundNow(2e18);
         activateRig(ann, 1_000e18);
         activateRig(ann, 1_000e18);
         closeRound(1);
@@ -390,6 +371,7 @@ contract RoundsTest is RoundTestBase {
         // A wallet with a rig that did no work in the round, and one that did, claims without revert.
         fundPlayer(bo, 1_000e18);
         vm.warp(roundStart(2) + 3599);
+        fundNow(2e18);
         vm.prank(bo);
         mine.activate(1_000e18);
         closeRound(2);
@@ -402,14 +384,16 @@ contract RoundsTest is RoundTestBase {
         fundPlayer(ann, 1_000e18);
         vm.warp(roundStart(1));
         uint256 a = activateRig(ann, 1_000e18);
-        fundRounds(1e18, 300); // rounds 2..301
+        fundNow(1e18); // into round 1
         // Nobody touches the mine for 250 rounds.
         vm.warp(roundStart(251) + 10);
         vm.prank(ann);
         vm.expectRevert(IRoundMine.NotCaughtUp.selector);
         mine.upgradeGpu(a);
+        stocks[0].mint(address(this), 1e18);
+        stocks[0].approve(address(mine), 1e18);
         vm.expectRevert(IRoundMine.NotCaughtUp.selector);
-        mine.fund(0, 1e18, 1);
+        mine.fund(0, 1e18);
         uint256 gas = gasleft();
         mine.poke();
         gas -= gasleft();
@@ -425,12 +409,12 @@ contract RoundsTest is RoundTestBase {
         assertEq(mine.closedRounds(), 251, "caught up");
         // Every round in between was recorded with the hash it really had, and the pots chained.
         assertEq(mine.roundWork(100), 1_000e18 * uint256(L));
-        assertEq(mine.pot(250, 0), 249e18, "249 funded rounds rolled into round 250, nothing claimed");
+        assertEq(mine.pot(250, 0), 1e18, "round 1's pot rolled all the way to round 250, nothing claimed");
         vm.prank(ann);
         mine.upgradeGpu(a);
         // The rig can only claim the latest closed round (250); the rest rolled over.
         uint256[] memory got = mine.claimable(a);
-        assertEq(got[0], 249_000_000, "the whole accumulated pot, one rig");
+        assertEq(got[0], 1_000_000, "the whole rolled pot, one rig");
     }
 
     /// @dev Client requirement 2026-09-08: deploy before the token exists, go live with one transaction.
@@ -449,9 +433,9 @@ contract RoundsTest is RoundTestBase {
         stocks[0].mint(feeWallet, 10e18);
         vm.startPrank(feeWallet);
         stocks[0].approve(address(m), 10e18);
-        m.fund(0, 10e18, 10);
+        m.fund(0, 10e18);
         vm.stopPrank();
-        assertEq(m.scheduled(0, 0), 1e18);
+        assertEq(m.pot(0, 0), 10e18, "into round 0");
         // Nothing else does.
         fundPlayer(ann, 1_000e18);
         vm.prank(ann);
@@ -481,10 +465,10 @@ contract RoundsTest is RoundTestBase {
         uint256 a = m.activate(1_000e18);
         vm.warp(GENESIS + L);
         m.poke();
-        assertEq(m.pot(0, 0), 1e18);
+        assertEq(m.pot(0, 0), 10e18);
         vm.prank(ann);
         uint256[] memory got = m.claim(a);
-        assertEq(got[0], 1_000_000);
+        assertEq(got[0], 10_000_000);
         // A mine deployed with only one of the pair set is refused.
         p = defaultParams();
         p.rig = address(0);

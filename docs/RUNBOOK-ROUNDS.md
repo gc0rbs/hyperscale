@@ -11,7 +11,7 @@ nights, every irreversible action confirmed with its exact parameters, one opera
 
 | Role | Env var | Powers |
 |---|---|---|
-| Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `unschedule`, `halt`, vault `rescue` |
+| Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `launch` (once), `halt`, vault `rescue` |
 | Fee wallet | `FUNDER_KEY` | receives the Pons trading tax, swaps it into the four Stock Tokens, calls `fund`. Any wallet may fund |
 | Guardian | `GUARDIAN_KEY` | the `treasury` address: `pause`, `unpause`. Receives activation and exit fees |
 | Keeper | `KEEPER_KEY` | its own funded key; sends `poke()` at round boundaries. Alerts below `KEEPER_MIN_ETH` |
@@ -76,21 +76,22 @@ forge verify-contract <mine> src/rounds/RoundMine.sol:RoundMine --chain 4663 --v
 Then set the hosting variables from the file (`NEXT_PUBLIC_ROUNDS_*`, `ROUNDS_*`; `app/.env.example`,
 `ops/chains/README.md`) and confirm `/api/health` and the served mine address before genesis.
 
-## 3. Fund the pots (the fee wallet, daily)
+## 3. Fund the pots (the fee wallet, as fees arrive)
 
 ```
-FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount <tokens per stock> --rounds 24 --dry-run
-FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount <tokens per stock> --rounds 24
-FUNDER_KEY=0x… pnpm fund-rounds --reserve 500            # USDG for cash-outs, when low
+FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount 0.5 --dry-run        # into the running round
+FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount balance --loop 300    # sweep the wallet into the pot every 5 min
+FUNDER_KEY=0x… pnpm fund-rounds --reserve 500                              # USDG for cash-outs, when low
 ```
 
-Funding starts with the round after the current one and never changes a running round's pot. Anyone
-can fund, so a second wallet topping up is fine. The Pons tax arrives as ETH/WETH or $RIG; the swap
-into Stock Tokens is a Robinhood-side action outside this repo, done by the fee wallet holder. What
-is not swapped stays with them; the mine only ever sees Stock Tokens.
+Funding lands in the running round's pot the moment it is sent and the pot is locked at the close, so
+the first hour pays out whatever came in during it. There is no calendar: run `--loop` from the fee
+wallet for as long as the project runs, two hours or two weeks. Anyone can fund, so a second wallet
+topping up is fine. The Pons tax arrives as ETH; the swap into the four Stock Tokens is a
+Robinhood-side action outside this repo, done by the fee wallet holder (automating it is the next
+step once the fee wallet is known). The mine only ever sees Stock Tokens.
 
-Sizing: the pot per hour is what was funded per round plus whatever rolled over. `rounds-watch` warns
-six rounds before the schedule runs out and when the next round has nothing scheduled.
+`rounds-watch` warns when a round is past its half-way point with no fees in yet.
 
 ## 4. Keep and watch
 
@@ -110,21 +111,19 @@ Normal: `[rounds-keeper] ok round=N closes in ~Ns` and `[rounds-watch] INFO roun
 
 | Alert | Meaning | Response |
 |---|---|---|
-| `nothing scheduled for round N+1` | the schedule ran out | fund (§3); the pot for that hour is only the rollover and the site says so |
-| `schedule runs out in ≤ 6 rounds` | same, early | fund |
+| `no fees in yet: round N pot is zero` | half the round gone, nothing funded | check the fee wallet and the funding loop (§3); the round pays only its rollover otherwise |
 | `USDG reserve below 1,000` | cash-out reserve thin | `fund-rounds --reserve`; in-kind redemption is unaffected |
 | `totalHash == 0 for over an hour` | nobody mining | pots roll over; comms |
 | `mine is PAUSED` | guardian paused | confirm it was intentional; unpause within the grace period (30 min) or players halt the mine with `emergencyWithdraw` |
 | `mine is HALTED` | operator halt or pause past grace | irreversible; §6 |
 | keeper `low gas` | keeper key below threshold | top it up; rounds still close on the next player transaction |
 
-## 6. Stop: halt, rescue, unschedule
+## 6. Stop: halt and rescue
 
-All three are the operator's and are stated on the site (DECISIONS 2026-09-08). `rounds-admin`
-prints the exact effect and refuses to broadcast without `--yes`.
+Both are the operator's and are stated on the site (DECISIONS 2026-09-08). `rounds-admin` prints the
+exact effect and refuses to broadcast without `--yes`.
 
 ```
-OPERATOR_KEY=0x… pnpm rounds-admin unschedule --stock NVDA --from-round <N>   # take back rounds not yet started
 OPERATOR_KEY=0x… pnpm rounds-admin halt --yes                                 # stop for good
 OPERATOR_KEY=0x… pnpm rounds-admin rescue --yes                               # after halt: pool and reserve back, minus fragment backing
 ```
@@ -137,7 +136,7 @@ Halt: no round closes after it, no claim window opens, players recover their ful
 
 1. Anvil rehearsal (§1) passed on this commit, including the hosting path.
 2. Deployment file committed; contracts verified; hosting variables set; served page shows the mine.
-3. Fee wallet funded ≥ 24 rounds; reserve ≥ a day of expected cash-outs.
+3. Fee wallet holds Stock Tokens and the funding loop is running; reserve sized to expected cash-outs.
 4. Keeper and watcher running on their own keys with alerts wired; keeper ETH ≥ 0.05.
 5. One operator on the Railway project and the branch for the day; nobody else pushes or edits.
-6. Site notices live: fee-funded pots, operator halt / unschedule, 15-minute claims and rollover.
+6. Site notices live: fee-funded pots, operator halt, 15-minute claims and rollover.

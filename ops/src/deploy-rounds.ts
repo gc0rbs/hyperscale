@@ -3,7 +3,7 @@
  * each other in their constructors, so the three CREATE addresses are predicted from the deployer's
  * nonce first. One transaction at a time (the public Robinhood RPC rate-limits Forge's simulation).
  *
- *   # Anvil demo: mock token set, funded schedule, players allowlisted, genesis in two minutes
+ *   # Anvil demo: mock token set, round 0 funded, players allowlisted, genesis in two minutes
  *   pnpm --filter @stock-miner/ops deploy-rounds demo [--round-seconds 3600] [--claim-seconds 900]
  *
  *   # Mainnet: token set, adapters and treasury from the chain profile; genesis = next full hour
@@ -217,15 +217,17 @@ async function main() {
   if (stage === "demo") {
     // Allowlist the vault and the Anvil accounts on every mock stock, fund a day of rounds, top up the reserve.
     const accounts = ANVIL_KEYS.map((k) => privateKeyToAccount(k).address);
-    const perRound = parseEther(process.env.DEMO_POT ?? "1");
-    const rounds = Number(process.env.DEMO_ROUNDS ?? 48);
+    // Round 0's pot: DEMO_POT of each stock, funded now (fees land in the running round, docs/13 §2).
+    // The deployer keeps DEMO_WALLET of each stock to fund later rounds by hand or with fund-rounds --loop.
+    const pot0 = parseEther(process.env.DEMO_POT ?? "1");
+    const keep = parseEther(process.env.DEMO_WALLET ?? "47");
     for (const s of stocks) {
       await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [vault, true]);
       for (const a of accounts) await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [a, true]);
-      await send("MockStockToken.sol", "MockStockToken", s, "mint", [account.address, perRound * BigInt(rounds)]);
-      await send("MockStockToken.sol", "MockStockToken", s, "approve", [mine, perRound * BigInt(rounds)]);
+      await send("MockStockToken.sol", "MockStockToken", s, "mint", [account.address, pot0 + keep]);
+      await send("MockStockToken.sol", "MockStockToken", s, "approve", [mine, pot0 + keep]);
     }
-    for (let i = 0; i < 4; i++) await send("RoundMine.sol", "RoundMine", mine, "fund", [i, perRound * BigInt(rounds), BigInt(rounds)]);
+    for (let i = 0; i < 4; i++) await send("RoundMine.sol", "RoundMine", mine, "fund", [i, pot0]);
     await send("MockERC20.sol", "MockERC20", usdc, "mint", [account.address, 50_000n * 10n ** 6n]);
     await send("MockERC20.sol", "MockERC20", usdc, "approve", [vault, 50_000n * 10n ** 6n]);
     await send("RoundVault.sol", "RoundVault", vault, "topUpReserve", [50_000n * 10n ** 6n]);

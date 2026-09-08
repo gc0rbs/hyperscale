@@ -12,8 +12,8 @@ import {IStockFragments} from "../interfaces/IStockFragments.sol";
 import {IEligibility, IPriceOracle} from "../interfaces/IRedemptionVault.sol";
 
 /// @title RoundVault – holds the round mine's Stock Tokens and USDG reserve (docs/13 §2)
-/// @notice Stock arrives through `RoundMine.fund`, leaves through redemption, unscheduling and, once
-///         the mine is halted, `rescue`. Fragments redeem at any time; there is no window. Oracle use
+/// @notice Stock arrives through `RoundMine.fund`, leaves through redemption and, once the mine is
+///         halted, `rescue`. Fragments redeem at any time; there is no window. Oracle use
 ///         is confined to `cashOut`.
 contract RoundVault is IRoundVault, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -69,13 +69,6 @@ contract RoundVault is IRoundVault, ReentrancyGuard {
         maxPriceAge = c.maxPriceAge;
         _stocks = c.stocks;
         _redeemed = new uint256[](c.stocks.length);
-    }
-
-    /// @inheritdoc IRoundVault
-    function release(uint256 id, address to, uint256 amount) external nonReentrant {
-        if (msg.sender != mine) revert NotMine();
-        IERC20(_stocks[id]).safeTransfer(to, amount);
-        emit Released(to, id, amount);
     }
 
     /// @inheritdoc IRoundVault

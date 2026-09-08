@@ -14,10 +14,10 @@ import {IStockFragments} from "../interfaces/IStockFragments.sol";
 /// @title RoundMine – the continuous mine with hourly rounds (docs/13-ROUNDS.md)
 /// @notice Rounds close on the clock. Each round's pot per stock is split among rigs by the exact
 ///         work (hash × seconds) they did in that round, is claimable for `claimSeconds` after the
-///         close, and whatever is not claimed rolls into the next round's pot. Funding is a schedule
-///         of stock per round filled by anyone; the operator can take back only rounds that have not
-///         begun, or halt the mine (client decision 2026-09-08, stated on the site). Immutable: no
-///         setters, no upgrade path.
+///         close, and whatever is not claimed rolls into the next round's pot. Funding lands in the
+///         running round's pot as it arrives and is locked at the close; the operator's only powers
+///         are `launch` (once), `halt` and the vault's `rescue` after it (client decision
+///         2026-09-08, stated on the site). Immutable otherwise: no setters, no upgrade path.
 /// @dev Units: hash is 1e18-scaled; work is hash × whole seconds, so every product here is exact and
 ///      the sum of rig work in a closed round equals the round's work (docs/13 §4.4 without dust).
 contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
@@ -27,7 +27,6 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     uint256 internal constant WAD = 1e18;
     uint256 internal constant BPS = 10_000;
     uint256 internal constant STOCKS = 4;
-    uint64 internal constant MAX_FUND_ROUNDS = 720; // 30 days of hourly rounds
     /// @dev Rounds recorded per `_updateGlobal`. Each costs up to ~150k gas (six storage writes and an
     ///      event), so 48 is ~7M: under every block gas limit in use. A stretch longer than that (two
     ///      idle days at hourly rounds) is caught up with a few permissionless pokes. Actions revert
@@ -57,8 +56,8 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     mapping(uint64 => uint256) internal _roundWork;
     mapping(uint64 => uint256[4]) internal _pot;
     mapping(uint64 => uint256[4]) internal _claimed;
-    mapping(uint8 => mapping(uint64 => uint256)) internal _scheduled;
-    mapping(uint8 => uint64) internal _scheduledUntil; // highest round with a schedule, per stock
+    /// @dev Funding received since the last recorded close: the running round's own pot, before rollover.
+    uint256[4] internal _live;
     mapping(uint64 => uint256) public ocExpiring; // hash leaving at the end of round r
     bool public halted;
     uint64 public pausedAt;
@@ -138,44 +137,15 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     // ── funding ─────────────────────────────────────────────────────────────
 
     /// @inheritdoc IRoundMine
-    /// @dev `amount / rounds` per round, the remainder never leaves the funder. The schedule starts
-    ///      with the round after the current one so a running round's pot is never changed under the
-    ///      rigs mining it.
-    function fund(uint8 s, uint256 amount, uint64 rounds) external nonReentrant notHalted {
+    /// @dev Lands in the running round: `_sync` guarantees the mine is caught up, so `_live` always
+    ///      belongs to `currentRound()` and is folded into that round's pot at its close.
+    function fund(uint8 s, uint256 amount) external nonReentrant notHalted {
         if (s >= STOCKS) revert InvalidParams("stock");
-        if (rounds == 0 || rounds > MAX_FUND_ROUNDS) revert InvalidParams("rounds");
+        if (amount == 0) revert InvalidParams("amount");
         _sync();
-        uint256 per = amount / rounds;
-        if (per == 0) revert InvalidParams("amount");
-        // Before genesis round 0 has not started, so it can be funded; afterwards the running round's
-        // pot is never changed under the rigs mining it.
-        uint64 first = (_genesis == 0 || _now() < _genesis) ? 0 : currentRound() + 1;
-        for (uint64 r = first; r < first + rounds; ++r) {
-            _scheduled[s][r] += per;
-        }
-        if (first + rounds - 1 > _scheduledUntil[s]) _scheduledUntil[s] = first + rounds - 1;
-        IERC20(_p.stocks[s]).safeTransferFrom(msg.sender, vault, per * rounds);
-        emit Funded(msg.sender, s, per * rounds, first, rounds);
-    }
-
-    /// @inheritdoc IRoundMine
-    function unschedule(uint8 s, uint64 fromRound)
-        external
-        nonReentrant
-        onlyOperator
-        returns (uint256 amount)
-    {
-        if (s >= STOCKS) revert InvalidParams("stock");
-        _sync();
-        if (_genesis != 0 && _now() >= _genesis && fromRound <= currentRound()) revert RoundStarted();
-        uint64 until = _scheduledUntil[s];
-        for (uint64 r = fromRound; r <= until; ++r) {
-            amount += _scheduled[s][r];
-            delete _scheduled[s][r];
-        }
-        if (until >= fromRound) _scheduledUntil[s] = fromRound - 1;
-        if (amount > 0) IRoundVault(vault).release(s, operator, amount);
-        emit Unscheduled(s, fromRound, amount);
+        _live[s] += amount;
+        IERC20(_p.stocks[s]).safeTransferFrom(msg.sender, vault, amount);
+        emit Funded(msg.sender, s, amount, currentRound());
     }
 
     // ── player actions ──────────────────────────────────────────────────────
@@ -406,21 +376,13 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     function pot(uint64 r, uint8 s) public view returns (uint256 p) {
         if (r < _closed) return _pot[r][s];
-        // Not closed yet: scheduled amounts back to the last recorded round (no claims on unclosed
-        // rounds), plus that round's unclaimed remainder.
-        for (uint64 k = r; k >= _closed; --k) {
-            p += _scheduled[s][k];
-            if (k == 0) return p;
-        }
+        // Running (or later) round: funded so far plus the last recorded round's unclaimed remainder.
+        p = _live[s];
         if (_closed > 0) p += _pot[_closed - 1][s] - _claimed[_closed - 1][s];
     }
 
     function claimedOf(uint64 r, uint8 s) external view returns (uint256) {
         return _claimed[r][s];
-    }
-
-    function scheduled(uint8 s, uint64 r) external view returns (uint256) {
-        return _scheduled[s][r];
     }
 
     function rigs(uint256 rigId) external view returns (Rig memory) {
@@ -488,7 +450,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     // ── internal: global settlement ─────────────────────────────────────────
 
     /// @dev Records every round boundary between `_lastTime` and now: the round's work, its pot
-    ///      (scheduled + the previous round's unclaimed remainder, final because that round's claim
+    ///      (funded during it + the previous round's unclaimed remainder, final because that round's claim
     ///      window ended before this one closed) and the overclock hash that expires with it. Bounded
     ///      by the rounds elapsed since the last transaction; the keeper keeps it to one.
     function _updateGlobal() internal {
@@ -508,7 +470,8 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
             delete ocExpiring[r];
             uint256[] memory p = new uint256[](STOCKS);
             for (uint8 s; s < STOCKS; ++s) {
-                uint256 v = _scheduled[s][r];
+                uint256 v = _live[s];
+                if (v > 0) _live[s] = 0; // funding lands in the first round closed by this call
                 if (r > 0) v += _pot[r - 1][s] - _claimed[r - 1][s];
                 if (v > 0) _pot[r][s] = v; // an empty pot needs no write
                 p[s] = v;

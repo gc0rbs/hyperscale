@@ -346,3 +346,9 @@ identifiers, params and accounting are unchanged. Development continues in `gc0r
   can be staked without a token), and the site shows "Not live yet" until then. Rationale: the mine
   must be live minutes after the Pons launch, and the retro showed that doing deployment, hosting
   and funding on the night is what breaks.
+- **Fees land in the running round, locked at the close (client decision, same day).** The first
+  design scheduled funding into future rounds so a displayed pot could never shrink. The client
+  pointed out that projects run for hours to days, never on a daily calendar, and that fees need
+  20-30 minutes to accrue, so a next-round schedule would leave the first round empty. `fund` now
+  adds to the current pot at once; the pot is final at the close; there is no schedule and no
+  `unschedule`. The operator's remaining powers are `launch` (once) and `halt`.

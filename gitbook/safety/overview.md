@@ -20,8 +20,7 @@ This section is the plain-language version of the guarantees the contracts enfor
 
 | Power | Who | What it means for you |
 | --- | --- | --- |
-| **Halt the mine** | Operator, any time | No further round closes, no claim window opens. Your deposit comes back in full. Fragments you already claimed stay redeemable. Unclaimed pots and everything scheduled return to the operator |
-| **Unschedule funding** | Operator, any time | Only rounds that have not started. The running round's pot never changes under you |
+| **Halt the mine** | Operator, any time | No further round closes, no claim window opens. Your deposit comes back in full. Fragments you already claimed stay redeemable. The unclaimed and running pots return to the operator |
 | **Pause** | Treasury key | Blocks actions for up to the grace period; the clock keeps running. Past the grace period players halt it themselves |
 
 The team is publicly known and these powers are stated here and on the site. They exist so a broken launch can be unwound in minutes instead of leaving money locked, which is what happened on 2026-09-05.
@@ -30,7 +29,7 @@ The team is publicly known and these powers are stated here and on the site. The
 
 | Item | Who | What if it fails |
 | --- | --- | --- |
-| Funding the pots | The team's fee wallet | A round with nothing scheduled pays only the rollover; the site shows it |
+| Funding the pots | The team's fee wallet | A round with no fees in pays only the rollover; the site shows it |
 | Chainlink price feeds | Chainlink | Cash-out pauses on a stale price (four-day cap covers weekends). In-kind redemption is unaffected |
 | Robinhood Stock Tokens | Robinhood | Issued and priced by Robinhood; no ownership or voting rights in the underlying company |
 | The chain's sequencer | Robinhood Chain | If the chain stalls you cannot act; work keeps accruing by timestamp when it resumes |
