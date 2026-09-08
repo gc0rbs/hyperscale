@@ -98,6 +98,8 @@
   "redemptionDays": 30,
   "cashOutFeeBps": 100,
   "pauseGraceSeconds": 1800,
+  "rescueWindowSeconds": 86400,
+  "maxPriceAgeSeconds": 345600,
   "usdcReserveShareBps": 5000,
   "transfersEnabled": false,
   "treasury": "0x0000000000000000000000000000000000000000",
