@@ -28,6 +28,12 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     uint256 internal constant BPS = 10_000;
     uint256 internal constant STOCKS = 4;
     uint64 internal constant MAX_FUND_ROUNDS = 720; // 30 days of hourly rounds
+    /// @dev Rounds recorded per `_updateGlobal`. Each costs up to ~150k gas (six storage writes and an
+    ///      event), so 48 is ~7M: under every block gas limit in use. A stretch longer than that (two
+    ///      idle days at hourly rounds) is caught up with a few permissionless pokes. Actions revert
+    ///      with `NotCaughtUp` until then, because past rounds must be recorded with the total hash
+    ///      they actually had.
+    uint64 public constant MAX_ROUNDS_PER_UPDATE = 48;
     /// @dev Upgrade spend is sent here: $RIG has no burn function, so the dead address is the burn.
     address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
@@ -116,6 +122,12 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         _updateGlobal();
     }
 
+    /// @dev Every state change that reads or moves hash, pots or schedules starts here.
+    function _sync() internal {
+        _updateGlobal();
+        if (!halted && _now() >= _genesis && _closed < currentRound()) revert NotCaughtUp();
+    }
+
     // ── funding ─────────────────────────────────────────────────────────────
 
     /// @inheritdoc IRoundMine
@@ -125,7 +137,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     function fund(uint8 s, uint256 amount, uint64 rounds) external nonReentrant notHalted {
         if (s >= STOCKS) revert InvalidParams("stock");
         if (rounds == 0 || rounds > MAX_FUND_ROUNDS) revert InvalidParams("rounds");
-        _updateGlobal();
+        _sync();
         uint256 per = amount / rounds;
         if (per == 0) revert InvalidParams("amount");
         // Before genesis round 0 has not started, so it can be funded; afterwards the running round's
@@ -147,7 +159,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         returns (uint256 amount)
     {
         if (s >= STOCKS) revert InvalidParams("stock");
-        _updateGlobal();
+        _sync();
         if (_now() >= _genesis && fromRound <= currentRound()) revert RoundStarted();
         uint64 until = _scheduledUntil[s];
         for (uint64 r = fromRound; r <= until; ++r) {
@@ -163,7 +175,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     function activate(uint256 amount) external nonReentrant whenNotPaused notHalted returns (uint256 rigId) {
-        _updateGlobal();
+        _sync();
         if (amount < _p.minStakeWeight) revert BelowMinStake();
         _rig.safeTransferFrom(msg.sender, address(this), amount);
         uint256 fee = (amount * _p.activationFeeBps) / BPS;
@@ -184,7 +196,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     function upgradeGpu(uint256 rigId) external nonReentrant whenNotPaused notHalted {
-        _updateGlobal();
+        _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
         uint8 tier = r.gpuTier;
@@ -208,7 +220,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     function upgradeCooling(uint256 rigId) external nonReentrant whenNotPaused notHalted {
-        _updateGlobal();
+        _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
         uint8 tier = r.coolingTier;
@@ -222,7 +234,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     /// @inheritdoc IRoundMine
     /// @dev Active until the end of round `current + ocRoundSpan`; buying another refreshes all.
     function overclock(uint256 rigId) external nonReentrant whenNotPaused notHalted {
-        _updateGlobal();
+        _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
         if (r.activeOc >= _p.maxActiveOc) revert MaxOverclocks();
@@ -251,7 +263,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         notHalted
         returns (uint256[] memory out)
     {
-        _updateGlobal();
+        _sync();
         Rig storage r = _owned(rigId);
         if (_closed == 0) revert NothingToClaim();
         if (_now() >= roundEnd(_closed - 1) + _W) revert ClaimWindowClosed();
@@ -262,7 +274,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     function claimAll() external nonReentrant whenNotPaused notHalted returns (uint256[] memory out) {
-        _updateGlobal();
+        _sync();
         out = new uint256[](STOCKS);
         uint256[] storage ids = _rigsOf[msg.sender];
         if (_closed == 0 || _now() >= roundEnd(_closed - 1) + _W) return out;
@@ -277,7 +289,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     function exit(uint256 rigId) external nonReentrant whenNotPaused notHalted {
-        _updateGlobal();
+        _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
         _removeHash(r);
@@ -353,14 +365,15 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         return 0;
     }
 
-    function pot(uint64 r, uint8 s) public view returns (uint256) {
+    function pot(uint64 r, uint8 s) public view returns (uint256 p) {
         if (r < _closed) return _pot[r][s];
-        // Not closed yet: scheduled plus the rollover chain back to the last recorded round.
-        uint256 p = _scheduled[s][r];
-        if (r == 0) return p;
-        uint64 prev = r - 1;
-        if (prev < _closed) return p + _pot[prev][s] - _claimed[prev][s];
-        return p + pot(prev, s); // an unclosed earlier round has no claims yet
+        // Not closed yet: scheduled amounts back to the last recorded round (no claims on unclosed
+        // rounds), plus that round's unclaimed remainder.
+        for (uint64 k = r; k >= _closed; --k) {
+            p += _scheduled[s][k];
+            if (k == 0) return p;
+        }
+        if (_closed > 0) p += _pot[_closed - 1][s] - _claimed[_closed - 1][s];
     }
 
     function claimedOf(uint64 r, uint8 s) external view returns (uint256) {
@@ -445,7 +458,9 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         if (t <= _lastTime) return;
         uint64 r = _closed;
         uint64 end = roundEnd(r);
-        while (end <= t) {
+        uint64 budget = MAX_ROUNDS_PER_UPDATE;
+        while (end <= t && budget > 0) {
+            --budget;
             _workAcc += totalHash * (end - _lastTime);
             _roundWork[r] = _workAcc;
             _workAcc = 0;
@@ -456,7 +471,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
             for (uint8 s; s < STOCKS; ++s) {
                 uint256 v = _scheduled[s][r];
                 if (r > 0) v += _pot[r - 1][s] - _claimed[r - 1][s];
-                _pot[r][s] = v;
+                if (v > 0) _pot[r][s] = v; // an empty pot needs no write
                 p[s] = v;
             }
             emit RoundClosed(r, _roundWork[r], p, totalHash);
@@ -464,6 +479,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
             end += _L;
         }
         _closed = r;
+        if (end <= t) return; // budget spent: the open segment is accrued once the loop catches up
         _workAcc += totalHash * (t - _lastTime);
         _lastTime = t;
     }

@@ -63,6 +63,8 @@ interface IRoundMine {
     error PauseGraceNotElapsed();
     error InvalidParams(string reason);
     error RoundStarted();
+    /// @dev More rounds elapsed than one call records (`MAX_ROUNDS_PER_UPDATE`): call `poke` first.
+    error NotCaughtUp();
 
     // ── events ──────────────────────────────────────────────────────────────
     event RigActivated(uint256 indexed rigId, address indexed owner, uint256 amount, uint256 fee);
@@ -80,8 +82,10 @@ interface IRoundMine {
     event MineHalted(uint64 at, address by);
 
     // ── permissionless maintenance ──────────────────────────────────────────
-    /// @notice Records every round boundary up to now (work, pot, overclock expiry). Anyone may call;
-    ///         correctness never depends on it.
+    /// @notice Records round boundaries up to now (work, pot, overclock expiry), at most
+    ///         `MAX_ROUNDS_PER_UPDATE` per call so a long idle stretch can never exceed the block gas
+    ///         limit; call again until `closedRounds() == currentRound()`. Anyone may call; every other
+    ///         state change requires the mine to be caught up.
     function poke() external;
 
     // ── funding ─────────────────────────────────────────────────────────────

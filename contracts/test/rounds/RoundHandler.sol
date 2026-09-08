@@ -188,7 +188,7 @@ contract RoundHandler is Test {
         address guardian = mine.params().treasury;
         vm.prank(guardian);
         try mine.pause() {}
-            catch {
+        catch {
             return;
         }
         dt = uint32(bound(dt, 1 minutes, 2 hours));

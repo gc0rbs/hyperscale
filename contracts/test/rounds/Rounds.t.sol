@@ -397,6 +397,41 @@ contract RoundsTest is RoundTestBase {
         assertGt(got[0], 0);
     }
 
+    function test_long_idle_stretch_catches_up_in_batches_and_blocks_actions_until_then() public {
+        fundPlayer(ann, 1_000e18);
+        vm.warp(roundStart(1));
+        uint256 a = activateRig(ann, 1_000e18);
+        fundRounds(1e18, 300); // rounds 2..301
+        // Nobody touches the mine for 250 rounds.
+        vm.warp(roundStart(251) + 10);
+        vm.prank(ann);
+        vm.expectRevert(IRoundMine.NotCaughtUp.selector);
+        mine.upgradeGpu(a);
+        vm.expectRevert(IRoundMine.NotCaughtUp.selector);
+        mine.fund(0, 1e18, 1);
+        uint256 gas = gasleft();
+        mine.poke();
+        gas -= gasleft();
+        assertEq(
+            mine.closedRounds(),
+            1 + mine.MAX_ROUNDS_PER_UPDATE(),
+            "rounds 0 was closed already; one batch more"
+        );
+        assertLt(gas, 8_000_000, "a full batch stays far under the block gas limit");
+        for (uint256 i; i < 6; ++i) {
+            mine.poke();
+        }
+        assertEq(mine.closedRounds(), 251, "caught up");
+        // Every round in between was recorded with the hash it really had, and the pots chained.
+        assertEq(mine.roundWork(100), 1_000e18 * uint256(L));
+        assertEq(mine.pot(250, 0), 249e18, "249 funded rounds rolled into round 250, nothing claimed");
+        vm.prank(ann);
+        mine.upgradeGpu(a);
+        // The rig can only claim the latest closed round (250); the rest rolled over.
+        uint256[] memory got = mine.claimable(a);
+        assertEq(got[0], 249_000_000, "the whole accumulated pot, one rig");
+    }
+
     function test_below_min_stake_and_rig_ownership() public {
         fundPlayer(ann, 1_000e18);
         vm.prank(ann);
