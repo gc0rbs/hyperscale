@@ -147,6 +147,19 @@
   },
   {
     "type": "function",
+    "name": "MAX_ROUNDS_PER_UPDATE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "activate",
     "inputs": [
       {
@@ -626,7 +639,7 @@
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "p",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1319,6 +1332,11 @@
   {
     "type": "error",
     "name": "MaxTier",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotCaughtUp",
     "inputs": []
   },
   {

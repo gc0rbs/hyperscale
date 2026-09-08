@@ -48,6 +48,13 @@ not claimed rolls into the next pot.
   time while the vault holds the stock; there is no redemption window. The vault always holds at least
   the stock behind every un-redeemed fragment plus every scheduled and unclaimed pot, because the only
   things that ever leave it are redemptions, cash-out-freed stock, unscheduling and a halt rescue.
+- **Catch-up.** Round boundaries are recorded by the first transaction after them, at most 48 per
+  call (`MAX_ROUNDS_PER_UPDATE`, ~7M gas) so an idle stretch can never exceed the block gas limit;
+  until the mine is caught up, every action except `poke` and `halt` reverts with `NotCaughtUp`, since
+  past rounds must be recorded with the hash they really had. The keeper pokes every hour so this
+  never shows in practice.
+- **Pause blocks claims too.** A pause inside a claim window can let it lapse; the share rolls into
+  the next pot, never to the operator.
 - **Halt.** The guardian (treasury key) can `pause`; players `emergencyWithdraw` after the grace period,
   which halts the mine for good. The operator can `halt()` at any time (client decision: they are a
   known team and the site says so). A halted mine never closes another round: stakes come back in full,
