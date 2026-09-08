@@ -110,6 +110,14 @@ describe("roundKeeperDecision", () => {
     expect(roundKeeperDecision({ ...base, lastPokedRound: 1 }).action).toBe("wait");
     expect(roundKeeperDecision({ ...base, lastPokedRound: 0 }).action).toBe("poke");
   });
+  it("keeps poking without delay while more than one round behind (48 boundaries per poke, docs/13 catch-up)", () => {
+    const lagging = { ...base, now: G + 100 * L + 1, currentRound: 100, closedRounds: 0, lastPokedRound: 100 };
+    const d = roundKeeperDecision(lagging);
+    expect(d.action).toBe("poke");
+    expect(d.sleepSec).toBe(1);
+    expect(d.reason).toMatch(/catching up: 100 rounds behind/);
+    expect(roundKeeperDecision({ ...lagging, closedRounds: 99 }).action).toBe("wait"); // back to one behind: settle delay + once-per-round apply
+  });
   it("waits when the close is recorded and shortens the sleep to land ~5s after the next boundary", () => {
     const d = roundKeeperDecision({ ...base, closedRounds: 1, now: G + 2 * L - 10 }, { intervalSec: 20, settleDelaySec: 5 });
     expect(d.action).toBe("wait");

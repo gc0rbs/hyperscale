@@ -14,7 +14,7 @@
  */
 import { formatUnits, parseUnits, type Address } from "viem";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
-import { fundSchedule, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi } from "./lib/rounds.js";
+import { catchUp, fundSchedule, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundsBehind, roundVaultAbi } from "./lib/rounds.js";
 
 const TAG = "[fund-rounds]";
 
@@ -37,6 +37,13 @@ async function main() {
 
   const halted = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "halted" })) as boolean;
   if (halted) throw new Error("mine is halted; fund would revert");
+  // fund reverts with NotCaughtUp while elapsed boundaries are unrecorded (docs/13 §2 "Catch-up").
+  if (dry) {
+    const { behind } = await roundsBehind(pub, dep.mine);
+    if (behind > 0) console.log(`${TAG} mine is ${behind} rounds behind; the real run would poke first`);
+  } else {
+    await catchUp(pub, wallet, dep.mine, TAG);
+  }
   const now = Number((await pub.getBlock()).timestamp);
   const current = Number((await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "currentRound" })) as bigint);
   const clock = roundClock(dep.genesis, dep.roundSeconds, dep.claimSeconds, now);

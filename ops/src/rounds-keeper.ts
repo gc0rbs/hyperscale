@@ -50,7 +50,8 @@ async function tick(): Promise<{ go: boolean; sleepSec: number }> {
   lastPokedRound = Number(currentRound);
   const closedAfter = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "closedRounds" })) as bigint;
   console.log(`[rounds-keeper] poke ${hash.slice(0, 10)} gas=${rcpt.gasUsed} closedRounds ${closedRounds}->${closedAfter} (${d.reason})`);
-  return { go: true, sleepSec: d.sleepSec };
+  // Still behind (more than MAX_ROUNDS_PER_UPDATE boundaries elapsed): go again at once.
+  return { go: true, sleepSec: closedAfter < currentRound ? 1 : d.sleepSec };
 }
 
 (async () => {

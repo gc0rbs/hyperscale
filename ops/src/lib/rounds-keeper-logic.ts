@@ -45,10 +45,17 @@ export function roundKeeperDecision(v: RoundKeeperView, o: RoundKeeperOptions = 
   const toNextPoke = c.roundEnd + o.settleDelaySec - v.now;
   const sleepSec = Math.max(1, Math.min(o.intervalSec, toNextPoke));
   if (v.now < v.genesis) return { action: "wait", reason: `genesis in ${v.genesis - v.now}s`, sleepSec, lowGas };
+  // More than one round behind (keeper was down): the contract records at most MAX_ROUNDS_PER_UPDATE
+  // (48) boundaries per call and every other action reverts with NotCaughtUp until then, so poke
+  // again right away, ignoring the settle delay and the once-per-round guard.
+  const behind = v.currentRound - v.closedRounds;
+  if (behind > 1) {
+    return { action: "poke", reason: `catching up: ${behind} rounds behind (closedRounds=${v.closedRounds}, currentRound=${v.currentRound}; 48 per poke)`, sleepSec: 1, lowGas };
+  }
   // A boundary has passed and the chain has not recorded it: poke, once we are past the settle delay
   // (a poke inside the delay is not wrong, only possibly early for a lagging block timestamp), and
   // at most once per round (a stale read right after our own poke must not send a second one).
-  if (v.closedRounds < v.currentRound) {
+  if (behind === 1) {
     const sinceBoundary = v.now - c.roundStart;
     if (sinceBoundary < o.settleDelaySec) {
       return { action: "wait", reason: `boundary ${sinceBoundary}s ago; poking in ${o.settleDelaySec - sinceBoundary}s`, sleepSec: o.settleDelaySec - sinceBoundary, lowGas };

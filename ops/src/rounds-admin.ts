@@ -10,7 +10,7 @@
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
  */
 import { decodeEventLog, formatUnits, type Address } from "viem";
-import { loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi } from "./lib/rounds.js";
+import { catchUp, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const TAG = "[rounds-admin]";
@@ -40,6 +40,12 @@ async function main() {
   const fmt = (s: number, v: bigint) => `${formatUnits(v, decimals[s])} ${dep.symbols[s]}`;
 
   async function broadcast(label: string, address: Address, abi: typeof roundMineAbi, fn: string, args: unknown[] = []) {
+    // Everything but poke/halt reverts with NotCaughtUp while boundaries are unrecorded (docs/13 §2):
+    // poke first when broadcasting (a dry run only reports it, since the simulation would fail).
+    if (fn !== "halt" && fn !== "rescue") {
+      if (yes) await catchUp(pub, wallet, dep.mine, TAG);
+      else if (now >= dep.genesis && closed < current) console.log(`${TAG} mine is ${current - closed} rounds behind; the real run pokes first`);
+    }
     // Simulate first so a revert is explained before anyone is asked to confirm.
     const sim = await pub.simulateContract({ abi, address, functionName: fn, args, account });
     if (!yes) {

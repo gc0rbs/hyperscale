@@ -41,6 +41,8 @@ async function tick() {
 
   if (halted) alert("page", "mine is HALTED");
   if (paused) alert("page", "mine is PAUSED");
+  const behind = now >= dep.genesis && !halted ? r - Number(closedRounds) : 0;
+  if (behind > 1) alert("warn", `mine is ${behind} rounds behind (closedRounds=${closedRounds}, currentRound=${r}); players' actions revert with NotCaughtUp until the keeper pokes`);
 
   const pots: string[] = [];
   let nextPotAllZero = true;

@@ -3,7 +3,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Address, Hex } from "viem";
+import type { Account, Address, Chain, Hex, PublicClient, Transport, WalletClient } from "viem";
 import { artifact } from "./artifacts.js";
 import { chainId, DEPLOYMENTS } from "./season.js";
 
@@ -58,6 +58,37 @@ export function loadRoundsDeployment(id = chainId()): RoundsDeployment {
 
 export const roundMineAbi = artifact("RoundMine.sol", "RoundMine").abi;
 export const roundVaultAbi = artifact("RoundVault.sol", "RoundVault").abi;
+
+/** Rounds elapsed but not recorded on chain (docs/13 §2 "Catch-up"); > 0 means every action but poke/halt reverts with NotCaughtUp. */
+export async function roundsBehind(pub: PublicClient, mine: Address): Promise<{ behind: number; currentRound: number; closedRounds: number }> {
+  const [cur, closed, halted, block] = await Promise.all([
+    pub.readContract({ abi: roundMineAbi, address: mine, functionName: "currentRound" }) as Promise<bigint>,
+    pub.readContract({ abi: roundMineAbi, address: mine, functionName: "closedRounds" }) as Promise<bigint>,
+    pub.readContract({ abi: roundMineAbi, address: mine, functionName: "halted" }) as Promise<boolean>,
+    pub.getBlock(),
+  ]);
+  const genesis = (await pub.readContract({ abi: roundMineAbi, address: mine, functionName: "params" }) as { genesis: bigint }).genesis;
+  const behind = halted || block.timestamp < genesis ? 0 : Number(cur - closed);
+  return { behind, currentRound: Number(cur), closedRounds: Number(closed) };
+}
+
+/**
+ * Pokes until every elapsed boundary is recorded (at most MAX_ROUNDS_PER_UPDATE = 48 per call), so the
+ * caller's next transaction does not revert with NotCaughtUp. Returns the number of pokes sent.
+ */
+export async function catchUp(pub: PublicClient, wallet: WalletClient<Transport, Chain, Account>, mine: Address, tag: string, maxPokes = 50): Promise<number> {
+  let pokes = 0;
+  for (;;) {
+    const { behind, currentRound, closedRounds } = await roundsBehind(pub, mine);
+    if (behind === 0) return pokes;
+    if (pokes >= maxPokes) throw new Error(`still ${behind} rounds behind after ${pokes} pokes`);
+    console.log(`${tag} mine is ${behind} round${behind === 1 ? "" : "s"} behind (closedRounds=${closedRounds}, currentRound=${currentRound}); poking first`);
+    const hash = await wallet.writeContract({ abi: roundMineAbi, address: mine, functionName: "poke" });
+    const r = await pub.waitForTransactionReceipt({ hash });
+    if (r.status !== "success") throw new Error(`poke reverted (${hash})`);
+    pokes++;
+  }
+}
 
 export interface RoundClock {
   /** round index at `now` (0 before genesis, like the contract) */
