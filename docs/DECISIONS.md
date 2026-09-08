@@ -321,3 +321,22 @@ Product renamed Stock Miner → **Hyperscale** (AI-compute fiction, `docs/12-REB
 The token stays **$RIG**: it launched on Pons on 2026-09-05, so only copy changes. Contract
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
+
+## 2026-09-08 – Post-launch rebuild: escape hatch, fee funding, hourly rounds (client decisions)
+
+- **24 h escape hatch on seasons.** The vault operator (the deployer) can `abort()` a season until
+  `openTime + rescueWindowSeconds` (24 h). The season is cancelled, every stake returns in full, every
+  fragment of it is void, and `RedemptionVault.rescue()` returns the whole pool and reserve to the
+  operator at once. An early close that honoured earnings was offered and declined: the client wants
+  the full pool back and will state the window on the site. Also shipped: `sweepUnmined()` at close,
+  `topUpReserve()`, and the cash-out staleness cap as a parameter (`maxPriceAgeSeconds`).
+- **The token address is per deployment, not settable.** Each season (and now the round mine) takes
+  `$RIG` at creation; the app reads addresses from the runtime environment. A token change is a new
+  deployment plus a variable edit, never a setter, because stakes are held in that token.
+- **Pools are funded by the Pons trading tax** (3%, possibly 5%), swapped into Stock Tokens by the
+  client and deposited as a stream, not from the client's own capital.
+- **Seasons are replaced by a continuous mine with hourly rounds** (`docs/13-ROUNDS.md`): the client
+  wants a payout every hour ("people need dopamine hits"). Each round's pot is split by work share,
+  claimable for 15 minutes, and anything unclaimed rolls into the next round. This relaxes two hard
+  rules on purpose (wall-clock rounds; per-round share instead of rig-independent rates); CLAUDE.md
+  is updated. The season contracts remain only for the live 2026-09-05 seasons.

@@ -696,3 +696,12 @@ Plan, in order:
    redemption, Pons-fee funding copy.
 4. Docs: CLAUDE.md hard rules (user decision), docs/05 §3/§6/§8, DECISIONS, RUNBOOK launch-night
    section (one operator, sheet, rehearsal, rescue), gitbook safety page, this log.
+
+## 2026-09-08 – Rounds (plan)
+
+Client decisions in DECISIONS (same date): hourly rounds, 15-minute claims, rollover, fee-stream funding.
+Plan: `specs/contracts/IRoundMine.sol`, `IRoundFragments.sol`, `IRoundVault.sol` first; then
+test-first in `contracts/test/rounds/` (unit: rounds close on the clock, work share, claim window,
+rollover, funding schedule, unschedule, halt; invariants 1–8 of docs/13 §4); then `contracts/src/rounds/`;
+then a deploy script, ops (`fund-rounds`, keeper that pokes at round boundaries, `halt`, `rescue`),
+app mine screen (countdown, live pot, your share, claim), docs and gitbook.

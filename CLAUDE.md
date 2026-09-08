@@ -7,10 +7,14 @@ This repo is **Hyperscale**, forked from `gc0rbs/stock-miner` on 2026-09-06. The
 AI-compute cluster (nodes, throughput, inference jobs, epochs, shards); see `docs/12-REBRAND-AI-INFERENCE.md`
 for the term map. Contract identifiers and the docs below still use the mining vocabulary on purpose.
 
-A progress-based virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake
-$RIG (a Pons-launched ERC-20; LP staking is off in v1) to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments across four
-reward blocks. Blocks are found by accumulated hash-work, not by time. The mine closes when block 4 is
-found. Spec set: `docs/01`–`09`, interfaces in `specs/contracts/`, params in `specs/params/`.
+A virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake $RIG (a
+Pons-launched ERC-20) to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments.
+**Since 2026-09-08 the mine is continuous with hourly rounds** (`docs/13-ROUNDS.md`, contracts in
+`contracts/src/rounds/`): each round's pot comes from the Pons fee stream, is split by work done in
+that hour, is claimable for 15 minutes, and rolls over if unclaimed. The season contracts
+(`SeasonMine` etc.) stay in the repo only because the 2026-09-05 mainnet seasons run out under them.
+Spec set: `docs/01`–`09` (season era), `docs/13` (rounds), interfaces in `specs/contracts/`, params in
+`specs/params/`.
 
 ## Source of truth, in order
 1. `specs/contracts/*.sol` – interfaces. Implementations must match them; change the interface first.
@@ -22,14 +26,15 @@ The spec is not gospel. If implementing reveals a flaw, fix the spec **and** the
 commit, and add a dated entry to `docs/DECISIONS.md` saying what changed and why.
 
 ## Hard rules (never relax without an explicit user decision)
-- Season contracts are immutable: no proxies, no parameter setters, no difficulty adjustment, no
-  admin power beyond `pause`.
-- No reward may accrue by wall-clock time. Everything is work / shifts. `maxDuration` is a hard cap that
-  ends a season early (a normal ending for a short season; the unmined pool rolls forward), never a
-  schedule that rewards depend on.
-- Rewards are `rigHash × seconds × ratePerWork[b]`, independent of other rigs. Do not reintroduce a
-  reward-per-share accumulator.
-- `Σ minted fragments for block b ≤ poolTokens[b] × fragPerToken`, enforced in `claim`.
+- Mine contracts are immutable: no proxies, no parameter setters. Admin power is exactly `pause`
+  (guardian), `halt` and `unschedule` (operator; client decision 2026-09-08, stated on the site) and,
+  for the legacy seasons, `abort` inside the rescue window.
+- Rounds are wall-clock (`roundSeconds`), and within a round every reward is by exact work share:
+  `pot[r] × rigWork[r] / roundWork[r]`, settled per round from piecewise-constant hash. No
+  reward-per-share accumulator, no difficulty, no randomness. (Season era: rewards were
+  `rigHash × seconds × ratePerWork[b]`; keep that code as is.)
+- `Σ claimed fragments for round r ≤ pot[r]`, enforced in `claim`; the vault always holds the stock
+  behind every unredeemed fragment, every unclaimed pot and everything scheduled.
 - Upgrade spend is 100% burned: transferred to `0x…dEaD` (the token has no burn function). Stake per rig
   is immutable. Fragments are non-transferable in v1.
 - No randomness, no oracles inside `SeasonMine`. Oracle use is confined to `RedemptionVault.cashOut`.
