@@ -62,7 +62,7 @@ export function RoundPurchaseSheet({ action, snap, onClose, onDone }: { action: 
     fn = "emergencyWithdraw";
   }
 
-  const allowance = useReads(account ? [{ address: dep.rig, abi: rigAbi, functionName: "allowance", args: [account, dep.mine] }] : [], { enabled: Boolean(account) && burn > 0n });
+  const allowance = useReads(account ? [{ address: snap.params.rig, abi: rigAbi, functionName: "allowance", args: [account, dep.mine] }] : [], { enabled: Boolean(account) && burn > 0n });
   const needsApprove = burn > 0n && ((allowance.data?.[0]?.result as bigint | undefined) ?? 0n) < burn;
   const tx = useTx();
   useEffect(() => {
@@ -75,7 +75,7 @@ export function RoundPurchaseSheet({ action, snap, onClose, onDone }: { action: 
   const submit = () => {
     if (!account) return;
     if (needsApprove) {
-      tx.send("approve", { address: dep.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account });
+      tx.send("approve", { address: snap.params.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account });
       return;
     }
     tx.send("send", { address: dep.mine, abi: roundMineAbi, functionName: fn, args: [rig.id], account });

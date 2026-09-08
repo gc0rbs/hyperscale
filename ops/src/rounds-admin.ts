@@ -4,13 +4,14 @@
  * (the 2026-09-05 launch retro, docs/BUILD-LOG.md).
  *
  *   pnpm --filter @stock-miner/ops rounds-admin status
+ *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin launch --token 0x… [--genesis next-hour] --yes   # pre-token deployments, once
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin halt [--yes]
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin unschedule --stock NVDA|0 --from-round N [--yes]
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin rescue [--yes]       # after halt
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
  */
 import { decodeEventLog, formatUnits, type Address } from "viem";
-import { catchUp, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi } from "./lib/rounds.js";
+import { catchUp, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const TAG = "[rounds-admin]";
@@ -22,6 +23,7 @@ async function main() {
   const dep = loadRoundsDeployment();
   const isGuardian = cmd === "pause" || cmd === "unpause";
   const { pub, wallet, account } = clients(isGuardian ? "GUARDIAN_KEY" : "OPERATOR_KEY");
+  await syncLaunchFromChain(dep, pub);
   const yes = hasFlag("--yes");
   const mine = { abi: roundMineAbi, address: dep.mine } as const;
   const vault = { abi: roundVaultAbi, address: dep.vault } as const;
@@ -161,7 +163,28 @@ async function main() {
     return;
   }
 
-  throw new Error("usage: rounds-admin status | halt | unschedule --stock X --from-round N | rescue | pause | unpause  [--yes]");
+  if (cmd === "launch") {
+    requireKey(operator, "operator", "OPERATOR_KEY");
+    const live = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "params" })) as { rig: Address; genesis: bigint };
+    if (Number(live.genesis) !== 0) throw new Error(`already launched: rig ${live.rig}, genesis ${live.genesis}`);
+    const token = arg("--token") as Address | undefined;
+    if (!token || !/^0x[0-9a-fA-F]{40}$/.test(token) || /^0x0{40}$/i.test(token)) throw new Error("--token <the $RIG address> is required");
+    const genesisArg = arg("--genesis", "next-hour")!;
+    const genesis = genesisArg === "next-hour" ? Math.ceil((now + 120) / 3600) * 3600 : genesisArg.startsWith("+") ? now + Number(genesisArg.slice(1)) : Number(genesisArg);
+    if (!(genesis > now)) throw new Error(`genesis ${genesis} is not in the future (now ${now})`);
+    const code = await pub.getCode({ address: token });
+    if (!code || code === "0x") throw new Error(`no contract at ${token}`);
+    const [sym, dec] = await Promise.all([
+      pub.readContract({ abi: erc20Abi, address: token, functionName: "symbol" }) as Promise<string>,
+      pub.readContract({ abi: erc20Abi, address: token, functionName: "decimals" }) as Promise<number>,
+    ]);
+    if (dec !== 18) throw new Error(`${sym} has ${dec} decimals; the mine expects 18`);
+    console.log(`${TAG} LAUNCH: token ${token} (${sym}) genesis ${genesis} (${new Date(genesis * 1000).toISOString()}, round 0 opens then). Both are fixed for good after this. Anything already scheduled pays from round 0.`);
+    await broadcast(`launch(${token}, ${genesis})`, dep.mine, roundMineAbi, "launch", [token, BigInt(genesis)]);
+    return;
+  }
+
+  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | unschedule --stock X --from-round N | rescue | pause | unpause  [--yes]");
 }
 
 main().catch((e: Error) => { console.error(`${TAG} failed:`, e.message ?? e); process.exit(1); });

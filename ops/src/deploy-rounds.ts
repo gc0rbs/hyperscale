@@ -8,6 +8,8 @@
  *
  *   # Mainnet: token set, adapters and treasury from the chain profile; genesis = next full hour
  *   PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=… pnpm --filter @stock-miner/ops deploy-rounds mainnet --chain robinhood [--dry-run]
+ *   # Before the token exists: rig and genesis stay zero; `rounds-admin launch` sets both once
+ *   PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=… pnpm --filter @stock-miner/ops deploy-rounds mainnet --chain robinhood --prelaunch
  *
  * Writes contracts/deployments/<chainId>-rounds.json (mine, fragments, vault, tokens, genesis, params),
  * the file the app, keeper, watcher and indexer read (or the ROUNDS_* env values on Railway).
@@ -100,7 +102,8 @@ export function validateRoundParams(p: RoundParamsJson): string[] {
   const errs: string[] = [];
   const zero = /^0x0{40}$/i;
   if (p.stocks.length !== 4 || p.stocks.some((s) => zero.test(s))) errs.push("stocks");
-  if (zero.test(p.rig) || zero.test(p.treasury)) errs.push("addresses");
+  if (zero.test(p.treasury)) errs.push("addresses");
+  if (zero.test(p.rig) !== (p.genesis === 0)) errs.push("launch pair"); // pre-launch: both zero
   if (p.roundSeconds === 0) errs.push("round");
   if (p.claimSeconds === 0 || p.claimSeconds >= p.roundSeconds) errs.push("claim < round");
   if (BigInt(p.fragPerToken) === 0n || BigInt(p.fragPerToken) > WAD) errs.push("fragPerToken");
@@ -166,15 +169,20 @@ async function main() {
     const chain = loadChainProfile(arg("--chain", "robinhood")!);
     const adapters = loadAdapters(id);
     const zero = /^0x0{40}$/i;
-    rig = chain.rig as Address;
+    // --prelaunch: the token does not exist yet. rig and genesis stay zero and `rounds-admin launch`
+    // sets both once, so the mine can be deployed, verified, funded and wired to the site days ahead.
+    const prelaunch = hasFlag("--prelaunch");
+    rig = prelaunch ? ("0x0000000000000000000000000000000000000000" as Address) : (chain.rig as Address);
     usdc = chain.usdc as Address;
     oracle = (chain.oracle && !zero.test(chain.oracle) ? chain.oracle : adapters?.oracle) as Address;
     eligibility = (chain.eligibility && !zero.test(chain.eligibility) ? chain.eligibility : adapters?.eligibility) as Address;
     treasury = (arg("--treasury") ?? chain.treasury) as Address;
     stocks = syms.map((s) => chain.stocks?.[s] as Address);
-    for (const [k, v] of Object.entries({ rig, usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
+    for (const [k, v] of Object.entries({ usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
+    if (!prelaunch && (!rig || zero.test(rig))) throw new Error("profile is missing rig (pass --prelaunch to deploy before the token exists)");
     syms.forEach((s, i) => { if (!stocks[i] || zero.test(stocks[i])) throw new Error(`profile is missing stock ${s}`); });
-    genesis = arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
+    genesis = prelaunch ? 0 : arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
+    if (prelaunch) console.log("[rounds] --prelaunch: rig and genesis stay zero until `rounds-admin launch --token … --genesis …`");
   } else {
     throw new Error("usage: deploy-rounds demo|mainnet");
   }

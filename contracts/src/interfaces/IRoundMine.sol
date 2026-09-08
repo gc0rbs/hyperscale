@@ -65,6 +65,9 @@ interface IRoundMine {
     error RoundStarted();
     /// @dev More rounds elapsed than one call records (`MAX_ROUNDS_PER_UPDATE`): call `poke` first.
     error NotCaughtUp();
+    /// @dev The mine was deployed before the token existed and `launch` has not been called yet.
+    error NotLaunched();
+    error AlreadyLaunched();
 
     // ── events ──────────────────────────────────────────────────────────────
     event RigActivated(uint256 indexed rigId, address indexed owner, uint256 amount, uint256 fee);
@@ -80,6 +83,7 @@ interface IRoundMine {
     event Funded(address indexed from, uint8 indexed stock, uint256 amount, uint64 firstRound, uint64 rounds);
     event Unscheduled(uint8 indexed stock, uint64 fromRound, uint256 amount);
     event MineHalted(uint64 at, address by);
+    event Launched(address indexed rig, uint64 genesis);
 
     // ── permissionless maintenance ──────────────────────────────────────────
     /// @notice Records round boundaries up to now (work, pot, overclock expiry), at most
@@ -113,6 +117,12 @@ interface IRoundMine {
     function emergencyWithdraw(uint256 rigId) external;
 
     // ── admin ───────────────────────────────────────────────────────────────
+    /// @notice Operator, once: set the $RIG address and genesis on a mine deployed before the token
+    ///         existed (`rig == 0` and `genesis == 0` at construction). Until then the mine accepts
+    ///         funding (scheduled from round 0) and nothing else; after it both values are fixed for
+    ///         good. Genesis must not be in the past. Client decision 2026-09-08: deploy, verify, fund
+    ///         and wire the site days ahead, then go live with one transaction.
+    function launch(address rig, uint64 genesis) external;
     /// @notice Operator: stop the mine for good. No round closes after this; the vault's `rescue`
     ///         returns unclaimed pots and everything scheduled to the operator. Client decision
     ///         2026-09-08, stated on the site.
@@ -126,6 +136,8 @@ interface IRoundMine {
     function vault() external view returns (address);
     function fragments() external view returns (address);
     function halted() external view returns (bool);
+    /// @notice False only for a pre-token deployment that has not been launched yet.
+    function launched() external view returns (bool);
     /// @notice Current round index at `block.timestamp` (0 before genesis + roundSeconds means round 0).
     function currentRound() external view returns (uint64);
     /// @notice Timestamp at which round `r` closes.

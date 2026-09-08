@@ -340,3 +340,9 @@ identifiers, params and accounting are unchanged. Development continues in `gc0r
   claimable for 15 minutes, and anything unclaimed rolls into the next round. This relaxes two hard
   rules on purpose (wall-clock rounds; per-round share instead of rig-independent rates); CLAUDE.md
   is updated. The season contracts remain only for the live 2026-09-05 seasons.
+- **Deploy before the token exists (client requirement, same day).** `RoundMine` accepts `rig = 0`
+  and `genesis = 0` at construction and a one-shot operator `launch(rig, genesis)`. This is the one
+  post-deployment setter in the system; it works only once, only before anything is staked (nothing
+  can be staked without a token), and the site shows "Not live yet" until then. Rationale: the mine
+  must be live minutes after the Pons launch, and the retro showed that doing deployment, hosting
+  and funding on the night is what breaks.

@@ -11,7 +11,7 @@
  */
 import { formatUnits } from "viem";
 import { createAlert } from "./lib/alert.js";
-import { loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, scheduleRunsOutIn } from "./lib/rounds.js";
+import { loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, scheduleRunsOutIn, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const interval = Number(arg("--interval", "60")) * 1000;
@@ -23,6 +23,7 @@ let idleSince: number | null = null;
 async function tick() {
   const dep = loadRoundsDeployment();
   const { pub } = clients();
+  await syncLaunchFromChain(dep, pub);
   const mine = { abi: roundMineAbi, address: dep.mine } as const;
   const [block, currentRound, closedRounds, totalHash, rigCount, paused, halted, reserve, udec] = await Promise.all([
     pub.getBlock(),

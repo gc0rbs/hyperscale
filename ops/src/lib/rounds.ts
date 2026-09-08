@@ -57,6 +57,20 @@ export function loadRoundsDeployment(id = chainId()): RoundsDeployment {
 }
 
 export const roundMineAbi = artifact("RoundMine.sol", "RoundMine").abi;
+
+/**
+ * A mine deployed before the token existed has rig = 0 and genesis = 0 in its deployment file until
+ * `rounds-admin launch` runs; the chain's params() is the truth afterwards. Every script calls this
+ * once after loading, so nothing needs a file or variable edit at launch.
+ */
+export async function syncLaunchFromChain(dep: RoundsDeployment, pub: { readContract: (a: { abi: typeof roundMineAbi; address: Address; functionName: string }) => Promise<unknown> }): Promise<RoundsDeployment> {
+  const params = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "params" })) as { rig: Address; genesis: bigint };
+  if (Number(params.genesis) !== 0) {
+    dep.genesis = Number(params.genesis);
+    dep.rig = params.rig;
+  }
+  return dep;
+}
 export const roundVaultAbi = artifact("RoundVault.sol", "RoundVault").abi;
 
 /** Rounds elapsed but not recorded on chain (docs/13 §2 "Catch-up"); > 0 means every action but poke/halt reverts with NotCaughtUp. */

@@ -400,6 +400,37 @@
   },
   {
     "type": "function",
+    "name": "launch",
+    "inputs": [
+      {
+        "name": "rig_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "genesis_",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "launched",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "ocExpiring",
     "inputs": [
       {
@@ -1091,6 +1122,25 @@
   },
   {
     "type": "event",
+    "name": "Launched",
+    "inputs": [
+      {
+        "name": "rig",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "genesis",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "MineHalted",
     "inputs": [
       {
@@ -1285,6 +1335,11 @@
   },
   {
     "type": "error",
+    "name": "AlreadyLaunched",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "BelowMinStake",
     "inputs": []
   },
@@ -1347,6 +1402,11 @@
   {
     "type": "error",
     "name": "NotHalted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotLaunched",
     "inputs": []
   },
   {

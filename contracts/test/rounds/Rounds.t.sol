@@ -5,6 +5,7 @@ import {RoundTestBase} from "./RoundTestBase.sol";
 import {IRoundMine} from "../../src/interfaces/IRoundMine.sol";
 import {IRoundVault} from "../../src/interfaces/IRoundVault.sol";
 import {RoundMine} from "../../src/rounds/RoundMine.sol";
+import {RoundVault} from "../../src/rounds/RoundVault.sol";
 
 /// @dev docs/13 §2: rounds close on the clock, pots split by work share, 15-minute claims, rollover,
 ///      scheduled funding, unschedule, halt and rescue.
@@ -430,6 +431,65 @@ contract RoundsTest is RoundTestBase {
         // The rig can only claim the latest closed round (250); the rest rolled over.
         uint256[] memory got = mine.claimable(a);
         assertEq(got[0], 249_000_000, "the whole accumulated pot, one rig");
+    }
+
+    /// @dev Client requirement 2026-09-08: deploy before the token exists, go live with one transaction.
+    function test_prelaunch_deployment_is_launched_once_with_token_and_genesis() public {
+        IRoundMine.RoundParams memory p = defaultParams();
+        p.rig = address(0);
+        p.genesis = 0;
+        (RoundMine m,, RoundVault v) = deployMine(p);
+        for (uint256 i; i < 4; ++i) {
+            stocks[i].setAllowed(address(v), true);
+        }
+        assertFalse(m.launched());
+        assertEq(m.currentRound(), 0);
+        m.poke(); // no-op
+        // Funding works before launch and lands in rounds 0..
+        stocks[0].mint(feeWallet, 10e18);
+        vm.startPrank(feeWallet);
+        stocks[0].approve(address(m), 10e18);
+        m.fund(0, 10e18, 10);
+        vm.stopPrank();
+        assertEq(m.scheduled(0, 0), 1e18);
+        // Nothing else does.
+        fundPlayer(ann, 1_000e18);
+        vm.prank(ann);
+        rig.approve(address(m), type(uint256).max);
+        vm.prank(ann);
+        vm.expectRevert(IRoundMine.NotLaunched.selector);
+        m.activate(1_000e18);
+        vm.prank(ann);
+        vm.expectRevert(IRoundMine.NotOperator.selector);
+        m.launch(address(rig), GENESIS);
+        vm.expectRevert(abi.encodeWithSelector(IRoundMine.InvalidParams.selector, "genesis in the past"));
+        m.launch(address(rig), uint64(block.timestamp) - 1);
+        vm.expectRevert(abi.encodeWithSelector(IRoundMine.InvalidParams.selector, "addresses"));
+        m.launch(address(0), GENESIS);
+        // Launch: token and genesis are set once, for good.
+        vm.expectEmit(true, true, true, true);
+        emit IRoundMine.Launched(address(rig), GENESIS);
+        m.launch(address(rig), GENESIS);
+        assertTrue(m.launched());
+        assertEq(m.params().rig, address(rig));
+        assertEq(m.params().genesis, GENESIS);
+        vm.expectRevert(IRoundMine.AlreadyLaunched.selector);
+        m.launch(address(rig), GENESIS + 1);
+        // The pre-launch schedule pays out from round 0.
+        vm.warp(GENESIS);
+        vm.prank(ann);
+        uint256 a = m.activate(1_000e18);
+        vm.warp(GENESIS + L);
+        m.poke();
+        assertEq(m.pot(0, 0), 1e18);
+        vm.prank(ann);
+        uint256[] memory got = m.claim(a);
+        assertEq(got[0], 1_000_000);
+        // A mine deployed with only one of the pair set is refused.
+        p = defaultParams();
+        p.rig = address(0);
+        vm.expectRevert(abi.encodeWithSelector(IRoundMine.InvalidParams.selector, "launch pair"));
+        new RoundMine(p, address(this), address(1), address(2));
     }
 
     function test_below_min_stake_and_rig_ownership() public {

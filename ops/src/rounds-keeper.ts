@@ -11,7 +11,7 @@
  */
 import { formatEther, parseEther } from "viem";
 import { createAlert } from "./lib/alert.js";
-import { loadRoundsDeployment, roundMineAbi } from "./lib/rounds.js";
+import { loadRoundsDeployment, roundMineAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { roundKeeperDecision, type RoundKeeperOptions } from "./lib/rounds-keeper-logic.js";
 import { arg, clients, hasFlag } from "./lib/season.js";
 
@@ -24,6 +24,7 @@ let lastPokedRound: number | null = null;
 async function tick(): Promise<{ go: boolean; sleepSec: number }> {
   const dep = loadRoundsDeployment();
   const { pub, wallet, account } = clients();
+  await syncLaunchFromChain(dep, pub);
   const [block, currentRound, closedRounds, halted, ethBalanceWei] = await Promise.all([
     pub.getBlock(),
     pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "currentRound" }) as Promise<bigint>,

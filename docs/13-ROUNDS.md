@@ -48,6 +48,11 @@ not claimed rolls into the next pot.
   time while the vault holds the stock; there is no redemption window. The vault always holds at least
   the stock behind every un-redeemed fragment plus every scheduled and unclaimed pot, because the only
   things that ever leave it are redemptions, cash-out-freed stock, unscheduling and a halt rescue.
+- **Pre-token deployment.** The mine can be deployed with `rig = 0` and `genesis = 0` before the
+  token exists. Funding works (scheduled from round 0); every player action reverts `NotLaunched`.
+  The operator calls `launch(rig, genesis)` exactly once (genesis not in the past); both are then
+  fixed for good. This lets the contracts be verified, funded and wired to the site days ahead, and
+  go live with one transaction the moment the token is live (client requirement 2026-09-08).
 - **Catch-up.** Round boundaries are recorded by the first transaction after them, at most 48 per
   call (`MAX_ROUNDS_PER_UPDATE`, ~7M gas) so an idle stretch can never exceed the block gas limit;
   until the mine is caught up, every action except `poke` and `halt` reverts with `NotCaughtUp`, since
@@ -66,7 +71,7 @@ not claimed rolls into the next pot.
 | Field | Default | Note |
 |---|---|---|
 | `rig`, `stocks[4]`, `treasury`, `usdc`, `eligibility`, `oracle` | chain profile | token address is fixed per mine; a new token = a new mine |
-| `genesis` | deploy time, rounded up to the next hour | |
+| `genesis` | deploy time, rounded up to the next hour; or 0 with `rig = 0` for a pre-token deployment, set once by `launch` | |
 | `roundSeconds` / `claimSeconds` | 3600 / 900 | claim < round |
 | `fragPerToken` | 1,000,000 | |
 | `minStakeWeight`, `activationFeeBps`, `exitFeeBps` | 100 RIG, 100, 300 | |

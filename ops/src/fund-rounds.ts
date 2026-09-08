@@ -14,7 +14,7 @@
  */
 import { formatUnits, parseUnits, type Address } from "viem";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
-import { catchUp, fundSchedule, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundsBehind, roundVaultAbi } from "./lib/rounds.js";
+import { catchUp, fundSchedule, loadRoundsDeployment, resolveStocks, roundClock, roundMineAbi, roundsBehind, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 
 const TAG = "[fund-rounds]";
 
@@ -29,6 +29,7 @@ function keyEnv(): string {
 async function main() {
   const dep = loadRoundsDeployment();
   const { pub, wallet, account } = clients(keyEnv());
+  await syncLaunchFromChain(dep, pub);
   const dry = hasFlag("--dry-run");
   const stockSpec = arg("--stock");
   const amountArg = arg("--amount");

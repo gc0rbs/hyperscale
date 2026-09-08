@@ -66,8 +66,9 @@ function RoundStatus() {
   const cur = p ? roundAt(p.genesis, p.roundSeconds, now) : undefined;
   const toEnd = p && cur !== undefined ? secondsToRoundEnd(p.genesis, p.roundSeconds, cur, now) : 0;
   const w = p ? claimWindow(p.genesis, p.roundSeconds, p.claimSeconds, now, snapshot?.halted) : null;
-  const tone = !snapshot ? "idle" : snapshot.halted ? "done" : snapshot.paused ? "soon" : "live";
-  const chip = !snapshot ? "Reading" : snapshot.halted ? "Halted" : snapshot.paused ? "Paused" : `closes in ${formatClock(toEnd)}${w?.open ? ` · claim ${formatClock(w.secondsLeft)}` : ""}`;
+  const unlaunched = Boolean(p && p.genesis === 0n);
+  const tone = !snapshot ? "idle" : snapshot.halted ? "done" : unlaunched || snapshot.paused ? "soon" : "live";
+  const chip = !snapshot ? "Reading" : snapshot.halted ? "Halted" : unlaunched ? "Not live yet" : snapshot.paused ? "Paused" : `closes in ${formatClock(toEnd)}${w?.open ? ` · claim ${formatClock(w.secondsLeft)}` : ""}`;
   return (
     <div className={`lp-status lp-status-${tone}`} data-testid="round-status" data-round={cur ?? ""}>
       <span className="lp-status-dot" aria-hidden />

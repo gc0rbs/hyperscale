@@ -1,0 +1,18 @@
+{
+  "name": "anvil-prelaunch",
+  "chainId": 31337,
+  "rpcUrl": "http://127.0.0.1:8545",
+  "explorerApi": null,
+  "mocks": true,
+  "rig": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+  "usdc": "0x71c95911e9a5d330f4d621842ec243ee1343292e",
+  "oracle": "0x948b3c65b89df0b4894abe91e6d02fe579834f8f",
+  "eligibility": "0x712516e61c8b383df4a63cfe83d7701bce54b03e",
+  "treasury": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "stocks": {
+    "NVDA": "0xbcf26943c0197d2ee0e5d05c716be60cc2761508",
+    "MU": "0xc6ba8c3233ecf65b761049ef63466945c362edd2",
+    "SNDK": "0x05aa229aec102f78ce0e852a812a388f076aa555",
+    "QQQ": "0x0f5d1ef48f12b6f691401bfe88c2037c690a6afe"
+  }
+}

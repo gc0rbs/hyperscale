@@ -48,6 +48,16 @@ export function RoundView({ snap }: { snap: RoundSnapshot }) {
   useRoundNotifications(notifyPref.on, cur, p.claimSeconds, snap.halted);
   const roomRigs = useMemo(() => rigs.map((r) => ({ id: r.id, gpuTier: r.gpuTier, coolingTier: r.coolingTier, state: { inactive: r.inactive, activeOc: r.activeOc } })), [rigs]);
 
+  if (p.genesis === 0n) {
+    return (
+      <div className="p-4 md:px-8 md:py-6 max-w-[760px] flex flex-col gap-4" data-testid="not-launched">
+        <div className="font-display leading-none uppercase tracking-[0.02em] text-[56px] font-semibold">Not live yet</div>
+        <div className="text-mine-muted text-[15px] leading-relaxed">The cluster is deployed and verified but waits for the $RIG token to exist. The team launches it with one transaction the moment the token is live; round 0 opens at the genesis they set then. Anything already scheduled into the pots pays out from round 0.</div>
+        <RoundNotices />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="p-4 md:px-8 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">

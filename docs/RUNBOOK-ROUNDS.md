@@ -43,15 +43,27 @@ Activate, wait for a close, claim inside the 15 minutes, redeem a fraction. Then
 path: merge → Railway build → variables → domain (docs/RUNBOOK.md §10c) against this deployment, and
 confirm the served page shows the Anvil mine before touching mainnet.
 
-## 2. Deploy (once)
+## 2. Deploy (once), before the token exists
 
 ```
 export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://…      # the operator key
-pnpm deploy-rounds mainnet --chain robinhood --dry-run       # predicted addresses, paramsHash, genesis
-pnpm deploy-rounds mainnet --chain robinhood                 # three transactions, verified addresses
+pnpm deploy-rounds mainnet --chain robinhood --prelaunch --dry-run   # predicted addresses, paramsHash
+pnpm deploy-rounds mainnet --chain robinhood --prelaunch             # three transactions, rig and genesis zero
 ```
 
-Genesis is the next full hour unless `--genesis <unix>` is given. The script refuses invalid params
+`--prelaunch` deploys the mine without a token or genesis so everything below (verification, hosting,
+funding, keeper, watcher, rehearsal against the real addresses) is done days ahead. Players see
+"Not live yet". When the token is live:
+
+```
+OPERATOR_KEY=0x… pnpm rounds-admin launch --token 0x<RIG> --genesis next-hour        # dry run: prints token symbol, genesis
+OPERATOR_KEY=0x… pnpm rounds-admin launch --token 0x<RIG> --genesis next-hour --yes  # one transaction; both fixed for good
+```
+
+`--genesis` accepts `next-hour` (default, at least two minutes out), `+<seconds>` or a unix time.
+The app, keeper, watcher and admin read the token and genesis from the chain, so no variable or
+file changes at launch. If the token address is known at deploy time, omit `--prelaunch`: genesis is
+then the next full hour unless `--genesis <unix>` is given. The script refuses invalid params
 before spending gas and aborts if the predicted addresses do not match (it means the deployer key sent
 another transaction in between: never share the deployer key with a keeper or a bot). It writes
 `contracts/deployments/4663-rounds.json`; commit it. Verify the three contracts on Blockscout before

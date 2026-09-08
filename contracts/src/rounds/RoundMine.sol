@@ -39,11 +39,13 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     // ── immutable configuration ─────────────────────────────────────────────
     RoundParams internal _p;
-    IERC20 internal immutable _rig;
+    /// @dev Fixed at construction, or once by `launch` for a pre-token deployment. Never changes after.
+    IERC20 internal _rig;
     address public immutable operator;
     address public immutable vault;
     address public immutable fragments;
-    uint64 internal immutable _genesis;
+    /// @dev 0 until `launch` on a pre-token deployment (see `launched`).
+    uint64 internal _genesis;
     uint32 internal immutable _L;
     uint32 internal immutable _W;
 
@@ -81,14 +83,19 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         _;
     }
 
+    modifier onlyLaunched() {
+        if (_genesis == 0) revert NotLaunched();
+        _;
+    }
+
     constructor(RoundParams memory p, address operator_, address fragments_, address vault_) {
         if (p.stocks.length != STOCKS) revert InvalidParams("stocks");
         for (uint256 i; i < STOCKS; ++i) {
             if (p.stocks[i] == address(0)) revert InvalidParams("stocks");
         }
-        if (p.rig == address(0) || p.treasury == address(0) || operator_ == address(0)) {
-            revert InvalidParams("addresses");
-        }
+        if (p.treasury == address(0) || operator_ == address(0)) revert InvalidParams("addresses");
+        // Pre-token deployment: both unset, filled in once by `launch`. Otherwise both set.
+        if ((p.rig == address(0)) != (p.genesis == 0)) revert InvalidParams("launch pair");
         if (p.roundSeconds == 0) revert InvalidParams("round");
         if (p.claimSeconds == 0 || p.claimSeconds >= p.roundSeconds) revert InvalidParams("claim < round");
         if (p.fragPerToken == 0 || p.fragPerToken > WAD) revert InvalidParams("fragPerToken");
@@ -125,7 +132,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     /// @dev Every state change that reads or moves hash, pots or schedules starts here.
     function _sync() internal {
         _updateGlobal();
-        if (!halted && _now() >= _genesis && _closed < currentRound()) revert NotCaughtUp();
+        if (!halted && _genesis != 0 && _now() >= _genesis && _closed < currentRound()) revert NotCaughtUp();
     }
 
     // ── funding ─────────────────────────────────────────────────────────────
@@ -142,7 +149,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         if (per == 0) revert InvalidParams("amount");
         // Before genesis round 0 has not started, so it can be funded; afterwards the running round's
         // pot is never changed under the rigs mining it.
-        uint64 first = _now() < _genesis ? 0 : currentRound() + 1;
+        uint64 first = (_genesis == 0 || _now() < _genesis) ? 0 : currentRound() + 1;
         for (uint64 r = first; r < first + rounds; ++r) {
             _scheduled[s][r] += per;
         }
@@ -160,7 +167,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     {
         if (s >= STOCKS) revert InvalidParams("stock");
         _sync();
-        if (_now() >= _genesis && fromRound <= currentRound()) revert RoundStarted();
+        if (_genesis != 0 && _now() >= _genesis && fromRound <= currentRound()) revert RoundStarted();
         uint64 until = _scheduledUntil[s];
         for (uint64 r = fromRound; r <= until; ++r) {
             amount += _scheduled[s][r];
@@ -174,7 +181,14 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     // ── player actions ──────────────────────────────────────────────────────
 
     /// @inheritdoc IRoundMine
-    function activate(uint256 amount) external nonReentrant whenNotPaused notHalted returns (uint256 rigId) {
+    function activate(uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        notHalted
+        onlyLaunched
+        returns (uint256 rigId)
+    {
         _sync();
         if (amount < _p.minStakeWeight) revert BelowMinStake();
         _rig.safeTransferFrom(msg.sender, address(this), amount);
@@ -195,7 +209,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IRoundMine
-    function upgradeGpu(uint256 rigId) external nonReentrant whenNotPaused notHalted {
+    function upgradeGpu(uint256 rigId) external nonReentrant whenNotPaused notHalted onlyLaunched {
         _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
@@ -219,7 +233,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IRoundMine
-    function upgradeCooling(uint256 rigId) external nonReentrant whenNotPaused notHalted {
+    function upgradeCooling(uint256 rigId) external nonReentrant whenNotPaused notHalted onlyLaunched {
         _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
@@ -233,7 +247,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     /// @inheritdoc IRoundMine
     /// @dev Active until the end of round `current + ocRoundSpan`; buying another refreshes all.
-    function overclock(uint256 rigId) external nonReentrant whenNotPaused notHalted {
+    function overclock(uint256 rigId) external nonReentrant whenNotPaused notHalted onlyLaunched {
         _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
@@ -261,6 +275,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         nonReentrant
         whenNotPaused
         notHalted
+        onlyLaunched
         returns (uint256[] memory out)
     {
         _sync();
@@ -273,7 +288,14 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IRoundMine
-    function claimAll() external nonReentrant whenNotPaused notHalted returns (uint256[] memory out) {
+    function claimAll()
+        external
+        nonReentrant
+        whenNotPaused
+        notHalted
+        onlyLaunched
+        returns (uint256[] memory out)
+    {
         _sync();
         out = new uint256[](STOCKS);
         uint256[] storage ids = _rigsOf[msg.sender];
@@ -288,7 +310,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc IRoundMine
-    function exit(uint256 rigId) external nonReentrant whenNotPaused notHalted {
+    function exit(uint256 rigId) external nonReentrant whenNotPaused notHalted onlyLaunched {
         _sync();
         Rig storage r = _ownedActive(rigId);
         _settleRig(rigId, r);
@@ -319,6 +341,19 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     // ── admin ───────────────────────────────────────────────────────────────
 
     /// @inheritdoc IRoundMine
+    function launch(address rig_, uint64 genesis_) external onlyOperator notHalted {
+        if (_genesis != 0) revert AlreadyLaunched();
+        if (rig_ == address(0)) revert InvalidParams("addresses");
+        if (genesis_ == 0 || genesis_ < _now()) revert InvalidParams("genesis in the past");
+        _rig = IERC20(rig_);
+        _p.rig = rig_;
+        _p.genesis = genesis_;
+        _genesis = genesis_;
+        _lastTime = genesis_;
+        emit Launched(rig_, genesis_);
+    }
+
+    /// @inheritdoc IRoundMine
     function halt() external onlyOperator notHalted {
         _updateGlobal();
         _halt();
@@ -343,9 +378,13 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         return _p;
     }
 
+    function launched() public view returns (bool) {
+        return _genesis != 0;
+    }
+
     function currentRound() public view returns (uint64) {
         uint64 t = _now();
-        if (t < _genesis) return 0;
+        if (_genesis == 0 || t < _genesis) return 0;
         return (t - _genesis) / _L;
     }
 
@@ -415,7 +454,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
 
     function claimable(uint256 rigId) external view returns (uint256[] memory out) {
         out = new uint256[](STOCKS);
-        if (halted || _now() < _genesis) return out;
+        if (halted || _genesis == 0 || _now() < _genesis) return out;
         (uint64 closed, uint256[] memory works,) = _simulate();
         if (closed == 0) return out;
         uint64 r = closed - 1;
@@ -453,7 +492,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
     ///      window ended before this one closed) and the overclock hash that expires with it. Bounded
     ///      by the rounds elapsed since the last transaction; the keeper keeps it to one.
     function _updateGlobal() internal {
-        if (halted) return;
+        if (halted || _genesis == 0) return;
         uint64 t = _now();
         if (t <= _lastTime) return;
         uint64 r = _closed;
@@ -495,7 +534,7 @@ contract RoundMine is IRoundMine, ReentrancyGuard, Pausable {
         uint64 cur = currentRound();
         uint256 n = cur >= _closed ? cur - _closed + 1 : 1;
         works = new uint256[](n);
-        if (halted || t <= last) {
+        if (halted || _genesis == 0 || t <= last) {
             works[0] = acc;
             return (_closed, works, h);
         }

@@ -32,8 +32,8 @@ export function RoundActivate({ snap }: { snap: RoundSnapshot }) {
   const reads = useReads(
     account
       ? [
-          { address: dep.rig, abi: rigAbi, functionName: "balanceOf", args: [account] },
-          { address: dep.rig, abi: rigAbi, functionName: "allowance", args: [account, dep.mine] },
+          { address: snap.params.rig, abi: rigAbi, functionName: "balanceOf", args: [account] },
+          { address: snap.params.rig, abi: rigAbi, functionName: "allowance", args: [account, dep.mine] },
         ]
       : [],
     { enabled: Boolean(account), refetchInterval: 5000 },
@@ -50,7 +50,7 @@ export function RoundActivate({ snap }: { snap: RoundSnapshot }) {
   }, [tx.done]);
   const go = () => {
     if (!account) return;
-    if (needApprove) { tx.send("approve", { address: dep.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
+    if (needApprove) { tx.send("approve", { address: snap.params.rig, abi: rigAbi, functionName: "approve", args: [dep.mine, 2n ** 255n], account }); return; }
     tx.send("activate", { address: dep.mine, abi: roundMineAbi, functionName: "activate", args: [amount], account });
   };
   const tooSmall = amount < p.minStakeWeight;
