@@ -62,6 +62,9 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     // ── emergency ───────────────────────────────────────────────────────────
     bool public cancelled;
     uint64 public pausedAt;
+    /// @dev Set by an operator `abort` after open (client decision 2026-09-08): the season closed early,
+    ///      everything earned stays claimable, the vault may `rescue` the unmined remainder at once.
+    bool public closedByOperator;
 
     struct G {
         uint16 shift;
@@ -305,12 +308,13 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     }
 
     /// @inheritdoc ISeasonMine
-    /// @dev FR-S6: only after a pause has lasted longer than the grace period. Cancels a season that
-    ///      is still open: unclaimed fragments are forfeited and the vault sweeps to treasury. A season
-    ///      that already closed is not cancelled; this then only returns the deposit (as `withdraw`
-    ///      would, but the pause blocks it) and earned fragments stay claimable after an unpause.
+    /// @dev FR-S6: on a season the operator cancelled with `abort`, or after a pause has lasted longer
+    ///      than the grace period. The latter cancels a season that is still open: unclaimed fragments
+    ///      are forfeited and the vault sweeps to treasury. A season that already closed is not
+    ///      cancelled; this then only returns the deposit (as `withdraw` would, but the pause blocks it)
+    ///      and earned fragments stay claimable after an unpause.
     function emergencyWithdraw(uint256 rigId) external nonReentrant {
-        if (!paused() || block.timestamp <= uint256(pausedAt) + _p.pauseGraceSeconds) {
+        if (!cancelled && (!paused() || block.timestamp <= uint256(pausedAt) + _p.pauseGraceSeconds)) {
             revert PauseGraceNotElapsed();
         }
         _updateGlobal();
@@ -328,6 +332,29 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     }
 
     // ── admin (emergency only) ──────────────────────────────────────────────
+
+    /// @inheritdoc ISeasonMine
+    /// @dev The operator is the vault's funding operator (the `SeasonFactory.create` caller). An
+    ///      unfunded or not-yet-open season is cancelled (no work exists, so nothing is owed); an open
+    ///      one closes at this instant through the ordinary close path, so claims, withdrawals and
+    ///      redemption behave exactly as after a fail-safe close. Works while paused: it is the escape
+    ///      hatch. The window is measured from `openTime`, so a season created with the wrong open time
+    ///      can always be aborted before it opens.
+    function abort() external nonReentrant {
+        if (msg.sender != IRedemptionVault(vault).operator()) revert NotOperator();
+        _updateGlobal();
+        if (cancelled) revert WrongPhase(Phase.Cancelled);
+        if (closeX != 0) revert WrongPhase(Phase.Closed);
+        if (_p.rescueWindowSeconds == 0 || block.timestamp > rescueDeadline()) revert RescueWindowClosed();
+        if (block.timestamp < openTime || !IRedemptionVault(vault).funded()) {
+            cancelled = true;
+            emit SeasonCancelled(uint64(block.timestamp));
+        } else {
+            closedByOperator = true;
+            closeX = lastX; // == now in X-time after _updateGlobal (the deadline case is already closed)
+            emit ClosedByOperator(shift, closeX);
+        }
+    }
 
     /// @inheritdoc ISeasonMine
     /// @dev Only while the season can still change (audit R2): once the close is persisted there is
@@ -420,6 +447,29 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
 
     function fragmentSupply(uint8 blockIdx) external view returns (uint256) {
         return _supplyWhole[blockIdx];
+    }
+
+    /// @inheritdoc ISeasonMine
+    function rescueDeadline() public view returns (uint64) {
+        return uint64(uint256(openTime) + _p.rescueWindowSeconds);
+    }
+
+    /// @inheritdoc ISeasonMine
+    /// @dev Every rig's pay for a block is `mulDiv(hash × dt, rate)` floored per settlement, so the sum
+    ///      over rigs never exceeds the block's true work times the rate; the stored work floors per
+    ///      global segment and can trail the true work by less than one work unit per segment, worth a
+    ///      negligible fraction of a fragment. One whole fragment of margin covers that (docs/05 §5.1).
+    function claimableCap(uint8 blockIdx) external view returns (uint256) {
+        if (cancelled) return 0;
+        if (closeX == 0) revert WrongPhase(_phaseAfterUpdate());
+        uint16 s = shift;
+        if (s >= _totalShifts) return _supplyWhole[blockIdx];
+        uint8 current = uint8(s / _spb);
+        if (blockIdx < current) return _supplyWhole[blockIdx];
+        if (blockIdx > current) return 0;
+        uint256 work = uint256(s % _spb) * _shiftDiff[blockIdx] + workInShift;
+        uint256 frags = Math.mulDiv(work, _rate[blockIdx], WAD) / WAD + 1;
+        return frags > _supplyWhole[blockIdx] ? _supplyWhole[blockIdx] : frags;
     }
 
     function rigs(uint256 rigId) external view returns (Rig memory) {

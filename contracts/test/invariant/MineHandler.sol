@@ -6,6 +6,9 @@ import {SeasonMine} from "../../src/SeasonMine.sol";
 import {ISeasonMine} from "../../src/interfaces/ISeasonMine.sol";
 import {RIG} from "../../src/tokens/RIG.sol";
 import {MockERC20} from "../../src/mocks/MockERC20.sol";
+import {RedemptionVault} from "../../src/RedemptionVault.sol";
+import {StockFragments} from "../../src/StockFragments.sol";
+import {MockPriceOracle} from "../../src/mocks/MockPriceOracle.sol";
 
 /// @dev Random players activate, upgrade, overclock, claim, exit, poke and warp time. Ghost state
 ///      tracks deposits and the last-seen pending per (rig, block) for the monotonicity invariant.
@@ -14,6 +17,7 @@ contract MineHandler is Test {
     RIG public rig;
     MockERC20 public lp;
     uint64 public openTime;
+    MockPriceOracle public oracle;
 
     address[] public actors;
     uint256[] public rigIds;
@@ -26,14 +30,20 @@ contract MineHandler is Test {
     bool internal wasClosed;
     uint256 public pauses;
     uint256 public emergencyWithdrawals;
+    uint256 public aborts;
+    uint256 public rescues;
+    uint256 public redemptions;
+    /// @dev Fragments burned per block through the vault (redeem + cashOut), mirrored for invariant 11.
+    uint256[4] public ghostRedeemed;
     // Invariant 10 (audit B4): global state frozen at the cancellation instant.
     bool public cancelSnapshotTaken;
     uint16 public cancelShift;
     uint256 public cancelLastX;
     uint256 public cancelWork;
 
-    constructor(SeasonMine mine_, RIG rig_, MockERC20 lp_, uint64 openTime_) {
+    constructor(SeasonMine mine_, RIG rig_, MockERC20 lp_, uint64 openTime_, MockPriceOracle oracle_) {
         mine = mine_;
+        oracle = oracle_;
         rig = rig_;
         lp = lp_;
         openTime = openTime_;
@@ -62,6 +72,12 @@ contract MineHandler is Test {
         dt = uint32(bound(dt, 1, 2 days));
         vm.warp(block.timestamp + dt);
         mine.poke();
+        if (address(oracle) != address(0)) {
+            RedemptionVault vault = RedemptionVault(mine.vault());
+            for (uint8 b; b < 4; ++b) {
+                oracle.set(vault.stockOf(b), 100e8, uint64(block.timestamp));
+            }
+        }
     }
 
     function activate(uint8 who, uint256 amount, bool useLp) external track {
@@ -172,10 +188,61 @@ contract MineHandler is Test {
         mine.unpause();
     }
 
-    /// @dev Only meaningful while paused past the grace period (after a cancelling pauseCycle).
+    /// @dev Only meaningful while paused past the grace period, or once the operator cancelled.
     function emergencyWithdraw(uint256 which) external track {
-        if (!mine.paused()) return;
+        if (!mine.paused() && !mine.cancelled()) return;
         _emergencyWithdraw(which);
+    }
+
+    /// @dev Operator escape hatch (client decision 2026-09-08): rarely, inside the rescue window.
+    function abort(uint8 mode) external track {
+        if (mode % 16 != 0) return;
+        RedemptionVault vault = RedemptionVault(mine.vault());
+        vm.prank(vault.operator());
+        try mine.abort() {
+            aborts++;
+            if (mine.cancelled() && !cancelSnapshotTaken) {
+                cancelSnapshotTaken = true;
+                cancelShift = mine.shift();
+                cancelLastX = mine.lastX();
+                cancelWork = mine.workInShift();
+            }
+        } catch {}
+    }
+
+    /// @dev Anyone sweeps the unmined remainder after close; the operator rescues after an abort.
+    function rescueOrSweepUnmined(bool asOperator) external track {
+        RedemptionVault vault = RedemptionVault(mine.vault());
+        if (asOperator) {
+            vm.prank(vault.operator());
+            try vault.rescue() {
+                rescues++;
+            } catch {}
+        } else {
+            try vault.sweepUnmined() {} catch {}
+        }
+    }
+
+    /// @dev A claimed fragment is redeemed in kind or cashed out once the window is open.
+    function redeem(uint256 which, uint8 b, bool cash) external track {
+        (uint256 id, address o) = _pick(which);
+        if (o == address(0)) return;
+        b = b % 4;
+        RedemptionVault vault = RedemptionVault(mine.vault());
+        uint256 bal = StockFragments(mine.fragments()).balanceOf(o, b);
+        if (bal == 0) return;
+        vm.prank(o);
+        if (cash) {
+            try vault.cashOut(b, bal) {
+                ghostRedeemed[b] += bal;
+                redemptions++;
+            } catch {}
+        } else {
+            try vault.redeem(b, bal) {
+                ghostRedeemed[b] += bal;
+                redemptions++;
+            } catch {}
+        }
     }
 
     function _emergencyWithdraw(uint256 which) internal {

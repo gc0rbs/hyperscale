@@ -28,7 +28,7 @@ contract VaultTest is SeasonTestBase {
         vm.prank(ann);
         mine.claim(a, 0);
         vm.prank(ann);
-        vm.expectRevert(RedemptionVault.NotClosed.selector);
+        vm.expectRevert(IRedemptionVault.NotClosed.selector);
         vault.redeem(0, 1_000_000);
         _finish();
         vm.prank(ann);
@@ -92,11 +92,27 @@ contract VaultTest is SeasonTestBase {
         assertEq(stocks[1].balanceOf(address(vault)), 0);
     }
 
+    function test_top_up_reserve_by_anyone() public {
+        usdc.mint(bo, 1_000e6);
+        vm.startPrank(bo);
+        usdc.approve(address(vault), 1_000e6);
+        vm.expectEmit(true, true, true, true);
+        emit IRedemptionVault.ReserveToppedUp(bo, 1_000e6);
+        vault.topUpReserve(1_000e6);
+        vm.stopPrank();
+        assertEq(vault.reserve(), 51_000e6);
+        assertEq(vault.fundedReserve(), 51_000e6);
+    }
+
+    function test_price_age_is_a_season_parameter() public view {
+        assertEq(vault.maxPriceAge(), 26 hours);
+    }
+
     function test_fund_once() public {
         vm.expectRevert(IRedemptionVault.AlreadyFunded.selector);
         vault.fund(0);
         vm.prank(ann);
-        vm.expectRevert(RedemptionVault.NotOperator.selector);
+        vm.expectRevert(IRedemptionVault.NotOperator.selector);
         vault.fund(0);
     }
 }

@@ -94,6 +94,8 @@ contract DeployDemo is Script {
         p.redemptionDays = 30;
         p.cashOutFeeBps = 100;
         p.pauseGraceSeconds = 30 minutes;
+        p.rescueWindowSeconds = 24 hours;
+        p.maxPriceAgeSeconds = 4 days;
         p.treasury = deployer;
 
         (uint256 seasonId, address mine, address frags, address vault) =

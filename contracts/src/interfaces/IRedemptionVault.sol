@@ -10,11 +10,16 @@ interface IRedemptionVault {
     error StalePrice();
     error WindowClosed();
     error WindowOpen();
+    error NotClosed();
+    error NotOperator();
+    error NotAborted();
 
     event Funded(uint256[] poolTokens, uint256 usdcReserve);
     event Redeemed(address indexed user, uint256 indexed id, uint256 fragments, uint256 tokens);
     event CashedOut(address indexed user, uint256 indexed id, uint256 fragments, uint256 usdc, uint256 fee);
     event Swept(address indexed to);
+    event UnminedSwept(address indexed to, uint256[] tokens, uint256 usdc);
+    event ReserveToppedUp(address indexed from, uint256 amount);
 
     /// @notice Operator pulls every block's Stock Token pool plus the USDC reserve. One-shot.
     function fund(uint256 usdcReserve) external;
@@ -30,7 +35,26 @@ interface IRedemptionVault {
     ///         transfer hook refuses the treasury stays and is retried on the next call.
     function sweep() external;
 
+    /// @notice After the mine has closed, move every token above `requiredOf` (the part of the pool
+    ///         no fragment can ever claim) to the treasury at once, instead of after the redemption
+    ///         window. The USDG reserve stays for cash-outs. Anyone may call; repeatable.
+    function sweepUnmined() external;
+
+    /// @notice After an operator `abort`, return the unmined pool and the matching share of the USDG
+    ///         reserve to the operator at once. Everything a claimable fragment can redeem stays.
+    ///         Operator only; repeatable until nothing is left above the caps.
+    function rescue() external;
+
+    /// @notice Add USDG to the cash-out reserve after funding. Anyone may call.
+    function topUpReserve(uint256 amount) external;
+
     function funded() external view returns (bool);
+    function operator() external view returns (address);
+    function maxPriceAge() external view returns (uint32);
+    function fundedReserve() external view returns (uint256);
+    /// @notice Stock the vault must keep for block `id` once closed: claimableCap minus redeemed, in wei.
+    function requiredOf(uint256 id) external view returns (uint256);
+    function redeemedOf(uint256 id) external view returns (uint256);
     function redemptionEnd() external view returns (uint64);
     function eligibility() external view returns (address);
     function oracle() external view returns (address);

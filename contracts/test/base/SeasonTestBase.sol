@@ -107,6 +107,8 @@ abstract contract SeasonTestBase is Test {
         p.cashOutFeeBps = 100;
         p.pauseGraceSeconds = 6 hours;
         p.treasury = treasury;
+        p.rescueWindowSeconds = 24 hours;
+        p.maxPriceAgeSeconds = 26 hours;
     }
 
     function fundVault(uint256 usdcReserve) internal {
