@@ -25,6 +25,27 @@ invariants in §5.3), `docs/03-GAME-DESIGN.md` (formulas), `docs/01-PRD.md` (req
 
 Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.2.0.
 
+## 1b. Addendum 2026-09-08: the round mine and the season escape hatch
+
+New scope for the same auditor, on top of §1 (interfaces in `specs/contracts/IRound*.sol`, spec
+`docs/13-ROUNDS.md`, decisions in `docs/DECISIONS.md` 2026-09-08):
+
+| Contract | Role |
+|---|---|
+| `contracts/src/rounds/RoundMine.sol` | continuous mine: hourly rounds close on the clock; pot per stock per round split by exact work share; 15-minute claim window; unclaimed rolls over; per-round funding schedule; operator `halt`/`unschedule`; guardian `pause`; catch-up capped at 48 rounds per call with `NotCaughtUp` on actions |
+| `contracts/src/rounds/RoundVault.sol` | holds the stock and USDG reserve; redeem / cash out any time; `release` for unscheduling (mine only); `rescue` after a halt keeps the stock behind un-redeemed fragments |
+| `contracts/src/StockFragments.sol` | reused unchanged: one permanent instance, id = stock index |
+| `SeasonMine.abort` / `RedemptionVault.rescue`, `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds` | season-era additions for the live 2026-09-05 seasons: operator cancel inside a 24 h rescue window returning the whole pool; unmined remainder sweeps at close |
+
+Trust changes: the operator (deployer key) now holds `halt`, `unschedule` and `rescue` on the round
+mine and `abort` on seasons, all stated publicly on the site; rewards within a round are a share of
+the pot (the pot is a fee stream, unknown in advance), settled per round from exact hash × seconds
+accounting with no accumulator. Tests: `contracts/test/rounds/` (13 scenarios, 8 invariants, docs/13
+§4) and `contracts/test/unit/Abort.t.sol`. Questions we would like answered: the catch-up cap and
+`NotCaughtUp` posture; rounding of `pot × work / roundWork` per stock; the `pot(r,s)` view's rollover
+chain for unclosed rounds; the halt-plus-open-claim-window interaction (claims stop at halt; the
+window's share returns to the operator with the rescue).
+
 ## 2. Trust assumptions
 
 1. **Season contracts are immutable.** No proxies, no setters, no difficulty adjustment. The only
