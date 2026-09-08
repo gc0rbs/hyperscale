@@ -668,3 +668,31 @@ doc 11, copy samples and the list of decisions (name, token symbol) that gate an
 
 What's next: pick name and symbol (doc 12 §9), then one app copy/units PR and one docs/social PR.
 Known gaps: no contract or param changes proposed; NVIDIA trademarks deliberately avoided in tier names.
+
+## 2026-09-08 – Launch-night retro rebuild (plan)
+
+Input: the 2026-09-05 mainnet retro (root causes §4, rebuild list §6) plus two client requirements:
+(a) the deployer can pull the pool back out during the first 24 h of a season, labelled on the site;
+(b) prize pools are funded from the Pons trading tax on $RIG (3%, possibly 5%), not from the client's
+own wallet.
+
+Plan, in order:
+1. Contracts (test-first). `SeasonParams` gains `rescueWindowSeconds` and `maxPriceAgeSeconds`.
+   `SeasonMine.abort()` for the vault operator inside the rescue window: before open it cancels the
+   season (stakes back via `emergencyWithdraw`), after open it closes the season at that instant
+   (earned fragments stay claimable, stakes back via `withdraw`). `SeasonMine.claimableCap(b)` bounds
+   what a closed season can still mint per block. `RedemptionVault.rescue()` (operator, after an
+   abort) and `sweepUnmined()` (anyone, after any close) return the unmined remainder immediately,
+   keeping `claimableCap` behind; `topUpReserve()` lets anyone add USDG after funding; the cash-out
+   staleness cap becomes a season parameter (weekends). `emergencyWithdraw` works on any cancelled
+   season. Interfaces change in `specs/contracts/` first.
+2. Ops: launch sheet (`ops/launch/*.json`) + `pnpm launch` that refuses to run until every field is
+   signed off and the wallet holds assets and gas, simulates every call, then creates, funds and
+   verifies; `pnpm rescue`, `pnpm sweep-unmined`; keeper low-gas alert; fund refuses a reserve below
+   the pool's value share unless overridden; a `poolFunding` section that sizes the pool from the
+   Pons-fee wallet's balances.
+3. App: season registry from the factory (current season + claim/redeem for every past season,
+   cancelled ones hidden), rescue-window notice wherever the pool is shown, fractional in-kind
+   redemption, Pons-fee funding copy.
+4. Docs: CLAUDE.md hard rules (user decision), docs/05 §3/§6/§8, DECISIONS, RUNBOOK launch-night
+   section (one operator, sheet, rehearsal, rescue), gitbook safety page, this log.
