@@ -1,0 +1,240 @@
+/**
+ * Deploys the continuous round mine (docs/13): RoundMine + StockFragments + RoundVault, which reference
+ * each other in their constructors, so the three CREATE addresses are predicted from the deployer's
+ * nonce first. One transaction at a time (the public Robinhood RPC rate-limits Forge's simulation).
+ *
+ *   # Anvil demo: mock token set, funded schedule, players allowlisted, genesis in two minutes
+ *   pnpm --filter @stock-miner/ops deploy-rounds demo [--round-seconds 3600] [--claim-seconds 900]
+ *
+ *   # Mainnet: token set, adapters and treasury from the chain profile; genesis = next full hour
+ *   PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=… pnpm --filter @stock-miner/ops deploy-rounds mainnet --chain robinhood [--dry-run]
+ *
+ * Writes contracts/deployments/<chainId>-rounds.json (mine, fragments, vault, tokens, genesis, params),
+ * the file the app, keeper, watcher and indexer read (or the ROUNDS_* env values on Railway).
+ */
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseEther, type Address } from "viem";
+import { artifact, REPO_ROOT } from "./lib/artifacts.js";
+import { privateKeyToAccount } from "viem/accounts";
+import { ANVIL_KEYS, arg, chainId, clients, DEPLOYMENTS, hasFlag, loadAdapters, loadChainProfile } from "./lib/season.js";
+
+const WAD = 10n ** 18n;
+
+export interface RoundParamsJson {
+  rig: string; stocks: string[]; treasury: string; genesis: number; roundSeconds: number; claimSeconds: number;
+  fragPerToken: string; minStakeWeight: string; activationFeeBps: number; exitFeeBps: number;
+  gpuMultBps: number[]; gpuCostBps: number[]; coolCostBps: number[]; heatPerOc: number[]; coolPerRound: number[];
+  heatMax: number; ocCostBps: number; ocBoostBps: number; maxActiveOc: number; ocRoundSpan: number; pauseGraceSeconds: number;
+}
+
+export interface RoundsDeployment {
+  chainId: number;
+  operator: Address;
+  rig: Address;
+  usdc: Address;
+  oracle: Address;
+  eligibility: Address;
+  mine: Address;
+  fragments: Address;
+  vault: Address;
+  stocks: Address[];
+  symbols: string[];
+  genesis: number;
+  roundSeconds: number;
+  claimSeconds: number;
+  block: number;
+  params: RoundParamsJson;
+  paramsHash: `0x${string}`;
+}
+
+/** Template values (docs/03 tables) with the rounds fields from specs/params/rounds-default.json. */
+export function roundParamsFromTemplate(tpl: Record<string, unknown>, rig: Address, stocks: Address[], treasury: Address, genesis: number, roundSeconds: number, claimSeconds: number): RoundParamsJson {
+  const n = (k: string) => Number(tpl[k]);
+  const arr = (k: string) => (tpl[k] as number[]).map(Number);
+  return {
+    rig, stocks, treasury, genesis, roundSeconds, claimSeconds,
+    fragPerToken: String(tpl.fragPerToken), minStakeWeight: (BigInt(String(tpl.minStakeWeight)) * WAD).toString(),
+    activationFeeBps: n("activationFeeBps"), exitFeeBps: n("exitFeeBps"),
+    gpuMultBps: arr("gpuMultBps"), gpuCostBps: arr("gpuCostBps"), coolCostBps: arr("coolCostBps"),
+    heatPerOc: arr("heatPerOc"), coolPerRound: arr("coolPerRound"), heatMax: n("heatMax"),
+    ocCostBps: n("ocCostBps"), ocBoostBps: n("ocBoostBps"), maxActiveOc: n("maxActiveOc"), ocRoundSpan: n("ocRoundSpan"),
+    pauseGraceSeconds: n("pauseGraceSeconds"),
+  };
+}
+
+export function roundParamsStruct(p: RoundParamsJson) {
+  return {
+    rig: p.rig as Address, stocks: p.stocks as Address[], treasury: p.treasury as Address, genesis: BigInt(p.genesis),
+    roundSeconds: p.roundSeconds, claimSeconds: p.claimSeconds, fragPerToken: BigInt(p.fragPerToken), minStakeWeight: BigInt(p.minStakeWeight),
+    activationFeeBps: p.activationFeeBps, exitFeeBps: p.exitFeeBps,
+    gpuMultBps: p.gpuMultBps as [number, number, number, number, number, number],
+    gpuCostBps: p.gpuCostBps as [number, number, number, number, number],
+    coolCostBps: p.coolCostBps as [number, number, number],
+    heatPerOc: p.heatPerOc as [number, number, number, number], coolPerRound: p.coolPerRound as [number, number, number, number],
+    heatMax: p.heatMax, ocCostBps: p.ocCostBps, ocBoostBps: p.ocBoostBps, maxActiveOc: p.maxActiveOc, ocRoundSpan: p.ocRoundSpan,
+    pauseGraceSeconds: p.pauseGraceSeconds,
+  };
+}
+
+const roundParamsAbi = [{
+  type: "tuple",
+  components: [
+    { name: "rig", type: "address" }, { name: "stocks", type: "address[]" }, { name: "treasury", type: "address" },
+    { name: "genesis", type: "uint64" }, { name: "roundSeconds", type: "uint32" }, { name: "claimSeconds", type: "uint32" },
+    { name: "fragPerToken", type: "uint256" }, { name: "minStakeWeight", type: "uint256" },
+    { name: "activationFeeBps", type: "uint16" }, { name: "exitFeeBps", type: "uint16" }, { name: "gpuMultBps", type: "uint16[6]" },
+    { name: "gpuCostBps", type: "uint16[5]" }, { name: "coolCostBps", type: "uint16[3]" }, { name: "heatPerOc", type: "uint8[4]" },
+    { name: "coolPerRound", type: "uint8[4]" }, { name: "heatMax", type: "uint8" }, { name: "ocCostBps", type: "uint16" },
+    { name: "ocBoostBps", type: "uint16" }, { name: "maxActiveOc", type: "uint8" }, { name: "ocRoundSpan", type: "uint8" },
+    { name: "pauseGraceSeconds", type: "uint32" },
+  ],
+}] as const;
+
+export function roundParamsHash(p: RoundParamsJson) {
+  return keccak256(encodeAbiParameters(roundParamsAbi, [roundParamsStruct(p)]));
+}
+
+/** Mirror of the RoundMine constructor checks so a bad file fails before gas is spent. */
+export function validateRoundParams(p: RoundParamsJson): string[] {
+  const errs: string[] = [];
+  const zero = /^0x0{40}$/i;
+  if (p.stocks.length !== 4 || p.stocks.some((s) => zero.test(s))) errs.push("stocks");
+  if (zero.test(p.rig) || zero.test(p.treasury)) errs.push("addresses");
+  if (p.roundSeconds === 0) errs.push("round");
+  if (p.claimSeconds === 0 || p.claimSeconds >= p.roundSeconds) errs.push("claim < round");
+  if (BigInt(p.fragPerToken) === 0n || BigInt(p.fragPerToken) > WAD) errs.push("fragPerToken");
+  if (BigInt(p.minStakeWeight) === 0n) errs.push("minStakeWeight");
+  if (p.gpuMultBps.length !== 6 || p.gpuMultBps[0] !== 10_000 || p.gpuMultBps.some((v, i) => i > 0 && v <= p.gpuMultBps[i - 1])) errs.push("gpuMultBps");
+  if (p.ocBoostBps * p.maxActiveOc > 30_000) errs.push("ocBoost*maxActiveOc");
+  if (p.maxActiveOc === 0 || p.ocRoundSpan === 0) errs.push("overclock config");
+  if (p.heatPerOc.some((h) => h > p.heatMax)) errs.push("heatPerOc > heatMax");
+  if (p.activationFeeBps > 1000 || p.exitFeeBps > 2000) errs.push("fees");
+  if (p.pauseGraceSeconds === 0) errs.push("grace");
+  return errs;
+}
+
+async function main() {
+  const stage = process.argv[2];
+  const id = chainId();
+  const { pub, wallet, account } = clients("PRIVATE_KEY");
+  const live = await pub.getChainId();
+  if (live !== id) throw new Error(`RPC is chain ${live}, CHAIN_ID is ${id}`);
+  const bal = await pub.getBalance({ address: account.address });
+  console.log(`[rounds] chain ${id} deployer ${account.address} balance ${formatEther(bal)} ETH`);
+  if (bal === 0n) throw new Error("deployer has no ETH for gas");
+  mkdirSync(DEPLOYMENTS, { recursive: true });
+  const tpl = JSON.parse(readFileSync(arg("--params", join(REPO_ROOT, "specs", "params", "rounds-default.json"))!, "utf8"));
+  const roundSeconds = Number(arg("--round-seconds", String(tpl.roundSeconds)));
+  const claimSeconds = Number(arg("--claim-seconds", String(tpl.claimSeconds)));
+  const syms: string[] = tpl.stocks.map((s: { symbol: string }) => s.symbol);
+
+  async function deploy(file: string, name: string, args: unknown[] = []): Promise<Address> {
+    const a = artifact(file, name);
+    const hash = await wallet.deployContract({ abi: a.abi, bytecode: a.bytecode, args });
+    const r = await pub.waitForTransactionReceipt({ hash });
+    if (r.status !== "success" || !r.contractAddress) throw new Error(`${name} deployment reverted (${hash})`);
+    console.log(`[rounds] ${name} ${r.contractAddress} gas=${r.gasUsed}`);
+    return r.contractAddress;
+  }
+  async function send(file: string, name: string, address: Address, functionName: string, args: unknown[]) {
+    const a = artifact(file, name);
+    const hash = await wallet.writeContract({ abi: a.abi, address, functionName, args });
+    const r = await pub.waitForTransactionReceipt({ hash });
+    if (r.status !== "success") throw new Error(`${name}.${functionName} reverted (${hash})`);
+  }
+
+  let rig: Address, usdc: Address, oracle: Address, eligibility: Address, treasury: Address, stocks: Address[];
+  let genesis: number;
+  const now = Number((await pub.getBlock()).timestamp);
+  if (stage === "demo") {
+    if (id !== 31337) throw new Error("demo is for Anvil only");
+    rig = await deploy("RIG.sol", "RIG", [account.address]);
+    usdc = await deploy("MockERC20.sol", "MockERC20", ["USD Coin", "USDG", 6]);
+    oracle = await deploy("MockPriceOracle.sol", "MockPriceOracle");
+    eligibility = await deploy("AllowlistEligibility.sol", "AllowlistEligibility", [account.address]);
+    treasury = account.address;
+    stocks = [];
+    const prices = [230n, 999n, 1719n, 717n];
+    for (let i = 0; i < 4; i++) {
+      const s = await deploy("MockStockToken.sol", "MockStockToken", [syms[i], syms[i]]);
+      stocks.push(s);
+      await send("MockPriceOracle.sol", "MockPriceOracle", oracle, "set", [s, prices[i] * 10n ** 8n, BigInt(now)]);
+    }
+    genesis = now + Number(process.env.GENESIS_DELAY ?? 120);
+  } else if (stage === "mainnet") {
+    const chain = loadChainProfile(arg("--chain", "robinhood")!);
+    const adapters = loadAdapters(id);
+    const zero = /^0x0{40}$/i;
+    rig = chain.rig as Address;
+    usdc = chain.usdc as Address;
+    oracle = (chain.oracle && !zero.test(chain.oracle) ? chain.oracle : adapters?.oracle) as Address;
+    eligibility = (chain.eligibility && !zero.test(chain.eligibility) ? chain.eligibility : adapters?.eligibility) as Address;
+    treasury = (arg("--treasury") ?? chain.treasury) as Address;
+    stocks = syms.map((s) => chain.stocks?.[s] as Address);
+    for (const [k, v] of Object.entries({ rig, usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
+    syms.forEach((s, i) => { if (!stocks[i] || zero.test(stocks[i])) throw new Error(`profile is missing stock ${s}`); });
+    genesis = arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
+  } else {
+    throw new Error("usage: deploy-rounds demo|mainnet");
+  }
+
+  const params = roundParamsFromTemplate(tpl, rig, stocks, treasury, genesis, roundSeconds, claimSeconds);
+  const problems = validateRoundParams(params);
+  if (problems.length) throw new Error(`invalid params: ${problems.join("; ")}`);
+  const nonce = BigInt(await pub.getTransactionCount({ address: account.address }));
+  const mineAddr = getContractAddress({ from: account.address, nonce });
+  const fragAddr = getContractAddress({ from: account.address, nonce: nonce + 1n });
+  const vaultAddr = getContractAddress({ from: account.address, nonce: nonce + 2n });
+  const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : "https://hyperscale.fi/api/frag/{id}.json")!;
+  const vaultConfig = {
+    mine: mineAddr, fragments: fragAddr, usdc, eligibility, oracle, operator: account.address,
+    cashOutFeeBps: Number(tpl.cashOutFeeBps), fragPerToken: BigInt(params.fragPerToken), maxPriceAge: Number(tpl.maxPriceAgeSeconds), stocks,
+  };
+  console.log(`[rounds] genesis ${genesis} (${new Date(genesis * 1000).toISOString()}) round ${roundSeconds}s claim ${claimSeconds}s`);
+  console.log(`[rounds] predicted mine ${mineAddr} fragments ${fragAddr} vault ${vaultAddr}`);
+  console.log(`[rounds] paramsHash ${roundParamsHash(params)}`);
+  if (hasFlag("--dry-run")) {
+    const a = artifact("RoundMine.sol", "RoundMine");
+    await pub.call({ account, data: a.bytecode, to: undefined }).catch((e: Error) => { throw new Error(`RoundMine creation simulation failed: ${e.message}`); });
+    console.log("[rounds] --dry-run: not broadcasting");
+    return;
+  }
+  const mine = await deploy("RoundMine.sol", "RoundMine", [roundParamsStruct(params), account.address, fragAddr, vaultAddr]);
+  const fragments = await deploy("StockFragments.sol", "StockFragments", [mineAddr, vaultAddr, stocks, BigInt(params.fragPerToken), false, baseUri]);
+  const vault = await deploy("RoundVault.sol", "RoundVault", [vaultConfig]);
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+  if (!same(mine, mineAddr) || !same(fragments, fragAddr) || !same(vault, vaultAddr)) throw new Error("address prediction mismatch; the deployer sent another transaction in between");
+
+  if (stage === "demo") {
+    // Allowlist the vault and the Anvil accounts on every mock stock, fund a day of rounds, top up the reserve.
+    const accounts = ANVIL_KEYS.map((k) => privateKeyToAccount(k).address);
+    const perRound = parseEther(process.env.DEMO_POT ?? "1");
+    const rounds = Number(process.env.DEMO_ROUNDS ?? 48);
+    for (const s of stocks) {
+      await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [vault, true]);
+      for (const a of accounts) await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [a, true]);
+      await send("MockStockToken.sol", "MockStockToken", s, "mint", [account.address, perRound * BigInt(rounds)]);
+      await send("MockStockToken.sol", "MockStockToken", s, "approve", [mine, perRound * BigInt(rounds)]);
+    }
+    for (let i = 0; i < 4; i++) await send("RoundMine.sol", "RoundMine", mine, "fund", [i, perRound * BigInt(rounds), BigInt(rounds)]);
+    await send("MockERC20.sol", "MockERC20", usdc, "mint", [account.address, 50_000n * 10n ** 6n]);
+    await send("MockERC20.sol", "MockERC20", usdc, "approve", [vault, 50_000n * 10n ** 6n]);
+    await send("RoundVault.sol", "RoundVault", vault, "topUpReserve", [50_000n * 10n ** 6n]);
+    for (const a of accounts) {
+      if (a.toLowerCase() !== account.address.toLowerCase()) await send("RIG.sol", "RIG", rig, "transfer", [a, parseEther("2000000")]);
+      await send("AllowlistEligibility.sol", "AllowlistEligibility", eligibility, "set", [a, true]);
+    }
+  }
+
+  const out: RoundsDeployment = {
+    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, stocks, symbols: syms,
+    genesis, roundSeconds, claimSeconds, block: Number(await pub.getBlockNumber()), params, paramsHash: roundParamsHash(params),
+  };
+  const p = join(DEPLOYMENTS, `${id}-rounds.json`);
+  writeFileSync(p, JSON.stringify(out, null, 2) + "\n");
+  console.log(`[rounds] wrote ${p}`);
+}
+
+const isMain = process.argv[1] && /deploy-rounds\.(ts|js)$/.test(process.argv[1]);
+if (isMain) main().catch((e: Error) => { console.error("[rounds] failed:", e.message); process.exit(1); });

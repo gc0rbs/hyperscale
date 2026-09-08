@@ -11,6 +11,8 @@ const WANTED: [string, string][] = [
   ["StockFragments.sol", "StockFragments"],
   ["RedemptionVault.sol", "RedemptionVault"],
   ["SeasonFactory.sol", "SeasonFactory"],
+  ["RoundMine.sol", "RoundMine"],
+  ["RoundVault.sol", "RoundVault"],
   ["Deployers.sol", "MineDeployer"],
   ["Deployers.sol", "FragmentsDeployer"],
   ["Deployers.sol", "VaultDeployer"],

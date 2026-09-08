@@ -17,7 +17,8 @@
     "deploy-demo": "tsx src/deploy-demo.ts",
     "guardian": "tsx src/guardian.ts",
     "deploy-adapters": "tsx src/deploy-adapters.ts",
-    "deploy-mainnet": "tsx src/deploy-mainnet.ts"
+    "deploy-mainnet": "tsx src/deploy-mainnet.ts",
+    "deploy-rounds": "tsx src/deploy-rounds.ts"
   },
   "dependencies": {
     "viem": "2.21.55"
