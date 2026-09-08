@@ -85,6 +85,11 @@
             "name": "poolTokens",
             "type": "uint256[]",
             "internalType": "uint256[]"
+          },
+          {
+            "name": "maxPriceAge",
+            "type": "uint32",
+            "internalType": "uint32"
           }
         ]
       }
