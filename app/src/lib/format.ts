@@ -8,6 +8,27 @@ export function formatHash(hashWad: bigint): string {
   return `${compact(whole)} H`;
 }
 
+/**
+ * Hash → throughput in the AI-compute fiction (docs/12 §7): one on-chain hash unit is one GFLOPS, so
+ * 100k hash reads "100.00 TFLOPS" and 10M hash "10.00 PFLOPS". A display constant, not a contract change.
+ */
+export function formatThroughput(hashWad: bigint): string {
+  const gflops = Number(hashWad / WAD) + Number(hashWad % WAD) / 1e18;
+  return `${flops(gflops)}S`;
+}
+
+/** Hash-seconds → compute served, same scale ("12.40 PFLOP"). Work is hash-wad × seconds. */
+export function formatCompute(workWad: bigint): string {
+  const gflop = Number(workWad / WAD) + Number(workWad % WAD) / 1e18;
+  return flops(gflop);
+}
+
+function flops(g: number): string {
+  const units: [number, string][] = [[1e9, "EFLOP"], [1e6, "PFLOP"], [1e3, "TFLOP"]];
+  for (const [div, u] of units) if (Math.abs(g) >= div) return `${(g / div).toFixed(2)} ${u}`;
+  return `${g.toFixed(2)} GFLOP`;
+}
+
 export function compact(n: number): string {
   const abs = Math.abs(n);
   const units: [number, string][] = [[1e9, "B"], [1e6, "M"], [1e3, "k"]];

@@ -24,5 +24,27 @@ transferring to the dead address, and LP staking is off (`lpToken` zero, decided
 Fill-in order: chain and explorer, then tokens, then oracle and eligibility adapters (deploy and test
 them against one known-eligible and one ineligible wallet, docs/08 §4), then `treasury`.
 
-Never put private keys here. Scripts read `PRIVATE_KEY` / `OPERATOR_KEY` / `KEEPER_KEY` from the
-environment.
+Never put private keys here. Scripts read `PRIVATE_KEY` / `OPERATOR_KEY` / `KEEPER_KEY` /
+`GUARDIAN_KEY` / `FUNDER_KEY` from the environment.
+
+## Round mine (docs/13) without a deployments mount
+
+`deploy-rounds` writes `contracts/deployments/<chainId>-rounds.json`, which `fund-rounds`,
+`rounds-keeper`, `rounds-watch` and `rounds-admin` read. Hosts without that file (the Railway
+`rounds-keeper` / `rounds-watch` services, `railway/rounds-*.json`) set these instead, alongside
+`CHAIN_ID` and `RPC_URL`:
+
+| Env | Value from the deployment file |
+|---|---|
+| `ROUNDS_MINE_ADDRESS` | `mine` (required) |
+| `ROUNDS_VAULT_ADDRESS` | `vault` |
+| `ROUNDS_FRAGMENTS_ADDRESS` | `fragments` |
+| `STOCK_ADDRESSES` | `stocks`, comma-separated in stock-index order |
+| `STOCK_SYMBOLS` | `symbols`, comma-separated (optional; labels only) |
+| `USDC_ADDRESS` | `usdc` (the USDG reserve token) |
+| `OPERATOR_ADDRESS`, `RIG_ADDRESS`, `ORACLE_ADDRESS`, `ELIGIBILITY_ADDRESS` | optional |
+| `GENESIS` | `genesis` (unix seconds, start of round 0) |
+| `ROUND_SECONDS` / `CLAIM_SECONDS` | `roundSeconds` / `claimSeconds` (default 3600 / 900) |
+
+Service knobs: `KEEPER_KEY`, `KEEPER_MIN_ETH` (default 0.01; low-gas alert), `ALERT_WEBHOOK_URL`,
+`ALERT_MIN_LEVEL`, `ALERT_REPEAT_SECONDS`.

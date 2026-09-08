@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "ops/Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @stock-miner/ops rounds-watch --interval 60",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

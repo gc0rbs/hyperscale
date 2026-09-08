@@ -70,3 +70,20 @@ export function useMineNotifications(on: boolean, blocksFound: number, closed: b
     if (longHaul && shift > p.shift) notify(`Shift ${shift} started`, "Heat and overclocks were settled at the boundary.", `shift-${shift}`);
   }, [on, blocksFound, closed, shift, longHaul, tickers]);
 }
+
+/**
+ * Rounds (docs/13): fires "Round N closed, claim in the next 15 minutes" the moment the observed
+ * round index advances. Opt-in like the season notifications; the first observation is silent so a
+ * reload never replays an old close. A halted mine never closes another round, so nothing fires.
+ */
+export function useRoundNotifications(on: boolean, round: number | undefined, claimSeconds: number, halted: boolean) {
+  const prev = useRef<number | null>(null);
+  useEffect(() => {
+    if (round === undefined) return;
+    const p = prev.current;
+    prev.current = round;
+    if (p === null || !on || halted || round <= p) return;
+    const closed = round - 1;
+    notify(`Round ${closed} closed`, `Claim in the next ${Math.round(claimSeconds / 60)} minutes. Unclaimed shards roll into round ${round}'s pot.`, `round-${closed}`);
+  }, [on, round, claimSeconds, halted]);
+}
