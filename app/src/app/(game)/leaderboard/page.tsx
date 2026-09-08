@@ -2,7 +2,9 @@
 import { useMemo, useState } from "react";
 import { INDEXER_URL, useIndexer } from "@/lib/indexer";
 import { useReads } from "@/lib/reads";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment } from "@/app/providers";
+import { RoundShell } from "@/components/rounds/RoundShell";
+import { RoundLeaderboard } from "@/components/rounds/RoundLeaderboard";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Label, Mono } from "@/components/ui";
 import { seasonMineAbi } from "@/lib/contracts";
@@ -14,6 +16,8 @@ import { useChainNow } from "@/lib/use-now";
 
 /** Reads every rig straight from the chain (NFR-4); the indexer's /leaderboard is the scalable path. */
 export default function LeaderboardPage() {
+  const dep = useAnyDeployment();
+  if (dep.kind === "rounds") return <RoundShell dark={false}>{(snap) => <RoundLeaderboard snap={snap} />}</RoundShell>;
   return <SeasonShell dark={false}>{(snap) => <Board snap={snap} />}</SeasonShell>;
 }
 

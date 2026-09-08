@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { useTx } from "@/lib/use-tx";
 import { useReads } from "@/lib/reads";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment } from "@/app/providers";
+import { RoundShell } from "@/components/rounds/RoundShell";
+import { RoundActivate } from "@/components/rounds/RoundActivate";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Btn, Label, Mono, Panel, Stat } from "@/components/ui";
 import { erc20Abi, rigAbi, seasonMineAbi } from "@/lib/contracts";
@@ -15,6 +17,8 @@ import { useActiveAddress } from "@/lib/use-account";
 import { useChainNow } from "@/lib/use-now";
 
 export default function NewRigPage() {
+  const dep = useAnyDeployment();
+  if (dep.kind === "rounds") return <RoundShell>{(snap) => <RoundActivate snap={snap} />}</RoundShell>;
   return <SeasonShell>{(snap) => <Activate snap={snap} />}</SeasonShell>;
 }
 
