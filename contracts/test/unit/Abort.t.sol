@@ -7,9 +7,9 @@ import {IRedemptionVault} from "../../src/interfaces/IRedemptionVault.sol";
 import {ISeasonFactory} from "../../src/interfaces/ISeasonFactory.sol";
 
 /// @dev Client decision 2026-09-08 (retro §6.1 + the 24 h escape hatch): the vault operator can abort a
-///      season inside the rescue window. Before open that cancels it; after open it closes it early.
-///      Either way every stake comes back in full, everything earned stays claimable, and the unmined
-///      remainder returns to the operator at once instead of after the 30-day window.
+///      season inside the rescue window. It is cancelled: every stake comes back in full, every
+///      fragment of the season is void, and the whole pool and reserve return to the operator at once
+///      instead of after the 30-day window. The site states the window.
 contract AbortTest is SeasonTestBase {
     address internal operator;
 
@@ -38,7 +38,6 @@ contract AbortTest is SeasonTestBase {
         mine.abort();
         assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Cancelled));
         assertTrue(mine.cancelled());
-        assertFalse(mine.closedByOperator());
 
         // No pause is needed: a cancelled season returns deposits on demand, in full.
         uint256 before = rig.balanceOf(ann);
@@ -65,82 +64,86 @@ contract AbortTest is SeasonTestBase {
         assertEq(vault.reserve(), 0);
     }
 
-    function test_abort_after_open_closes_early_and_keeps_earned() public {
-        uint256 a = activateRig(ann, 1_000e18); // 1e21 hash: block 0 alone would take 5.5 years
-        uint256 b = activateRig(bo, 2_000e18);
+    function test_abort_after_open_cancels_and_returns_the_full_pool() public {
+        fundPlayer(ann, 10_000_000e18, 0);
+        uint256 a = activateRig(ann, 10_000_000e18);
         open();
-        vm.warp(OPEN + 1 days - 1); // last second of the window
+        // Block 0 is found and claimed inside the window; the client still gets everything back.
+        warpToBlockFound();
+        vm.prank(ann);
+        uint256 claimed = mine.claim(a, 0);
+        assertGt(claimed, 0);
+        assertLt(block.timestamp, OPEN + 1 days, "still inside the rescue window");
+
         vm.expectEmit(true, true, true, true);
-        emit ISeasonMine.ClosedByOperator(0, uint256(OPEN + 1 days - 1) * WAD);
+        emit ISeasonMine.SeasonCancelled(uint64(block.timestamp));
         mine.abort();
+        assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Cancelled));
+        assertEq(mine.closeX(), 0, "cancelled, not closed");
+        uint16 shiftAt = mine.shift();
 
-        assertEq(uint8(mine.phase()), uint8(ISeasonMine.Phase.Closed));
-        assertTrue(mine.closedByOperator());
-        assertFalse(mine.cancelled());
-        assertEq(mine.closeX(), uint256(OPEN + 1 days - 1) * WAD);
-        assertEq(mine.shift(), 0, "still in the first shift");
-
-        // 3000 hash × 86,399 s × 5,000,000 / 1.728e11 = 7,499.9 fragments for block 0 in total.
-        uint256 cap = mine.claimableCap(0);
-        assertEq(cap, 7_499 + 1, "paid work's worth plus one fragment of margin");
-        assertEq(mine.claimableCap(1), 0);
-        assertEq(mine.claimableCap(3), 0);
-        assertApproxEqAbs(mine.pending(a, 0), 2_500, 1);
-        assertApproxEqAbs(mine.pending(b, 0), 5_000, 1);
-        assertLe(mine.pending(a, 0) + mine.pending(b, 0), cap);
-
-        // Time passes: nothing more accrues, the season is closed for good.
+        // Frozen (audit B4): time passes, nothing moves, a second abort is refused.
         vm.warp(OPEN + 3 days);
-        assertApproxEqAbs(mine.pending(a, 0), 2_500, 1);
-        vm.expectRevert(abi.encodeWithSelector(ISeasonMine.WrongPhase.selector, ISeasonMine.Phase.Closed));
+        mine.poke();
+        assertEq(mine.shift(), shiftAt);
+        vm.expectRevert(abi.encodeWithSelector(ISeasonMine.WrongPhase.selector, ISeasonMine.Phase.Cancelled));
         mine.abort();
 
-        // Players claim and withdraw exactly as after any close: full deposit, no fee.
-        uint256 before = rig.balanceOf(ann);
+        // Every fragment of the season is void: unclaimed ones cannot be claimed, claimed ones cannot
+        // be redeemed or cashed out; the stake comes back in full without a pause.
         vm.startPrank(ann);
-        uint256[4] memory got = mine.claimAll(a);
-        mine.withdraw(a);
+        vm.expectRevert(abi.encodeWithSelector(ISeasonMine.NotFound.selector, 1));
+        mine.claim(a, 1);
         vm.stopPrank();
-        assertApproxEqAbs(got[0], 2_500, 1);
-        assertEq(rig.balanceOf(ann) - before, 1_000e18);
-
-        // The operator takes the unmined remainder now; the vault keeps the cap's worth behind.
-        uint256[4] memory poolBefore;
-        for (uint256 i; i < 4; ++i) {
-            stocks[i].setAllowed(operator, true);
-            poolBefore[i] = stocks[i].balanceOf(operator);
-        }
-        vault.rescue();
-        uint256 kept = (cap * WAD + vault.fragPerToken() - 1) / vault.fragPerToken();
-        assertEq(stocks[0].balanceOf(address(vault)), kept, "cap's worth of NVDA stays");
-        assertEq(stocks[0].balanceOf(operator) - poolBefore[0], POOL[0] - kept);
-        for (uint256 i = 1; i < 4; ++i) {
-            assertEq(stocks[i].balanceOf(address(vault)), 0, "unmined blocks fully returned");
-            assertEq(stocks[i].balanceOf(operator) - poolBefore[i], POOL[i]);
-        }
-        // Reserve: the mined share is 7,500 / 5,000,000 of block 0 and nothing of the others, averaged.
-        uint256 keptUsdc = (50_000e6 * ((cap * WAD) / mine.fragmentSupply(0))) / 4 / WAD;
-        assertEq(vault.reserve(), keptUsdc);
-        assertEq(usdc.balanceOf(operator), 50_000e6 - keptUsdc);
-
-        // Redemption still works for everything claimed, in kind and for USDG.
         elig.set(ann, true);
         stocks[0].setAllowed(ann, true);
         vm.prank(ann);
-        uint256 tokens = vault.redeem(0, got[0]);
-        assertEq(tokens, (got[0] * WAD) / 1_000_000);
-        vm.prank(bo);
-        mine.claimAll(b);
-        oracle.set(address(stocks[0]), 200e8, uint64(block.timestamp));
-        vm.prank(bo);
-        uint256 net = vault.cashOut(0, 1_000);
-        assertGt(net, 0);
-        // A cash-out burns fragments without taking stock, so the stock behind them is freed for the
-        // operator; a second rescue takes exactly that and nothing else.
-        uint256 opBefore = stocks[0].balanceOf(operator);
+        vm.expectRevert(IRedemptionVault.NotClosed.selector); // a cancelled season never closes
+        vault.redeem(0, claimed);
+        uint256 before = rig.balanceOf(ann);
+        vm.prank(ann);
+        mine.emergencyWithdraw(a);
+        assertEq(rig.balanceOf(ann) - before, 10_000_000e18, "full deposit back, no fee");
+        assertEq(mine.claimableCap(0), 0);
+
+        // The operator takes the whole pool and reserve at once.
+        for (uint256 i; i < 4; ++i) {
+            stocks[i].setAllowed(operator, true);
+        }
+        uint256[4] memory poolBefore;
+        for (uint256 i; i < 4; ++i) {
+            poolBefore[i] = stocks[i].balanceOf(operator);
+        }
         vault.rescue();
-        assertEq(stocks[0].balanceOf(operator) - opBefore, (1_000 * WAD) / 1_000_000);
-        assertEq(stocks[0].balanceOf(address(vault)), vault.requiredOf(0));
+        for (uint256 i; i < 4; ++i) {
+            assertEq(stocks[i].balanceOf(operator) - poolBefore[i], POOL[i], "whole pool back");
+            assertEq(stocks[i].balanceOf(address(vault)), 0);
+        }
+        assertEq(usdc.balanceOf(operator), 50_000e6);
+        assertEq(vault.reserve(), 0);
+        // `sweepUnmined` is for closed seasons only; `sweep` on a cancelled one finds nothing left.
+        vm.expectRevert(IRedemptionVault.NotClosed.selector);
+        vault.sweepUnmined();
+        vault.sweep();
+    }
+
+    function test_rescue_retries_an_asset_whose_hook_refused_the_operator() public {
+        activateRig(ann, 1_000e18);
+        mine.abort();
+        for (uint256 i = 1; i < 4; ++i) {
+            stocks[i].setAllowed(operator, false); // three of the four hooks refuse the operator for now
+        }
+        vault.rescue();
+        assertEq(stocks[0].balanceOf(address(vault)), 0);
+        assertEq(stocks[1].balanceOf(address(vault)), POOL[1], "hook refused: stays, does not block");
+        assertEq(vault.reserve(), 0, "the reserve moved anyway");
+        for (uint256 i = 1; i < 4; ++i) {
+            stocks[i].setAllowed(operator, true);
+        }
+        vault.rescue();
+        for (uint256 i; i < 4; ++i) {
+            assertEq(stocks[i].balanceOf(address(vault)), 0);
+        }
     }
 
     function test_abort_window_closes_after_24h() public {
@@ -149,8 +152,8 @@ contract AbortTest is SeasonTestBase {
         vm.warp(OPEN + 1 days + 1);
         vm.expectRevert(ISeasonMine.RescueWindowClosed.selector);
         mine.abort();
-        // ...and the vault refuses a rescue on a season that was never aborted.
-        vm.expectRevert(IRedemptionVault.NotAborted.selector);
+        // ...and the vault refuses a rescue on a season that was never cancelled.
+        vm.expectRevert(IRedemptionVault.NotCancelled.selector);
         vault.rescue();
     }
 
@@ -161,10 +164,10 @@ contract AbortTest is SeasonTestBase {
         mine.pause();
         vm.warp(OPEN + 1 hours);
         mine.abort();
-        assertTrue(mine.closedByOperator());
-        // Claims and withdrawals ignore the pause once the close is persisted (audit R2).
+        assertTrue(mine.cancelled());
+        // No grace period needed: the deposit comes back at once.
         vm.prank(ann);
-        mine.withdraw(0);
+        mine.emergencyWithdraw(0);
     }
 
     function test_abort_unfunded_season_cancels_it() public {

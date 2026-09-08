@@ -12,7 +12,7 @@ interface IRedemptionVault {
     error WindowOpen();
     error NotClosed();
     error NotOperator();
-    error NotAborted();
+    error NotCancelled();
 
     event Funded(uint256[] poolTokens, uint256 usdcReserve);
     event Redeemed(address indexed user, uint256 indexed id, uint256 fragments, uint256 tokens);
@@ -40,9 +40,9 @@ interface IRedemptionVault {
     ///         window. The USDG reserve stays for cash-outs. Anyone may call; repeatable.
     function sweepUnmined() external;
 
-    /// @notice After an operator `abort`, return the unmined pool and the matching share of the USDG
-    ///         reserve to the operator at once. Everything a claimable fragment can redeem stays.
-    ///         Operator only; repeatable until nothing is left above the caps.
+    /// @notice On a cancelled season (operator `abort`, or a pause that outlived its grace period),
+    ///         return the whole pool and reserve to the operator at once. Operator only; repeatable,
+    ///         an asset whose hook refuses the operator stays and is retried.
     function rescue() external;
 
     /// @notice Add USDG to the cash-out reserve after funding. Anyone may call.

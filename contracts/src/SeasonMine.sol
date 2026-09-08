@@ -62,9 +62,6 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     // ── emergency ───────────────────────────────────────────────────────────
     bool public cancelled;
     uint64 public pausedAt;
-    /// @dev Set by an operator `abort` after open (client decision 2026-09-08): the season closed early,
-    ///      everything earned stays claimable, the vault may `rescue` the unmined remainder at once.
-    bool public closedByOperator;
 
     struct G {
         uint16 shift;
@@ -334,26 +331,21 @@ contract SeasonMine is ISeasonMine, ReentrancyGuard, Pausable {
     // ── admin (emergency only) ──────────────────────────────────────────────
 
     /// @inheritdoc ISeasonMine
-    /// @dev The operator is the vault's funding operator (the `SeasonFactory.create` caller). An
-    ///      unfunded or not-yet-open season is cancelled (no work exists, so nothing is owed); an open
-    ///      one closes at this instant through the ordinary close path, so claims, withdrawals and
-    ///      redemption behave exactly as after a fail-safe close. Works while paused: it is the escape
-    ///      hatch. The window is measured from `openTime`, so a season created with the wrong open time
-    ///      can always be aborted before it opens.
+    /// @dev The operator is the vault's funding operator (the `SeasonFactory.create` caller). The
+    ///      season is cancelled exactly as by the pause path (audit B4: frozen at this instant), so
+    ///      `emergencyWithdraw` returns every deposit in full and no fragment can be claimed or
+    ///      redeemed. Works while paused: it is the escape hatch. The window is measured from
+    ///      `openTime`, so a season created with the wrong open time can always be aborted before it
+    ///      opens. The client chose the full-pool return over an early close that would honour
+    ///      earnings (DECISIONS 2026-09-08); the site states the window.
     function abort() external nonReentrant {
         if (msg.sender != IRedemptionVault(vault).operator()) revert NotOperator();
         _updateGlobal();
         if (cancelled) revert WrongPhase(Phase.Cancelled);
         if (closeX != 0) revert WrongPhase(Phase.Closed);
         if (_p.rescueWindowSeconds == 0 || block.timestamp > rescueDeadline()) revert RescueWindowClosed();
-        if (block.timestamp < openTime || !IRedemptionVault(vault).funded()) {
-            cancelled = true;
-            emit SeasonCancelled(uint64(block.timestamp));
-        } else {
-            closedByOperator = true;
-            closeX = lastX; // == now in X-time after _updateGlobal (the deadline case is already closed)
-            emit ClosedByOperator(shift, closeX);
-        }
+        cancelled = true;
+        emit SeasonCancelled(uint64(block.timestamp));
     }
 
     /// @inheritdoc ISeasonMine

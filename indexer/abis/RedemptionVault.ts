@@ -642,7 +642,7 @@ export const RedemptionVaultAbi = [
   },
   {
     "type": "error",
-    "name": "NotAborted",
+    "name": "NotCancelled",
     "inputs": []
   },
   {

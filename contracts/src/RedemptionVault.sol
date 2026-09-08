@@ -142,30 +142,16 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
     }
 
     /// @inheritdoc IRedemptionVault
-    /// @dev After a pre-open abort every cap is zero and everything returns. After an in-season abort
-    ///      the vault keeps each block's `claimableCap` worth of stock and the reserve share matching
-    ///      the mined fraction of the pool (token-count share per block, averaged over the blocks), so
-    ///      cash-out keeps working for what was earned.
+    /// @dev A cancelled season has `closeX == 0` and every `claimableCap` is zero, so `_moveExcess`
+    ///      takes the whole pool; the reserve follows in full.
     function rescue() external nonReentrant {
         if (msg.sender != operator) revert NotOperator();
         ISeasonMine m = ISeasonMine(mine);
-        m.poke();
-        bool cancelled = m.phase() == ISeasonMine.Phase.Cancelled;
-        if (!cancelled && !m.closedByOperator()) revert NotAborted();
+        if (m.phase() != ISeasonMine.Phase.Cancelled) revert NotCancelled();
         uint256[] memory moved = _moveExcess(operator);
-        uint256 keep;
-        if (!cancelled) {
-            uint256 share; // 1e18-scaled mined fraction, averaged over blocks
-            for (uint256 b; b < _stocks.length; ++b) {
-                uint256 supply = m.fragmentSupply(uint8(b));
-                if (supply > 0) share += Math.mulDiv(m.claimableCap(uint8(b)), WAD, supply);
-            }
-            keep = Math.mulDiv(fundedReserve, share / _stocks.length, WAD);
-        }
         uint256 bal = IERC20(usdc).balanceOf(address(this));
-        uint256 out = bal > keep ? bal - keep : 0;
-        if (out > 0) IERC20(usdc).safeTransfer(operator, out);
-        emit UnminedSwept(operator, moved, out);
+        if (bal > 0) IERC20(usdc).safeTransfer(operator, bal);
+        emit UnminedSwept(operator, moved, bal);
     }
 
     /// @inheritdoc IRedemptionVault

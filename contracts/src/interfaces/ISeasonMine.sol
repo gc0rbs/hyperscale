@@ -117,7 +117,6 @@ interface ISeasonMine {
     event Exited(uint256 indexed rigId, uint256 returned, uint256 fee);
     event Withdrawn(uint256 indexed rigId, uint256 amount);
     event SeasonCancelled(uint64 at);
-    event ClosedByOperator(uint16 shift, uint256 closeX);
 
     // ── permissionless maintenance ──────────────────────────────────────────
     /// @notice Advances shift/block discovery up to now. Anyone may call; correctness never depends on it.
@@ -137,11 +136,10 @@ interface ISeasonMine {
 
     // ── admin (emergency only) ──────────────────────────────────────────────
     /// @notice Operator escape hatch, only until `openTime + rescueWindowSeconds` (the rescue window)
-    ///         and only while the season is neither closed nor cancelled. Before open the season is
-    ///         cancelled: no work was done, every rig recovers its full deposit with `emergencyWithdraw`.
-    ///         After open the season closes at this instant: everything earned so far stays claimable
-    ///         and redeemable, every rig recovers its full deposit with `withdraw`, and the vault's
-    ///         `rescue()` returns the unmined remainder to the operator. Client decision 2026-09-08.
+    ///         and only while the season is neither closed nor cancelled. Cancels the season: every rig
+    ///         recovers its full deposit with `emergencyWithdraw`, every fragment of this season
+    ///         (claimed or not) is void, and the vault's `rescue()` returns the whole pool and reserve
+    ///         to the operator at once. Labelled on the site. Client decision 2026-09-08.
     function abort() external;
     /// @notice Guardian emergency stop; reverts once the season has closed. Claims and post-close
     ///         withdrawals ignore a pause after the close is persisted, so earned fragments can never
@@ -177,8 +175,6 @@ interface ISeasonMine {
     function vault() external view returns (address);
     /// @notice Last second at which `abort` is allowed (openTime + rescueWindowSeconds).
     function rescueDeadline() external view returns (uint64);
-    /// @notice True once the operator closed the season early with `abort` after open.
-    function closedByOperator() external view returns (bool);
     /// @notice Upper bound on whole fragments block `b` can still mint in total (minted + claimable)
     ///         once the season is closed: the full supply for a found block, the paid work's worth for
     ///         the block the close landed in, zero for later blocks. Reverts while open. The vault keeps

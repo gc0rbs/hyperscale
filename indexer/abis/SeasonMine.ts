@@ -326,19 +326,6 @@ export const SeasonMineAbi = [
   },
   {
     "type": "function",
-    "name": "closedByOperator",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "coolingCost",
     "inputs": [
       {
@@ -1229,25 +1216,6 @@ export const SeasonMineAbi = [
         "type": "uint16",
         "indexed": false,
         "internalType": "uint16"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ClosedByOperator",
-    "inputs": [
-      {
-        "name": "shift",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
-      },
-      {
-        "name": "closeX",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
