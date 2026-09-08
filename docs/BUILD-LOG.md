@@ -705,3 +705,43 @@ test-first in `contracts/test/rounds/` (unit: rounds close on the clock, work sh
 rollover, funding schedule, unschedule, halt; invariants 1–8 of docs/13 §4); then `contracts/src/rounds/`;
 then a deploy script, ops (`fund-rounds`, keeper that pokes at round boundaries, `halt`, `rescue`),
 app mine screen (countdown, live pot, your share, claim), docs and gitbook.
+
+## 2026-09-08 – Rounds: what shipped / what's next / known gaps
+
+**Shipped (branch `claude/mainnet-launch-postmortem-cri2up`)**
+- Contracts: `RoundMine`, `RoundVault` (docs/13): hourly rounds closing on the clock, pot per stock per
+  round split by exact work share, 15-minute claim window, rollover of unclaimed pots, per-round funding
+  schedule anyone can fill, operator `unschedule` (rounds not started) and `halt`, guardian `pause`,
+  catch-up capped at 48 rounds per call with `NotCaughtUp` on actions. 14 unit/scenario tests and 8
+  invariants (`contracts/test/rounds/`). Season contracts gained the 24 h `abort` + `rescue` (full pool
+  back, client decision), `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds`; 87 tests green.
+- Ops: `deploy-rounds` (Anvil demo + mainnet, predicted addresses, dry run), `fund-rounds`,
+  `rounds-keeper` (boundary poke, catch-up, low-gas alert), `rounds-watch`, `rounds-admin`
+  (status / halt / unschedule / rescue / pause, `--yes` to broadcast), Railway configs; 31 ops tests.
+  E2E on Anvil: fund → boundary → keeper poke → status → watch.
+- App: rounds deployment from runtime env or `<chainId>-rounds.json` (season UI kept for the live
+  2026-09-05 seasons), `/mine` round view (countdown, pots with rollover, share, projected cut, claim
+  panel, rig cards, halt state, client notices), activate, redeem any time with fractional in-kind,
+  header round status, round-close notification; 24 app tests. E2E with Playwright on Anvil: activate →
+  overclock → round close → claim (fragments minted) → fractional redeem. Screenshots in
+  `app/test-results/rounds/` (gitignored).
+- Docs: docs/13, DECISIONS, CLAUDE.md hard rules, `RUNBOOK-ROUNDS.md`, GitBook rounds page and safety
+  overview, tokenomics fee-funding section, audit-package addendum.
+
+**What's next**
+1. Client: confirm the Pons tax asset and recipient wallet, then decide who holds `FUNDER_KEY`.
+2. Rehearse `docs/RUNBOOK-ROUNDS.md` §1 end to end including the Railway path; deploy with
+   `deploy-rounds mainnet`; verify on Blockscout; set `NEXT_PUBLIC_ROUNDS_*` / `ROUNDS_*`.
+3. Season tail (retro §7): `poke()` season id 2, the client's redemptions, `sweepUnmined` is not
+   available on the deployed seasons (old bytecode), so `sweep()` after 2026-10-05; the unexplained
+   0.128 ETH transfer from the deployer.
+4. Audit addendum questions (AUDIT-PACKAGE §1b) to the auditor before mainnet.
+
+**Known gaps**
+- No Ponder indexer for rounds (`indexer/` still indexes a season); the app reads the chain directly
+  and the leaderboard for rounds is chain-read only.
+- The Python simulation still models seasons; no economic sim of pot sizes vs. fee volume yet.
+- Halt / emergency-withdraw and browser notifications were unit-tested but not driven in the browser.
+- The demo deploy's operator on Anvil is account 1 (the ops `clients()` fallback), which the runbook
+  now states.
+- Copy in shared season components (rig room, hash stream) still uses mining words.

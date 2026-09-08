@@ -4,6 +4,9 @@ import { coolingCostOf, gpuCostOf, overclockCostOf, shareOf, type RoundRig, type
 import { Btn, Chip, Cost, HeatGauge, Mono, OcSlots, Pips, Stat } from "../ui";
 import { Icon } from "../Icons";
 
+/** "500.00 TFLOPS" → number with a small unit so it fits the card column. */
+const split = (v: string) => { const [n, u] = v.split(" "); return <>{n}<span className="text-mine-muted text-[13px]"> {u}</span></>; };
+
 export type RoundRigAction = { kind: "overclock" | "gpu" | "cooling" | "exit" | "withdraw"; rig: RoundRig };
 
 /** A node in the rounds mine: same card as the season RigCard, with per-round figures and no close/withdraw states. */
@@ -23,13 +26,13 @@ export function RoundRigCard({ rig, snap, onAction }: { rig: RoundRig; snap: Rou
         <Mono className="text-mine-muted text-[12px]">stake {formatRig(rig.amount)} RIG</Mono>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <Stat label="Throughput" value={formatThroughput(off ? 0n : rig.hash)} big />
-        <Stat label="Served this round" value={formatCompute(rig.work)} sub="compute in round" />
+        <Stat label="Throughput" value={split(formatThroughput(off ? 0n : rig.hash))} />
+        <Stat label="Served this round" value={split(formatCompute(rig.work))} sub="compute in round" />
         <Stat label="Share of round" value={`${(share * 100).toFixed(2)}%`} sub="of this round's pot" />
       </div>
       <div className="h-px bg-mine-line" />
-      <div className="grid grid-cols-2 gap-4"><Pips on={rig.gpuTier} total={5} label="GPU gen" /><Pips on={rig.coolingTier} total={3} label="Cooling" /></div>
-      <HeatGauge value={rig.heat} ghost={p.heatPerOc[rig.coolingTier]} max={p.heatMax} />
+      <div className="grid grid-cols-2 gap-4"><Pips on={rig.gpuTier} total={5} label="GPU" caption={`GPU Gen ${rig.gpuTier}`} /><Pips on={rig.coolingTier} total={3} label="Cooling" caption={`Cooling ${["Air", "Liquid loop", "Direct-to-chip", "Immersion"][rig.coolingTier] ?? rig.coolingTier}`} /></div>
+      <HeatGauge value={rig.heat} ghost={p.heatPerOc[rig.coolingTier]} max={p.heatMax} label="Thermal load" />
       <OcSlots active={rig.activeOc} max={p.maxActiveOc} expiresLabel={`expire end of round ${rig.ocExpiryRound}`} />
       {snap.halted && !off && (
         <div className="flex flex-col gap-2" data-testid={`halt-${rig.id}`}>

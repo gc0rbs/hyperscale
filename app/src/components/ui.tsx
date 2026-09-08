@@ -6,8 +6,8 @@ export const Label = ({ children, className = "" }: { children: ReactNode; class
   <div className={`text-[12px] tracking-[0.08em] uppercase text-mine-muted font-medium ${className}`}>{children}</div>
 );
 
-export const Mono = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <span className={`font-data tabular-nums ${className}`}>{children}</span>
+export const Mono = ({ children, className = "", ...rest }: { children: ReactNode; className?: string; "data-testid"?: string }) => (
+  <span {...rest} className={`font-data tabular-nums ${className}`}>{children}</span>
 );
 
 export const Chip = ({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "signal" | "ember" }) => {
@@ -15,8 +15,8 @@ export const Chip = ({ children, tone = "muted" }: { children: ReactNode; tone?:
   return <span className={`text-[11px] tracking-[0.06em] uppercase px-[7px] py-[3px] border rounded-[3px] whitespace-nowrap ${tones[tone]}`}>{children}</span>;
 };
 
-export const Panel = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={`bg-mine-panel border border-mine-line rounded-md p-5 ${className}`}>{children}</div>
+export const Panel = ({ children, className = "", ...rest }: { children: ReactNode; className?: string; "data-testid"?: string }) => (
+  <div {...rest} className={`bg-mine-panel border border-mine-line rounded-md p-5 ${className}`}>{children}</div>
 );
 
 export function Stat({ label, value, sub, est = false, big = false }: { label: string; value: ReactNode; sub?: ReactNode; est?: boolean; big?: boolean }) {
@@ -60,10 +60,10 @@ export function Progress({ pct, ticks = 8, head = true, color = "var(--signal)" 
   );
 }
 
-export function Pips({ on, total, label }: { on: number; total: number; label: string }) {
+export function Pips({ on, total, label, caption }: { on: number; total: number; label: string; caption?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>{label} tier {on}</Label>
+      <Label>{caption ?? `${label} tier ${on}`}</Label>
       <div className="flex gap-1">
         {Array.from({ length: total }, (_, i) => <div key={i} className={`w-[14px] h-[6px] rounded-[1px] ${i < on ? "bg-ember" : "bg-mine-line"}`} />)}
       </div>
@@ -71,10 +71,10 @@ export function Pips({ on, total, label }: { on: number; total: number; label: s
   );
 }
 
-export function HeatGauge({ value, ghost, max = 100 }: { value: number; ghost: number; max?: number }) {
+export function HeatGauge({ value, ghost, max = 100, label = "Heat" }: { value: number; ghost: number; max?: number; label?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between"><Label className="flex items-center gap-1.5"><Icon name="heat" size={13} /> Heat</Label><Mono className="text-mine-muted text-[12px]">{value} / {max} · next overclock +{ghost}</Mono></div>
+      <div className="flex justify-between"><Label className="flex items-center gap-1.5"><Icon name="heat" size={13} /> {label}</Label><Mono className="text-mine-muted text-[12px]">{value} / {max} · next overclock +{ghost}</Mono></div>
       <div className="relative h-2 bg-mine-panel2 border border-mine-line">
         <div className="absolute left-0 top-0 bottom-0 transition-[width] duration-[400ms] motion-reduce:transition-none" style={{ width: `${(value / max) * 100}%`, background: "linear-gradient(90deg, var(--ember), var(--ember) 60%, var(--heat-hot))" }} />
         <div className="absolute top-0 bottom-0 opacity-60" style={{ left: `${(value / max) * 100}%`, width: `${(Math.min(ghost, max - value) / max) * 100}%`, background: "repeating-linear-gradient(135deg, var(--ember) 0 3px, transparent 3px 6px)" }} />

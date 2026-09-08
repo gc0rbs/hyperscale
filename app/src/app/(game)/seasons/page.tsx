@@ -1,6 +1,7 @@
 "use client";
 import { useReads } from "@/lib/reads";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment } from "@/app/providers";
+import Link from "next/link";
 import { Mono } from "@/components/ui";
 import { short } from "@/lib/format";
 import SeasonFactoryJson from "@/abi/SeasonFactory.json";
@@ -31,6 +32,22 @@ function CurrentMine() {
 }
 
 export default function SeasonsPage() {
+  const any = useAnyDeployment();
+  if (any.kind === "rounds") return <RoundsNoSeasons />;
+  return <SeasonList />;
+}
+
+function RoundsNoSeasons() {
+  return (
+    <main className="min-h-[calc(100vh-var(--lp-header-height))] bg-shell-bg text-shell-fg px-4 md:px-8 py-10 max-w-[1100px] mx-auto flex flex-col gap-4">
+      <div className="font-display uppercase tracking-[0.02em] text-[80px] font-bold leading-none">Rounds, not seasons</div>
+      <div className="text-shell-muted text-[15px] max-w-[640px]">This mine runs continuously in hourly rounds: every round has its own pot, split by the compute served in it. There is nothing to list here.</div>
+      <Link href="/mine" className="text-signal-deep text-[14px]">Go to the mine</Link>
+    </main>
+  );
+}
+
+function SeasonList() {
   const dep = useDeployment();
   const count = useReads([{ address: dep.factory, abi: factoryAbi, functionName: "seasonCount" }]);
   const n = Number((count.data?.[0]?.result as bigint | undefined) ?? 0n);

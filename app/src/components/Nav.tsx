@@ -3,18 +3,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContext, useState } from "react";
 import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment, useRoundsDeployment } from "@/app/providers";
 import { useSeason } from "@/lib/use-season";
+import { useRounds } from "@/lib/use-rounds";
+import { useChainNow } from "@/lib/use-now";
+import { claimWindow, formatClock, roundAt, secondsToRoundEnd } from "@/lib/round-model";
 import { DevAccountContext, useActiveAddress } from "@/lib/use-account";
 import { short } from "@/lib/format";
 import { LogoMark } from "./Icons";
 import "@/components/landing/landing.css";
 
-const LINKS = [["/mine", "Mine"], ["/claim", "Claim"], ["/redeem", "Redeem"], ["/leaderboard", "Leaderboard"]] as const;
+/** Season deployments keep Claim and Seasons; the rounds mine claims on the mine screen and has no season list. */
+const SEASON_LINKS = [["/mine", "Mine"], ["/claim", "Claim"], ["/redeem", "Redeem"], ["/leaderboard", "Leaderboard"], ["/seasons", "Seasons"]] as const;
+const ROUND_LINKS = [["/mine", "Mine"], ["/redeem", "Redeem"], ["/leaderboard", "Leaderboard"]] as const;
 
 /** The landing page's header, reused verbatim (same classes from landing.css) so the app and the site share one chrome. */
 export function Nav() {
   const path = usePathname();
+  const dep = useAnyDeployment();
+  const LINKS = dep.kind === "rounds" ? ROUND_LINKS : SEASON_LINKS;
   const [menuOpen, setMenuOpen] = useState(false);
   const links = (onPick?: () => void) =>
     LINKS.map(([href, label]) => (
@@ -23,7 +30,7 @@ export function Nav() {
   return (
     <div className="lp-chrome">
       <header className="lp-header">
-        <div className="lp-brand"><Link href="/" className="lp-logo" aria-label="Hyperscale home"><LogoMark size={34} /></Link><SeasonStatus /></div>
+        <div className="lp-brand"><Link href="/" className="lp-logo" aria-label="Hyperscale home"><LogoMark size={34} /></Link>{dep.kind === "rounds" ? <RoundStatus /> : <SeasonStatus />}</div>
         <nav className="lp-desktop-nav" aria-label="Main navigation">{links()}</nav>
         <div className="lp-header-actions"><WalletButton /></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
@@ -50,6 +57,26 @@ function SeasonStatus() {
   );
 }
 
+/** Header status for the rounds mine: live dot, "Round N", and the close countdown (or the claim window) as the chip. */
+function RoundStatus() {
+  const dep = useRoundsDeployment();
+  const { snapshot } = useRounds(dep);
+  const now = useChainNow(snapshot, 1000);
+  const p = snapshot?.params;
+  const cur = p ? roundAt(p.genesis, p.roundSeconds, now) : undefined;
+  const toEnd = p && cur !== undefined ? secondsToRoundEnd(p.genesis, p.roundSeconds, cur, now) : 0;
+  const w = p ? claimWindow(p.genesis, p.roundSeconds, p.claimSeconds, now, snapshot?.halted) : null;
+  const tone = !snapshot ? "idle" : snapshot.halted ? "done" : snapshot.paused ? "soon" : "live";
+  const chip = !snapshot ? "Reading" : snapshot.halted ? "Halted" : snapshot.paused ? "Paused" : `closes in ${formatClock(toEnd)}${w?.open ? ` · claim ${formatClock(w.secondsLeft)}` : ""}`;
+  return (
+    <div className={`lp-status lp-status-${tone}`} data-testid="round-status" data-round={cur ?? ""}>
+      <span className="lp-status-dot" aria-hidden />
+      <span className="lp-status-name">{cur === undefined ? "Round" : `Round ${cur}`}</span>
+      <span className="lp-status-chip">{chip}</span>
+    </div>
+  );
+}
+
 function Arrow() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14" stroke="currentColor" strokeWidth="1.5" /></svg>;
 }
@@ -61,7 +88,7 @@ export function WalletButton() {
   const dev = useContext(DevAccountContext);
   const active = useActiveAddress();
   const mock = connectors.find((c) => c.id === "mock");
-  const dep = useDeployment();
+  const dep = useAnyDeployment();
   const chainId = useChainId();
   const { switchChain, isPending: switching } = useSwitchChain();
   if (!isConnected) {

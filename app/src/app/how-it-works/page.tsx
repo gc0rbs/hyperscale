@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FramedIcon } from "@/components/Icons";
+import { ROUND_NOTICES } from "@/components/rounds/RoundNotices";
 
 export const metadata = { title: "Hyperscale · How rewards work" };
 
@@ -18,6 +19,15 @@ export default function HowItWorks() {
         <h1 className="font-display leading-[0.9] uppercase text-[80px] md:text-[128px] font-bold">How rewards work</h1>
         <p className="text-mine-muted text-[17px] max-w-[640px]">Hyperscale is a game of work, not time. This page explains exactly what pays, what burns, and what ends a season. It is the reference the terms point to.</p>
       </div>
+
+      <Sec title="Rounds: the continuous mine">
+        <p>Since 8 September 2026 the mine runs continuously in rounds of one hour. Every round has a pot per stock. When the round closes on the clock, the pot is split among the nodes by the compute they served in that hour: your share is your compute over everyone&apos;s. You then have fifteen minutes to claim. Whatever is not claimed in that window rolls into the next round&apos;s pot. A round in which nobody served compute rolls its whole pot forward.</p>
+        <p>Nodes stay online across rounds until you decommission them (stake back minus the exit fee, default 3%). Upgrades, cooling, thermal load and overclocks work as before; overclocks expire at a round boundary. Shards can be redeemed for the Stock Token, in any fraction, or cashed out, at any time: there is no redemption window.</p>
+        <div className="flex flex-col gap-2 border border-mine-line rounded-sm p-4" data-testid="round-notices">
+          {ROUND_NOTICES.map((n) => <p key={n}>{n}</p>)}
+        </div>
+        <p>The 2026-09-05 seasons keep running under the season rules below until their redemption windows close.</p>
+      </Sec>
 
       <Sec title="Work finds blocks">
         <p>A season has four blocks. Each block needs a fixed amount of work, measured in hashrate multiplied by seconds. Every active rig contributes work every second. When the total reaches the block&apos;s difficulty, the block is found and the next one starts. Block 4 found means the season is over. Nothing is scheduled: more total hashrate finds blocks sooner.</p>

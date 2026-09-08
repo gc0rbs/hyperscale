@@ -222,6 +222,17 @@ export function formatClock(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** Parse a user amount into whole fragments: "0.5" tokens → 500,000 fragments; fragments are integers. */
+export function parseAmount(str: string, unit: "frag" | "token", fragPerToken: bigint): bigint {
+  const s = str.trim();
+  if (!s || !/^\d*\.?\d*$/.test(s)) return 0n;
+  if (unit === "frag") return BigInt(s.split(".")[0] || "0");
+  const [w, f = ""] = s.split(".");
+  const digits = fragPerToken.toString().length - 1; // 1_000_000 → 6
+  const frac = (f + "0".repeat(digits)).slice(0, digits);
+  return BigInt(w || "0") * fragPerToken + BigInt(frac || "0");
+}
+
 // ── costs (the contract's gpuCost/coolingCost/overclockCost, computed locally so a maxed tier does not revert the multicall) ──
 
 export function gpuCostOf(p: RoundParamsView, rig: { amount: bigint; gpuTier: number }): bigint {

@@ -6,22 +6,11 @@ import { useRoundsDeployment } from "@/app/providers";
 import { Btn, Mono } from "../ui";
 import { eligibilityAbi, roundVaultAbi, stockFragmentsAbi } from "@/lib/contracts";
 import { formatInt } from "@/lib/format";
-import type { RoundSnapshot } from "@/lib/round-model";
+import { parseAmount, type RoundSnapshot } from "@/lib/round-model";
 import { useActiveAddress } from "@/lib/use-account";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 const STOCKS = [0, 1, 2, 3] as const;
-
-/** Parse a user amount into whole fragments: "0.5" tokens → 500,000 fragments; fragments are integers. */
-export function parseAmount(str: string, unit: "frag" | "token", fragPerToken: bigint): bigint {
-  const s = str.trim();
-  if (!s || !/^\d*\.?\d*$/.test(s)) return 0n;
-  if (unit === "frag") return BigInt(s.split(".")[0] || "0");
-  const [w, f = ""] = s.split(".");
-  const digits = fragPerToken.toString().length - 1; // 1_000_000 → 6
-  const frac = (f + "0".repeat(digits)).slice(0, digits);
-  return BigInt(w || "0") * fragPerToken + BigInt(frac || "0");
-}
 
 /**
  * Redeem shards from the rounds vault: any time, no window (docs/13 §2 "Fragments"). In kind for any

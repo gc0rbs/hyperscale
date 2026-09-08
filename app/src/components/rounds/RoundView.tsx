@@ -27,6 +27,8 @@ export function RoundView({ snap }: { snap: RoundSnapshot }) {
   const account = useActiveAddress();
   const { rigs, refetch } = useMyRoundRigs(dep.mine, snap.round);
   const [action, setAction] = useState<RoundRigAction | null>(null);
+  // The round last claimed from this screen: keeps the panel up in its "Claimed" state until the window shuts.
+  const [claimedRound, setClaimedRound] = useState<number | null>(null);
   const p = snap.params;
   const L = p.roundSeconds;
   // The round the clock says we are in; the snapshot's round lags it by at most one poll after a boundary.
@@ -61,7 +63,7 @@ export function RoundView({ snap }: { snap: RoundSnapshot }) {
           </div>
 
           {snap.halted && <HaltCard />}
-          {!snap.halted && window.open && anyClaimable && <ClaimPanel snap={snap} round={window.round!} secondsLeft={window.secondsLeft} claimable={claimable} onClaimed={refetch} />}
+          {!snap.halted && window.open && (anyClaimable || claimedRound === window.round) && <ClaimPanel snap={snap} round={window.round!} secondsLeft={window.secondsLeft} claimable={claimable} claimed={claimedRound === window.round} onClaimed={() => { setClaimedRound(window.round); refetch(); }} />}
           {!snap.halted && <RoundCard snap={snap} cur={cur} toEnd={toEnd} elapsedPct={elapsedPct} share={share} cut={cut} rollover={rollover} haveRigs={rigs.length > 0} />}
 
           {!snap.halted && <RigRoom rigs={roomRigs} />}
@@ -152,24 +154,23 @@ function RoundCard({ snap, cur, toEnd, elapsedPct, share, cut, rollover, haveRig
   );
 }
 
-function ClaimPanel({ snap, round, secondsLeft, claimable, onClaimed }: { snap: RoundSnapshot; round: number; secondsLeft: number; claimable: bigint[]; onClaimed: () => void }) {
+function ClaimPanel({ snap, round, secondsLeft, claimable, claimed, onClaimed }: { snap: RoundSnapshot; round: number; secondsLeft: number; claimable: bigint[]; claimed: boolean; onClaimed: () => void }) {
   const dep = useRoundsDeployment();
   const account = useActiveAddress();
   const tx = useTx();
-  const [claimedRound, setClaimedRound] = useState<number | null>(null);
   useEffect(() => {
-    if (tx.done?.ok && tx.done.tag === "claim") { setClaimedRound(round); tx.reset(); onClaimed(); }
+    if (tx.done?.ok && tx.done.tag === "claim") { tx.reset(); onClaimed(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tx.done]);
   const total = claimable.reduce((a, b) => a + b, 0n);
-  const done = claimedRound === round && total === 0n;
+  const done = claimed && total === 0n;
   return (
     <Panel className="flex flex-col gap-5 p-6 md:p-8 border-signal-deep" data-testid="claim-panel">
       <div className="flex items-center gap-4 flex-wrap">
         <FramedIcon name="lock" size={48} />
         <div className="flex-1 min-w-[200px]">
           <div className="font-display uppercase text-[48px] md:text-[64px] font-bold leading-none">Round {round} closed</div>
-          <div className="text-mine-muted text-[13px]">Your share of its pot is ready. Claim before the window shuts.</div>
+          <div className="text-mine-muted text-[13px]">{done ? "Claimed. Your shards are in your wallet; redeem them any time." : "Your share of its pot is ready. Claim before the window shuts."}</div>
         </div>
         <div className="flex flex-col items-end"><Label>Claim window</Label><div className="font-display uppercase text-[64px] font-bold leading-none text-ember tabular-nums" data-testid="claim-countdown">{formatClock(secondsLeft)}</div></div>
       </div>

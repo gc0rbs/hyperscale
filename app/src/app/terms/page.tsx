@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ROUND_NOTICES } from "@/components/rounds/RoundNotices";
 
 export const metadata = { title: "Hyperscale · Terms" };
 
@@ -32,10 +33,14 @@ export default function Terms() {
       <H>6. Redemption window</H>
       <p>Fragments may be redeemed for Stock Tokens or cashed out for USDG only during the redemption window after a season closes. After the window, unredeemed amounts are swept to the treasury and can no longer be redeemed from that season.</p>
 
-      <H>7. Stock Tokens</H>
+      <H>7. Rounds, funding and the operator&apos;s powers</H>
+      <p>Where the mine runs in rounds (from 8 September 2026), each round&apos;s pot is split by the compute served in that round and is claimable for fifteen minutes after the round closes; unclaimed amounts roll into the next round&apos;s pot. Shards can be redeemed or cashed out at any time while the vault holds the stock behind them.</p>
+      {ROUND_NOTICES.map((n) => <p key={n}>{n}</p>)}
+
+      <H>8. Stock Tokens</H>
       <p>Robinhood Stock Tokens are tokenized instruments that track the price of an underlying security. They confer no ownership, voting or dividend rights in the underlying company. Their availability and transferability are determined by their issuer, not by Hyperscale.</p>
 
-      <H>8. No advice, no guarantee</H>
+      <H>9. No advice, no guarantee</H>
       <p>Nothing in the app is financial advice. Smart contracts are immutable once deployed and are used at your own risk. The operator does not guarantee uptime, price feeds, or the value of any token.</p>
 
       <p className="mt-10"><Link href="/" className="text-signal inline-block py-2">Back to the mine</Link></p>

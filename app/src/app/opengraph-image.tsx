@@ -25,7 +25,7 @@ interface Live { phase: number; shift: number; totalHash: bigint; closeX: bigint
 
 async function readLive(): Promise<Live | null> {
   const dep = getDeployment();
-  if (!dep) return null;
+  if (!dep || dep.kind !== "season") return null;
   const client = createPublicClient({ transport: http(dep.rpcUrl, { timeout: 1500 }) });
   const read = (functionName: string) => client.readContract({ address: dep.mine, abi: seasonMineAbi, functionName });
   try {
