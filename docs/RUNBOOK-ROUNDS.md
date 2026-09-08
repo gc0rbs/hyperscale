@@ -12,7 +12,9 @@ nights, every irreversible action confirmed with its exact parameters, one opera
 | Role | Env var | Powers |
 |---|---|---|
 | Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `launch` (once), `halt`, vault `rescue` |
-| Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | receives the Pons trading tax (ETH), swaps it into the four Stock Tokens, calls `fund`. Any wallet may fund |
+| FeeFunder (contract) | none | the Pons tax recipient: holds the ETH between flushes; `flush` swaps and funds. No key |
+| Flusher | `FLUSHER_KEY` (the keeper key is fine) | calls `FeeFunder.flush` every few minutes with a quoted slippage bound; holds gas only |
+| Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet from 2026-09-08 |
 | Guardian | `GUARDIAN_KEY` | the `treasury` address: `pause`, `unpause`. Receives activation and exit fees |
 | Keeper | `KEEPER_KEY` | its own funded key; sends `poke()` at round boundaries. Alerts below `KEEPER_MIN_ETH` |
 
@@ -24,7 +26,8 @@ from the funding flows; do not repeat that.
 - `bash .claude/hooks/session-start.sh`, `cd contracts && forge build`, `pnpm --filter @stock-miner/ops sync-abi`.
 - Chain profile `ops/chains/robinhood.json` with `rig`, `usdc`, `treasury`, the four `stocks`, and the
   adapters (`oracle`, `eligibility`, or `contracts/deployments/4663-adapters.json` from `deploy-adapters`).
-- The fee wallet holds some of each Stock Token and the funder key; the keeper key holds ≥ 0.05 ETH.
+- `ops/chains/robinhood.json` `pools` names the WETH pool per stock (discovered 2026-09-08); the keeper
+  and flusher keys hold ≥ 0.05 ETH each.
 
 ## 1. Rehearse on Anvil (ten minutes, every time the code changes)
 
@@ -53,7 +56,10 @@ pnpm deploy-rounds mainnet --chain robinhood --prelaunch             # three tra
 
 `--prelaunch` deploys the mine without a token or genesis so everything below (verification, hosting,
 funding, keeper, watcher, rehearsal against the real addresses) is done days ahead. Players see
-"Not live yet". When the token is live:
+"Not live yet". The script also deploys the **FeeFunder** and prints its address: **set that address
+as the tax recipient on Pons**, and allow the flusher with
+`OPERATOR_KEY=0x… pnpm rounds-admin set-flusher --address <keeper address> --yes` (or pass
+`--flusher` to the deploy). When the token is live:
 
 ```
 OPERATOR_KEY=0x… pnpm rounds-admin launch --token 0x<RIG> --genesis next-hour        # dry run: prints token symbol, genesis
@@ -76,20 +82,22 @@ forge verify-contract <mine> src/rounds/RoundMine.sol:RoundMine --chain 4663 --v
 Then set the hosting variables from the file (`NEXT_PUBLIC_ROUNDS_*`, `ROUNDS_*`; `app/.env.example`,
 `ops/chains/README.md`) and confirm `/api/health` and the served mine address before genesis.
 
-## 3. Fund the pots (the fee wallet, as fees arrive)
+## 3. Fund the pots (automatic)
 
 ```
-FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount 0.5 --dry-run        # into the running round
-FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount balance --loop 300    # sweep the wallet into the pot every 5 min
-FUNDER_KEY=0x… pnpm fund-rounds --reserve 500                              # USDG for cash-outs, when low
+FLUSHER_KEY=0x… pnpm flush-fees --once --dry-run            # quote: what a flush would buy now
+FLUSHER_KEY=0x… pnpm flush-fees --interval 300               # the service: every 5 min, when ≥ 0.002 ETH waits
+FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount 0.5     # optional: fund Stock Tokens by hand
+FUNDER_KEY=0x… pnpm fund-rounds --reserve 500                # USDG for cash-outs, when low
 ```
 
-Funding lands in the running round's pot the moment it is sent and the pot is locked at the close, so
-the first hour pays out whatever came in during it. There is no calendar: run `--loop` from the fee
-wallet for as long as the project runs, two hours or two weeks. Anyone can fund, so a second wallet
-topping up is fine. The Pons tax arrives as ETH; the swap into the four Stock Tokens is a
-Robinhood-side action outside this repo, done by the fee wallet holder (automating it is the next
-step once the fee wallet is known). The mine only ever sees Stock Tokens.
+The Pons tax is paid in ETH to the FeeFunder. `flush-fees` (Railway `railway/flush-fees.json`) checks
+it every five minutes; when at least `--min-eth` waits it simulates a flush at current prices, takes a
+`--slippage-bps` (1%) haircut as `minOut`, and sends: wrap, four swaps on the WETH pools, four `fund`
+calls, one transaction. The stock lands in the running round's pot at once and the pot is locked at
+the close, so the first hour pays out whatever came in during it. No calendar, no key holding fees,
+nothing to do for a project that runs two hours or two weeks. Three slippage reverts in a row alert:
+a pool moved or thinned; re-point it with `setLegs` or raise the haircut.
 
 `rounds-watch` warns when a round is past its half-way point with no fees in yet.
 
@@ -111,7 +119,9 @@ Normal: `[rounds-keeper] ok round=N closes in ~Ns` and `[rounds-watch] INFO roun
 
 | Alert | Meaning | Response |
 |---|---|---|
-| `no fees in yet: round N pot is zero` | half the round gone, nothing funded | check the fee wallet and the funding loop (§3); the round pays only its rollover otherwise |
+| `no fees in yet: round N pot is zero` | half the round gone, nothing funded | check the FeeFunder's pending ETH (`rounds-admin status`) and the flusher service (§3); the round pays only its rollover otherwise |
+| flusher `slippage 3× in a row` | a pool moved more than the haircut between quote and send, or is too thin | `setLegs` to a deeper pool, or raise `--slippage-bps` |
+| flusher `mine is HALTED; N ETH waits` | tax keeps arriving after a halt | owner sweeps the FeeFunder (`sweep`) |
 | `USDG reserve below 1,000` | cash-out reserve thin | `fund-rounds --reserve`; in-kind redemption is unaffected |
 | `totalHash == 0 for over an hour` | nobody mining | pots roll over; comms |
 | `mine is PAUSED` | guardian paused | confirm it was intentional; unpause within the grace period (30 min) or players halt the mine with `emergencyWithdraw` |

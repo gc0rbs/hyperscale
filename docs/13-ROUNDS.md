@@ -35,9 +35,18 @@ not claimed rolls into the next pot.
   (`claimSeconds < roundSeconds` is enforced). A round nobody mined rolls its whole pot forward.
 - **Funding.** Anyone calls `fund(s, amount)` as often as fees arrive: the stock moves into the vault
   and into the running round's pot at once; the pot is locked the moment the round closes. So the
-  first hour pays out whatever accrued during it, a bot can push fees in every few minutes, and a
-  project can run for two hours or two weeks with no funding calendar. Nothing is ever scheduled
-  ahead, so there is nothing to unschedule; the operator's only way out is `halt` (below).
+  first hour pays out whatever accrued during it, and a project can run for two hours or two weeks
+  with no funding calendar. Nothing is ever scheduled ahead, so there is nothing to unschedule; the
+  operator's only way out is `halt` (below).
+- **FeeFunder.** The Pons tax is paid in ETH to the `FeeFunder` contract (`contracts/src/rounds/
+  FeeFunder.sol`), which is set as the tax recipient. A flusher (the keeper key, holding only gas)
+  calls `flush(minOut[])` every few minutes: the ETH is wrapped, split across the four stocks by
+  share (15/20/25/40 by default), swapped directly against each stock's Uniswap v3 WETH pool (the
+  contract is the swap caller and pays in `uniswapV3SwapCallback`, which only accepts a configured
+  pool and only pays WETH), and every token bought is funded into the running round in the same
+  transaction. `minOut` is quoted off-chain right before sending (simulate, then a 1% haircut); a
+  moved price reverts the whole flush and the ETH waits. No key ever holds the fees. The owner (the
+  operator) can re-point pools and shares (`setLegs`), allow flushers, and sweep the contract.
 - **Claim.** After round `r` closes, each rig that worked in it can `claim` during
   `[close, close + claimSeconds)` (900 s) and receives `pot[r][s] × rigWork[r] / roundWork[r]` of each
   stock as fragments (whole fragments; dust stays in the pot). Only the latest closed round is ever

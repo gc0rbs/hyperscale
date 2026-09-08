@@ -37,5 +37,30 @@
   "deployedNote": "Mainnet 2026-09-05 from deployer 0x0F89e3Ce3e4646341De2f71C0Da2C7cea5CeD0a2: factory, OpenEligibility, ChainlinkOracle (feeds verified live). rig stays zero until the Pons launch.",
   "rigNote": "$RIG \"Stock Miner\" (RIG, 18 decimals, 1e27 supply) verified on chain 2026-09-05",
   "feeWallet": "0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0",
-  "feeWalletNote": "Pons tax recipient (client, 2026-09-08). Receives the trading tax in ETH; its key is FUNDER_KEY on the funding service only. Swaps into the four Stock Tokens and calls RoundMine.fund via fund-rounds --loop."
+  "feeWalletNote": "Pons tax recipient (client, 2026-09-08). Receives the trading tax in ETH; its key is FUNDER_KEY on the funding service only. Swaps into the four Stock Tokens and calls RoundMine.fund via fund-rounds --loop.",
+  "pools": {
+    "NVDA": {
+      "pool": "0x62AB521f71431f78ac374CdbadC6cda3c8916b6C",
+      "fee": 500
+    },
+    "MU": {
+      "pool": "0xFD4911302Ba5c25D153a6912b394a72d0A9601F2",
+      "fee": 3000
+    },
+    "SNDK": {
+      "pool": "0x995c1Ad5Eb998b1BdD89F515C4BB64760c411b62",
+      "fee": 3000
+    },
+    "QQQ": {
+      "pool": "0xA40D00a55d43bA2d188039DCF88bD68f4F133E78",
+      "fee": 3000
+    }
+  },
+  "poolsNote": "Uniswap v3 pools of each Stock Token against WETH on chain 4663, discovered 2026-09-08 via factory.getPool: the deepest WETH pool per stock (NVDA 0.05%: 1.7e22 liquidity; MU 0.3%: 5.2e20; SNDK 0.3%: 3.0e20; QQQ 0.3%: 2.8e21). FeeFunder swaps against these; the owner can re-point with setLegs.",
+  "feeShareBps": {
+    "NVDA": 1500,
+    "MU": 2000,
+    "SNDK": 2500,
+    "QQQ": 4000
+  }
 }

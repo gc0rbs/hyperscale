@@ -10,7 +10,7 @@
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
  */
 import { decodeEventLog, formatUnits, type Address } from "viem";
-import { catchUp, loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
+import { catchUp, feeFunderAbi, loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
 const TAG = "[rounds-admin]";
@@ -41,7 +41,7 @@ async function main() {
   async function broadcast(label: string, address: Address, abi: typeof roundMineAbi, fn: string, args: unknown[] = []) {
     // Everything but poke/halt reverts with NotCaughtUp while boundaries are unrecorded (docs/13 §2):
     // poke first when broadcasting (a dry run only reports it, since the simulation would fail).
-    if (fn !== "halt" && fn !== "rescue" && fn !== "launch") {
+    if (fn !== "halt" && fn !== "rescue" && fn !== "launch" && fn !== "setFlusher") {
       if (yes) await catchUp(pub, wallet, dep.mine, TAG);
       else if (now >= dep.genesis && closed < current) console.log(`${TAG} mine is ${current - closed} rounds behind; the real run pokes first`);
     }
@@ -81,6 +81,10 @@ async function main() {
       console.log(`${TAG} ${dep.symbols[s].padEnd(6)} pot r${cur} so far=${formatUnits(pot, decimals[s])} vault=${formatUnits(bal, decimals[s])} requiredOf=${formatUnits(required, decimals[s])}`);
     }
     console.log(`${TAG} vault USDG reserve ${formatUnits(reserve, udec)}`);
+    if (dep.feeFunder) {
+      const pendingEth = (await pub.readContract({ abi: feeFunderAbi, address: dep.feeFunder, functionName: "pending" })) as bigint;
+      console.log(`${TAG} FeeFunder ${dep.feeFunder} (Pons tax recipient): ${formatUnits(pendingEth, 18)} ETH waiting to be flushed`);
+    }
     return;
   }
 
@@ -159,7 +163,18 @@ async function main() {
     return;
   }
 
-  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause  [--yes]");
+  if (cmd === "set-flusher") {
+    requireKey(operator, "operator", "OPERATOR_KEY");
+    if (!dep.feeFunder) throw new Error("no FeeFunder in the deployment");
+    const who = arg("--address") as Address | undefined;
+    if (!who) throw new Error("--address <flusher> is required");
+    const allowed = !hasFlag("--revoke");
+    console.log(`${TAG} FeeFunder ${dep.feeFunder}: ${allowed ? "allow" : "revoke"} flusher ${who}`);
+    await broadcast(`setFlusher(${who}, ${allowed})`, dep.feeFunder, feeFunderAbi as typeof roundMineAbi, "setFlusher", [who, allowed]);
+    return;
+  }
+
+  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause | set-flusher --address 0x… [--revoke]  [--yes]");
 }
 
 main().catch((e: Error) => { console.error(`${TAG} failed:`, e.message ?? e); process.exit(1); });

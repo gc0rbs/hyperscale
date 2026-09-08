@@ -355,3 +355,10 @@ identifiers, params and accounting are unchanged. Development continues in `gc0r
 - **Fee wallet** is `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` (client, 2026-09-08): the Pons tax
   recipient, paid in ETH. Its key lives only as `FUNDER_KEY` on the funding service; it was never shared
   in chat (the retro's process rule).
+- **FeeFunder contract as the Pons tax recipient (same day).** The Stock Tokens trade against WETH
+  on Uniswap v3 pools on Robinhood Chain (all four found via the factory), so the ETH → stock swap is
+  automated on chain: `FeeFunder` holds the tax, a flusher key with gas only calls `flush` with an
+  off-chain quoted `minOut`, and the contract wraps, swaps directly against the pools and funds the
+  running round in one transaction. Chosen over a router dependency (the canonical router address
+  holds a different contract on this chain) and over a hot wallet holding fees. The client's fee
+  wallet stays as an optional manual funder.

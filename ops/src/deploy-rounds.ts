@@ -40,6 +40,10 @@ export interface RoundsDeployment {
   mine: Address;
   fragments: Address;
   vault: Address;
+  /** FeeFunder: the Pons tax recipient. Set this address as the recipient on Pons. */
+  feeFunder: Address;
+  weth: Address;
+  pools: Address[];
   stocks: Address[];
   symbols: string[];
   genesis: number;
@@ -149,6 +153,9 @@ async function main() {
 
   let rig: Address, usdc: Address, oracle: Address, eligibility: Address, treasury: Address, stocks: Address[];
   let genesis: number;
+  let weth: Address;
+  let pools: Address[] = [];
+  const shareBps: number[] = tpl.stocks.map((s: { symbol: string }) => Number((tpl.feeShareBps as Record<string, number> | undefined)?.[s.symbol] ?? 2500));
   const now = Number((await pub.getBlock()).timestamp);
   if (stage === "demo") {
     if (id !== 31337) throw new Error("demo is for Anvil only");
@@ -165,6 +172,17 @@ async function main() {
       await send("MockPriceOracle.sol", "MockPriceOracle", oracle, "set", [s, prices[i] * 10n ** 8n, BigInt(now)]);
     }
     genesis = now + Number(process.env.GENESIS_DELAY ?? 120);
+    // Mock WETH and one fixed-price WETH/stock pool per stock so the FeeFunder path runs on Anvil.
+    weth = await deploy("MockWETH.sol", "MockWETH");
+    const stockPerEth = [10n, 2n, 1n, 4n]; // NVDA, MU, SNDK, QQQ per WETH on the mocks
+    for (let i = 0; i < 4; i++) {
+      const wethFirst = weth.toLowerCase() < stocks[i].toLowerCase();
+      const rate = wethFirst ? stockPerEth[i] * WAD : WAD / stockPerEth[i] * 1n; // token1 per token0
+      const pool = await deploy("MockV3Pool.sol", "MockV3Pool", [weth, stocks[i], 3000, wethFirst ? rate : (WAD * WAD) / (stockPerEth[i] * WAD)]);
+      await send("MockStockToken.sol", "MockStockToken", stocks[i], "setAllowed", [pool, true]);
+      await send("MockStockToken.sol", "MockStockToken", stocks[i], "mint", [pool, parseEther("100000")]);
+      pools.push(pool);
+    }
   } else if (stage === "mainnet") {
     const chain = loadChainProfile(arg("--chain", "robinhood")!);
     const adapters = loadAdapters(id);
@@ -182,6 +200,11 @@ async function main() {
     if (!prelaunch && (!rig || zero.test(rig))) throw new Error("profile is missing rig (pass --prelaunch to deploy before the token exists)");
     syms.forEach((s, i) => { if (!stocks[i] || zero.test(stocks[i])) throw new Error(`profile is missing stock ${s}`); });
     genesis = prelaunch ? 0 : arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
+    weth = (chain as { external?: { weth?: string } }).external?.weth as Address;
+    const poolMap = (chain as { pools?: Record<string, { pool: string }> }).pools ?? {};
+    pools = syms.map((s) => poolMap[s]?.pool as Address);
+    if (!weth || zero.test(weth)) throw new Error("profile is missing external.weth");
+    syms.forEach((s, i) => { if (!pools[i] || zero.test(pools[i])) throw new Error(`profile is missing pools.${s}.pool (the WETH/${s} Uniswap v3 pool)`); });
     if (prelaunch) console.log("[rounds] --prelaunch: rig and genesis stay zero until `rounds-admin launch --token … --genesis …`");
   } else {
     throw new Error("usage: deploy-rounds demo|mainnet");
@@ -214,6 +237,13 @@ async function main() {
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
   if (!same(mine, mineAddr) || !same(fragments, fragAddr) || !same(vault, vaultAddr)) throw new Error("address prediction mismatch; the deployer sent another transaction in between");
 
+  // The FeeFunder: Pons pays its tax here; the flusher (keeper) turns it into the running round's pot.
+  const legs = stocks.map((_, i) => ({ pool: pools[i], stock: i, shareBps: shareBps[i] }));
+  const feeFunder = await deploy("FeeFunder.sol", "FeeFunder", [account.address, mine, weth, legs]);
+  const flusher = (arg("--flusher") as Address | undefined) ?? (process.env.FLUSHER_ADDRESS as Address | undefined);
+  if (flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [flusher, true]);
+  console.log(`[rounds] FeeFunder ${feeFunder}: set this address as the Pons tax recipient${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
+
   if (stage === "demo") {
     // Allowlist the vault and the Anvil accounts on every mock stock, fund a day of rounds, top up the reserve.
     const accounts = ANVIL_KEYS.map((k) => privateKeyToAccount(k).address);
@@ -223,11 +253,13 @@ async function main() {
     const keep = parseEther(process.env.DEMO_WALLET ?? "47");
     for (const s of stocks) {
       await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [vault, true]);
+      await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [feeFunder, true]);
       for (const a of accounts) await send("MockStockToken.sol", "MockStockToken", s, "setAllowed", [a, true]);
       await send("MockStockToken.sol", "MockStockToken", s, "mint", [account.address, pot0 + keep]);
       await send("MockStockToken.sol", "MockStockToken", s, "approve", [mine, pot0 + keep]);
     }
     for (let i = 0; i < 4; i++) await send("RoundMine.sol", "RoundMine", mine, "fund", [i, pot0]);
+    if (!flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [accounts[1], true]); // Anvil #1 flushes on the demo
     await send("MockERC20.sol", "MockERC20", usdc, "mint", [account.address, 50_000n * 10n ** 6n]);
     await send("MockERC20.sol", "MockERC20", usdc, "approve", [vault, 50_000n * 10n ** 6n]);
     await send("RoundVault.sol", "RoundVault", vault, "topUpReserve", [50_000n * 10n ** 6n]);
@@ -238,7 +270,7 @@ async function main() {
   }
 
   const out: RoundsDeployment = {
-    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, stocks, symbols: syms,
+    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, stocks, symbols: syms,
     genesis, roundSeconds, claimSeconds, block: Number(await pub.getBlockNumber()), params, paramsHash: roundParamsHash(params),
   };
   const p = join(DEPLOYMENTS, `${id}-rounds.json`);

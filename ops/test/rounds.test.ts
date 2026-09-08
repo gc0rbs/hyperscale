@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveStocks, roundClock } from "../src/lib/rounds.js";
+import { haircut, resolveStocks, roundClock } from "../src/lib/rounds.js";
 import { roundKeeperDecision, type RoundKeeperView } from "../src/lib/rounds-keeper-logic.js";
 
 const G = 1_000_000;
@@ -96,5 +96,13 @@ describe("roundKeeperDecision", () => {
     expect(roundKeeperDecision({ ...base, ethBalanceWei: 10n ** 15n }).lowGas).toBe(true);
     expect(roundKeeperDecision({ ...base, ethBalanceWei: 10n ** 15n, halted: true }).lowGas).toBe(true);
     expect(roundKeeperDecision(base).lowGas).toBe(false);
+  });
+});
+
+describe("haircut (flush minOut)", () => {
+  it("applies the slippage in bps to every leg and rejects nonsense", () => {
+    expect(haircut([1000n, 0n, 33n], 100)).toEqual([990n, 0n, 32n]);
+    expect(haircut([1000n], 0)).toEqual([1000n]);
+    expect(() => haircut([1n], 10_001)).toThrow(/range/);
   });
 });

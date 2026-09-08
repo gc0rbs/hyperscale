@@ -19,6 +19,9 @@ export interface RoundsDeployment {
   vault: Address;
   stocks: Address[];
   symbols: string[];
+  feeFunder?: Address;
+  weth?: Address;
+  pools?: Address[];
   genesis: number;
   roundSeconds: number;
   claimSeconds: number;
@@ -50,6 +53,7 @@ export function loadRoundsDeployment(id = chainId()): RoundsDeployment {
     eligibility: env("ELIGIBILITY_ADDRESS"), mine, fragments: env("ROUNDS_FRAGMENTS_ADDRESS"), vault: env("ROUNDS_VAULT_ADDRESS"),
     stocks,
     symbols: symbols.length === stocks.length ? symbols : stocks.map((_, i) => `stock${i}`),
+    feeFunder: process.env.FEE_FUNDER_ADDRESS as Address | undefined,
     genesis: Number(process.env.GENESIS ?? 0),
     roundSeconds: Number(process.env.ROUND_SECONDS ?? 3600),
     claimSeconds: Number(process.env.CLAIM_SECONDS ?? 900),
@@ -72,6 +76,13 @@ export async function syncLaunchFromChain(dep: RoundsDeployment, pub: { readCont
   return dep;
 }
 export const roundVaultAbi = artifact("RoundVault.sol", "RoundVault").abi;
+export const feeFunderAbi = artifact("FeeFunder.sol", "FeeFunder").abi;
+
+/** Haircut a simulated flush's outputs into the minOut the real call is sent with. Pure. */
+export function haircut(outs: readonly bigint[], slippageBps: number): bigint[] {
+  if (slippageBps < 0 || slippageBps > 10_000) throw new Error("slippage bps out of range");
+  return outs.map((o) => (o * BigInt(10_000 - slippageBps)) / 10_000n);
+}
 
 /** Rounds elapsed but not recorded on chain (docs/13 §2 "Catch-up"); > 0 means every action but poke/halt reverts with NotCaughtUp. */
 export async function roundsBehind(pub: PublicClient, mine: Address): Promise<{ behind: number; currentRound: number; closedRounds: number }> {
