@@ -1,3 +1,5 @@
+> **Legacy.** This page describes the season contracts used on 2026-09-05. Since 2026-09-08 the mine is continuous with hourly rounds; see [Rounds](rounds.md). This page stays for the redemption tail of those seasons.
+
 # Seasons, blocks and shifts
 
 ## Phases

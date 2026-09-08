@@ -10,7 +10,8 @@
 
 ## Playing
 
-* [Seasons, blocks and shifts](playing/seasons-and-blocks.md)
+* [Rounds: the hourly pot](playing/rounds.md)
+* [Seasons, blocks and shifts (legacy, 2026-09-05 seasons)](playing/seasons-and-blocks.md)
 * [Hashrate and rewards](playing/hashrate-and-rewards.md)
 * [Upgrades](playing/upgrades.md)
 * [Heat and overclocking](playing/heat-and-overclocking.md)

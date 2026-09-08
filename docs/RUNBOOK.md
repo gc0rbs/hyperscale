@@ -1,4 +1,7 @@
-# Stock Miner – season runbook
+# Stock Miner – season runbook (legacy)
+
+> Since 2026-09-08 the live product is the continuous round mine: see `docs/RUNBOOK-ROUNDS.md`. This
+> file remains for the 2026-09-05 mainnet seasons (redemption, `sweep`, and the rescue-window `abort`).
 
 How one season is deployed, run and closed using only the scripts in this repo. Every step below was
 executed against a local Anvil "long" season (planned pace one week, then time-warped) on 2026-09-04;

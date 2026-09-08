@@ -19,7 +19,16 @@ project, and no multisig. Season prize pools are bought by the operator with tre
 (activation and exit fees, swept remainders) and outside funding, not from a token allocation.
 Nothing in the game contracts depends on the distribution.
 
-## 2. Value flows in a season
+### Pots are funded by the Pons trading tax (client decision 2026-09-08)
+
+Pons lets the token creator set a trading tax on $RIG (3%, possibly 5%). The fee wallet receives it,
+swaps it into the four Stock Tokens and schedules it into upcoming rounds with `RoundMine.fund`
+(`docs/13-ROUNDS.md`, `docs/RUNBOOK-ROUNDS.md` §3). The client's own capital is no longer the pool.
+Consequences: the pot per hour tracks trading volume; a quiet day means small pots and large rollovers;
+the reserve for cash-outs is topped up from the same wallet. The mine contract never sees ETH or $RIG
+from the tax, only Stock Tokens, so the swap is an off-chain operator step.
+
+## 2. Value flows in a season (legacy; rounds in docs/13)
 
 ```
  player ──upgrades (100%)──▶ transfer to 0x…dEaD (burn)
