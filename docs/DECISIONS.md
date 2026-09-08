@@ -352,3 +352,6 @@ identifiers, params and accounting are unchanged. Development continues in `gc0r
   20-30 minutes to accrue, so a next-round schedule would leave the first round empty. `fund` now
   adds to the current pot at once; the pot is final at the close; there is no schedule and no
   `unschedule`. The operator's remaining powers are `launch` (once) and `halt`.
+- **Fee wallet** is `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` (client, 2026-09-08): the Pons tax
+  recipient, paid in ETH. Its key lives only as `FUNDER_KEY` on the funding service; it was never shared
+  in chat (the retro's process rule).

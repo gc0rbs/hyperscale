@@ -12,7 +12,7 @@ nights, every irreversible action confirmed with its exact parameters, one opera
 | Role | Env var | Powers |
 |---|---|---|
 | Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `launch` (once), `halt`, vault `rescue` |
-| Fee wallet | `FUNDER_KEY` | receives the Pons trading tax, swaps it into the four Stock Tokens, calls `fund`. Any wallet may fund |
+| Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | receives the Pons trading tax (ETH), swaps it into the four Stock Tokens, calls `fund`. Any wallet may fund |
 | Guardian | `GUARDIAN_KEY` | the `treasury` address: `pause`, `unpause`. Receives activation and exit fees |
 | Keeper | `KEEPER_KEY` | its own funded key; sends `poke()` at round boundaries. Alerts below `KEEPER_MIN_ETH` |
 
