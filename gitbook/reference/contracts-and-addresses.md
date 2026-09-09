@@ -13,7 +13,7 @@
 
 | Token | Address |
 | --- | --- |
-| $VRAM | Published at launch on Pons |
+| $VRAM | Published at launch on Pons, and readable as `params().rig` on the mine once launched |
 | USDG (cash-out quote token, 6 decimals) | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
 | NVDA Stock Token | `0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC` |
 | MU Stock Token | `0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD` |
@@ -34,26 +34,25 @@ Feeds are 8-decimal USD prices with a 24-hour heartbeat and a 0.5% deviation tri
 
 The oracle adapter's stock-to-feed map is immutable and readable on the explorer once deployed.
 
-## Season contracts
+## Game contracts
 
-Each season deploys three contracts. Their addresses are published with the season and shown in the app's footer and on the explorer.
+The game is one permanent deployment of four contracts. Their addresses are published with the launch and shown in the app's footer and on the explorer.
 
 | Contract | Role |
 | --- | --- |
-| `SeasonMine` | Stakes, upgrades, work-based block discovery, per-rig accounting, claims, exits, pause |
-| `StockFragments` | The fragments: an ERC-1155 with one id per block, minted by the mine, burned by the vault, non-transferable |
-| `RedemptionVault` | Holds the Stock Tokens and the USDG reserve; redeem, cash out, sweep |
-| `SeasonFactory` | Validates parameters and deploys the three above, once per season |
+| `RoundMine` | Stakes, upgrades, per-round work accounting, claims, exits, pause, the one-shot launch and halt |
+| `StockFragments` | The shards: an ERC-1155 with one id per stock, minted by the mine, burned by the vault, non-transferable |
+| `RoundVault` | Holds the Stock Tokens and the USDG reserve; redeem, cash out, rescue after a halt |
+| `FeeFunder` | The Pons tax recipient: swaps the ETH it receives into the four Stock Tokens and funds the running round |
 | `OpenEligibility`, `ChainlinkOracle` | Adapters: who may redeem in kind (everyone, on mainnet) and the cash-out price |
 
-## Verifying a season
+## Verifying the game
 
-1. Read `params()` on the `SeasonMine` contract in the explorer. It returns every parameter listed under [Season parameters](season-parameters.md).
-2. Compare with the published season file; the deployment records the hash of the encoded parameters.
-3. Check `phase()` is `Open` or `PreOpen` and `closeX()` is zero for a live season.
-4. Check the vault holds the pool: each Stock Token's `balanceOf(vault)` should equal the pool amount, and USDG's should equal the reserve.
-5. Check `pause` is the only privileged function. The contract source is verified on the explorer; there is no `owner`, no setter, no proxy.
+1. Read `params()` on the `RoundMine` contract in the explorer. It returns every parameter: the token, the stocks, the round and claim lengths, the fees and the upgrade tables.
+2. Check `launched()` is true and `halted()` is false for a live game, and `currentRound()` advances every hour from `params().genesis`.
+3. Check the vault holds the pots: each Stock Token's `balanceOf(vault)` is at least that stock's running pot plus the latest closed round's unclaimed pot plus the stock behind every unredeemed shard.
+4. Check the privileged functions are exactly `pause` and `unpause` (guardian), `launch` (once) and `halt` (operator). The contract source is verified on the explorer; there is no setter for any parameter and no proxy.
 
 ## Source
 
-The contracts, tests, simulation, app and this documentation are in the project repository. Interfaces are in `specs/contracts/`, the technical specification in `docs/05-TECH-SPEC-CONTRACTS.md`, and the audit hand-off in `docs/AUDIT-PACKAGE.md`.
+The contracts, tests, app and this documentation are in the project repository. Interfaces are in `specs/contracts/`, the round design in `docs/13-ROUNDS.md`, and the audit hand-off in `docs/AUDIT-PACKAGE.md`.

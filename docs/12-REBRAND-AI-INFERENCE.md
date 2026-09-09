@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | **Adopted 2026-09-06** as Hyperscale / $RIG; **revised 2026-09-09**: name = **Hyperscaler**, token = **$VRAM** (a new Pons launch; the 2026-09-05 RIG token stays with the legacy seasons), green palette and logo from the client's design handoff (docs/DECISIONS.md 2026-09-09). Repo stays `gc0rbs/hyperscale`. §9 items 1–2 are decided. |
+| Status | **Adopted 2026-09-06** as Hyperscale / $RIG; **revised 2026-09-09**: name = **Hyperscaler**, token = **$VRAM** (a new Pons launch), green palette and logo from the client's design handoff (docs/DECISIONS.md 2026-09-09). Repo stays `gc0rbs/hyperscale`. §9 items 1–2 are decided. |
 | Scope | Same contracts, same math, same params. New fiction, names, copy and art. |
-| Companion | 02 (mining model), 03 (game design), 11 (design brief), LAUNCH-SOCIAL-GUIDE |
+| Companion | 02 (mining model), 03 (game design), 11 (design brief) |
 
 ## 1. The pitch in one paragraph
 

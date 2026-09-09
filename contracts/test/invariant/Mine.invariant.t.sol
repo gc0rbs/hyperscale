@@ -113,7 +113,7 @@ contract MineInvariantTest is SeasonTestBase {
         assertEq(mine.closeX(), 0);
     }
 
-    /// Invariant 11 (retro 2026-09-05 §6.1): once closed, what a block can still mint in total never
+    /// Invariant 11: once closed, what a block can still mint in total never
     /// exceeds `claimableCap`, and the vault holds at least the stock those fragments can redeem, even
     /// after the unmined remainder was swept or rescued.
     function invariant_11_cap_bounds_claims_and_vault_backing() public view {

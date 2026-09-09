@@ -23,7 +23,7 @@ This section is the plain-language version of the guarantees the contracts enfor
 | **Halt the mine** | Operator, any time | No further round closes, no claim window opens. Your deposit comes back in full. Fragments you already claimed stay redeemable. The unclaimed and running pots return to the operator |
 | **Pause** | Treasury key | Blocks actions for up to the grace period; the clock keeps running. Past the grace period players halt it themselves |
 
-The team is publicly known and these powers are stated here and on the site. They exist so a broken launch can be unwound in minutes instead of leaving money locked, which is what happened on 2026-09-05.
+The team is publicly known and these powers are stated here and on the site. They exist so a broken launch can be unwound in minutes instead of leaving money locked.
 
 ## Depends on people or external systems
 

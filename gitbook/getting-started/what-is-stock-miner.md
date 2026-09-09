@@ -37,7 +37,3 @@ The fee stream is split across the four stocks by these shares before it is swap
 {% hint style="warning" %}
 The pot for a round is whatever the fee stream brought in during that hour plus the previous round's unclaimed remainder. It is locked the moment the round closes; the site shows it filling during the hour. A round with no fees pays only the rollover, and the site says so.
 {% endhint %}
-
-## The 2026-09-05 seasons
-
-Before rounds, the game ran in **seasons**: one deployment with four reward blocks, a fixed pool, and a six-hour cap, closing for good when block four was found. The seasons launched on 2026-09-05 keep running under those rules until their redemption windows close; see [Seasons, blocks and shifts](../playing/seasons-and-blocks.md).

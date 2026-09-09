@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| Status | **Adopted 2026-09-08** (client decision). Replaces seasons for everything after the 2026-09-05 mainnet seasons, which run out under the season contracts. |
+| Status | **Adopted 2026-09-08** (client decision). Replaces the season mode entirely; the season contracts stay in the repo as the previous design. |
 | Supersedes | docs/03 §season structure, docs/05 (SeasonMine/SeasonFactory/RedemptionVault), the season parts of docs/04 and RUNBOOK |
 | Contracts | `contracts/src/rounds/`: `RoundMine`, `RoundFragments`, `RoundVault`. Interfaces in `specs/contracts/IRound*.sol` |
 
 ## 1. Why
 
-Seasons needed a pool fixed in advance, a launch night per season and a 30-day tail. The client's
+Seasons needed a pool fixed in advance, a deployment per season and a 30-day tail. The client's
 funding is now a stream (the Pons trading tax on $VRAM) and the product needs a payout every hour, not
 every season. So: one permanent mine, rounds of one hour, a pot per round filled from the fee stream,
 split among the rigs by the work they did in that hour, claimable for fifteen minutes, and whatever is

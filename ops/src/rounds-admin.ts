@@ -1,7 +1,6 @@
 /**
  * Round-mine admin (docs/13 §2 "Halt", §5). Every broadcasting command prints exactly what it would
- * do and refuses to send without --yes: these are irreversible on-chain actions with client money
- * (the 2026-09-05 launch retro, docs/BUILD-LOG.md).
+ * do and refuses to send without --yes: these are irreversible on-chain actions with client money.
  *
  *   pnpm --filter @stock-miner/ops rounds-admin status
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin launch --token 0x… [--genesis next-hour] --yes   # pre-token deployments, once

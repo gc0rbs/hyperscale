@@ -21,7 +21,7 @@ contract RedemptionVault is IRedemptionVault, ReentrancyGuard {
     uint256 internal constant BPS = 10_000;
     /// @dev Robinhood's Chainlink equity feeds update on a 0.5% deviation or a 24 h heartbeat, so a quiet
     ///      price legitimately carries a day-old timestamp, and over a weekend the last print is Friday's
-    ///      close. The cap is a season parameter (`maxPriceAgeSeconds`, retro 2026-09-05) so a weekend
+    ///      close. The cap is a season parameter (`maxPriceAgeSeconds`) so a weekend
     ///      launch can accept a Friday price for cash-out; in-kind redemption never depends on it.
     uint32 public immutable maxPriceAge;
     /// @dev 1e18 USD → quote-token units; the quote token (USDG on Robinhood Chain, USDC elsewhere) is

@@ -13,8 +13,8 @@ cooling / overclock upgrades to raise its throughput, and earn **Stock Token sha
 tax on $VRAM is swapped into the four Stock Tokens and fills the running round's pot; at the close
 the pot is split by the work each GPU did that hour, claims are open for fifteen minutes, and
 anything unclaimed rolls into the next pot. Shards redeem for the Stock Token or a USDG cash-out at
-any time. The 2026-09-05 mainnet seasons (four reward blocks, fixed pool, a six-hour cap) run out
-under the season contracts, which stay in the repo for that reason.
+any time. The earlier season mode (four reward blocks, a fixed pool, a six-hour cap) stays in the
+repo as the previous design; nothing live runs on it.
 
 - **Public docs (players, safety):** `gitbook/` (GitBook Git Sync via `.gitbook.yaml`).
 - **Internal specs:** `docs/` (PRD, game design, tech specs, runbook, audit package, decisions).
@@ -40,7 +40,7 @@ pnpm --filter @stock-miner/app dev     # Next.js dev server
 | `indexer/` | Ponder (stub until the ABI exists) | tsc |
 | `ops/` | TypeScript scripts: plan, fund, keeper, watch, guardian, sweep; forge-script wrappers | tsc, vitest |
 
-Deploying and running a season: `docs/RUNBOOK.md`. Audit material: `docs/AUDIT-PACKAGE.md`.
+Deploying and running the round mine: `docs/RUNBOOK-ROUNDS.md` (season mode: `docs/RUNBOOK.md`). Audit material: `docs/AUDIT-PACKAGE.md`.
 
 CI (`.github/workflows/ci.yml`) runs the same groups plus slither. The build follows `docs/10-BUILD-PLAN.md`;
 `docs/BUILD-LOG.md` is the hand-off between sessions.
@@ -60,7 +60,7 @@ CI (`.github/workflows/ci.yml`) runs the same groups plus slither. The build fol
 | 9 | [Open questions](docs/09-OPEN-QUESTIONS.md) | Decisions still needed before build |
 | 10 | [Build plan](docs/10-BUILD-PLAN.md) | Phases and the Claude Code prompt for each; how to start |
 | 11 | [Design brief](docs/11-DESIGN-BRIEF.md) | Visual direction (approved), principles, type, colour, components, motion; mockups and references in `design/` |
-| – | [Runbook](docs/RUNBOOK.md) | Deploy, fund, run, pause/cancel, close and sweep a season with the ops scripts |
+| – | [Round runbook](docs/RUNBOOK-ROUNDS.md) | Deploy, launch, fund, keep and halt the round mine with the ops scripts |
 | – | [Audit package](docs/AUDIT-PACKAGE.md) | Scope, trust assumptions, actors, accounting argument, invariants, findings, how to run everything |
 | – | [Decisions](docs/DECISIONS.md) | Dated log of spec, design and build decisions |
 | – | [Glossary](docs/GLOSSARY.md) | Terms used across the docs |

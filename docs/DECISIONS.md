@@ -306,19 +306,10 @@ neither is load-bearing for the accounting. Changes:
   radius; "Connect wallet" is a gold button like the landing's primary actions.
 - **Brief §1 and §2.8 updated**; `specs/design/tokens.{css,json}` are the source of truth as before.
 
-## 2026-09-05 – Geo-fence off for launch (client decision)
-
-- The client decided season 1 launches without the geo-fence. `NEXT_PUBLIC_GEOFENCE=0` on the
-  production app; the middleware and `/restricted` page stay in the code. docs/07 §1/§4 still
-  describe the fence as the front-end control for Stock Token jurisdictions; the risk is the
-  client's, recorded here so the launch checklist item reads "off by decision", not "missing".
-- Consequence: no Cloudflare proxy is required. `stockminer.fi` points straight at Railway
-  (custom domain on `app`, target port 3000). Turning the fence on later needs the proxy first.
-
 ## 2026-09-06 – Rebrand to Hyperscale; fork to gc0rbs/hyperscale
 
 Product renamed Stock Miner → **Hyperscale** (AI-compute fiction, `docs/12-REBRAND-AI-INFERENCE.md`).
-The token stays **$RIG**: it launched on Pons on 2026-09-05, so only copy changes. Contract
+The token symbol was left as $RIG at the time; superseded by the 2026-09-09 decision below. Contract
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
 
@@ -335,8 +326,8 @@ mineral scenes, and the copy structure "Build a virtual GPU. Earn stock tokens."
 `--signal` the light green; heat stays red); `app/src/lib/brand.ts` is the single source of the
 name, ticker and tagline; the landing page, share card, metadata, GitBook, terms and how-it-works
 use the new names; `contracts/src/tokens/RIG.sol` (the Anvil stand-in token) is named
-"Hyperscaler VRAM" / "VRAM". The hard-coded 2026-09-05 RIG address and Pons buy link were removed
-from the site: they are the legacy seasons' token, not $VRAM. Contract identifiers, the
+"Hyperscaler VRAM" / "VRAM". No token address or purchase link is hard-coded on the site: both come
+from the hosting env once $VRAM is live. Contract identifiers, the
 `NEXT_PUBLIC_RIG_*` variables and `rig` in chain profiles keep their names.
 
 **Copy departures from the handoff.** The handoff's copy was written for the season era ("four
@@ -349,7 +340,7 @@ The handoff's "LAUNCH PAIR VRAM / NVDA" line was left out until the Pons pair is
 deploy now refuses to run without `--base-uri` / `FRAG_BASE_URI`), the $VRAM contract address and
 the Pons purchase link (hosting env `NEXT_PUBLIC_RIG_ADDRESS`, `NEXT_PUBLIC_RIG_BUY_URL`).
 
-## 2026-09-08 – Post-launch rebuild: escape hatch, fee funding, hourly rounds (client decisions)
+## 2026-09-08 – Escape hatch, fee funding, hourly rounds (client decisions)
 
 - **24 h escape hatch on seasons.** The vault operator (the deployer) can `abort()` a season until
   `openTime + rescueWindowSeconds` (24 h). The season is cancelled, every stake returns in full, every
@@ -366,13 +357,13 @@ the Pons purchase link (hosting env `NEXT_PUBLIC_RIG_ADDRESS`, `NEXT_PUBLIC_RIG_
   wants a payout every hour ("people need dopamine hits"). Each round's pot is split by work share,
   claimable for 15 minutes, and anything unclaimed rolls into the next round. This relaxes two hard
   rules on purpose (wall-clock rounds; per-round share instead of rig-independent rates); CLAUDE.md
-  is updated. The season contracts remain only for the live 2026-09-05 seasons.
+  is updated. The season contracts remain in the repo as the previous design.
 - **Deploy before the token exists (client requirement, same day).** `RoundMine` accepts `rig = 0`
   and `genesis = 0` at construction and a one-shot operator `launch(rig, genesis)`. This is the one
   post-deployment setter in the system; it works only once, only before anything is staked (nothing
   can be staked without a token), and the site shows "Not live yet" until then. Rationale: the mine
-  must be live minutes after the Pons launch, and the retro showed that doing deployment, hosting
-  and funding on the night is what breaks.
+  must be live minutes after the Pons launch, and doing deployment, hosting and funding on the
+  night is what breaks.
 - **Fees land in the running round, locked at the close (client decision, same day).** The first
   design scheduled funding into future rounds so a displayed pot could never shrink. The client
   pointed out that projects run for hours to days, never on a daily calendar, and that fees need
@@ -381,7 +372,7 @@ the Pons purchase link (hosting env `NEXT_PUBLIC_RIG_ADDRESS`, `NEXT_PUBLIC_RIG_
   `unschedule`. The operator's remaining powers are `launch` (once) and `halt`.
 - **Fee wallet** is `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` (client, 2026-09-08): the Pons tax
   recipient, paid in ETH. Its key lives only as `FUNDER_KEY` on the funding service; it was never shared
-  in chat (the retro's process rule).
+  in chat.
 - **FeeFunder contract as the Pons tax recipient (same day).** The Stock Tokens trade against WETH
   on Uniswap v3 pools on Robinhood Chain (all four found via the factory), so the ETH → stock swap is
   automated on chain: `FeeFunder` holds the tax, a flusher key with gas only calls `flush` with an

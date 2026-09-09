@@ -35,7 +35,7 @@ New scope for the same auditor, on top of §1 (interfaces in `specs/contracts/IR
 | `contracts/src/rounds/RoundMine.sol` | continuous mine: hourly rounds close on the clock; pot per stock per round split by exact work share; 15-minute claim window; unclaimed rolls over; per-round funding schedule; operator `halt`/`unschedule`; guardian `pause`; catch-up capped at 48 rounds per call with `NotCaughtUp` on actions |
 | `contracts/src/rounds/RoundVault.sol` | holds the stock and USDG reserve; redeem / cash out any time; `release` for unscheduling (mine only); `rescue` after a halt keeps the stock behind un-redeemed fragments |
 | `contracts/src/StockFragments.sol` | reused unchanged: one permanent instance, id = stock index |
-| `SeasonMine.abort` / `RedemptionVault.rescue`, `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds` | season-era additions for the live 2026-09-05 seasons: operator cancel inside a 24 h rescue window returning the whole pool; unmined remainder sweeps at close |
+| `SeasonMine.abort` / `RedemptionVault.rescue`, `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds` | season-era additions (season mode: operator cancel inside a 24 h rescue window returning the whole pool; unmined remainder sweeps at close |
 
 Trust changes: the operator (deployer key) now holds `halt`, `unschedule` and `rescue` on the round
 mine and `abort` on seasons, all stated publicly on the site; rewards within a round are a share of

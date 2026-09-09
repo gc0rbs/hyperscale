@@ -1,11 +1,11 @@
 # Hyperscaler – round mine runbook
 
 How the continuous hourly mine (`docs/13-ROUNDS.md`) is deployed, funded, kept and stopped, using only
-the scripts in this repo. It replaces the season runbook (`docs/RUNBOOK.md`) for everything after the
-2026-09-05 seasons; that file stays for their redemption tail and sweeps.
+the scripts in this repo. It replaces the season runbook (`docs/RUNBOOK.md`), which stays only for
+its hosting section (§10) and for season mode.
 
-Written against the 2026-09-05 retro (`docs/BUILD-LOG.md`, same date): one deployment, no launch
-nights, every irreversible action confirmed with its exact parameters, one operator per environment.
+Principles: one deployment, no launch nights, every irreversible action confirmed with its exact
+parameters, one operator per environment.
 
 ## Roles and keys (environment only, never in files or chat)
 
@@ -14,18 +14,18 @@ nights, every irreversible action confirmed with its exact parameters, one opera
 | Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `launch` (once), `halt`, vault `rescue` |
 | FeeFunder (contract) | none | the Pons tax recipient: holds the ETH between flushes; `flush` swaps and funds. No key |
 | Flusher | `FLUSHER_KEY` (the keeper key is fine) | calls `FeeFunder.flush` every few minutes with a quoted slippage bound; holds gas only |
-| Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet from 2026-09-08 |
+| Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet |
 | Guardian | `GUARDIAN_KEY` | the `treasury` address: `pause`, `unpause`. Receives activation and exit fees |
 | Keeper | `KEEPER_KEY` | its own funded key; sends `poke()` at round boundaries. Alerts below `KEEPER_MIN_ETH` |
 
-Four different keys. The retro's single-key wallet ran out of gas mid-run and could not be told apart
-from the funding flows; do not repeat that.
+Four different keys: a single wallet doing everything runs out of gas mid-run and cannot be told
+apart from the funding flows.
 
 ## 0. Prerequisites
 
 - `bash .claude/hooks/session-start.sh`, `cd contracts && forge build`, `pnpm --filter @stock-miner/ops sync-abi`.
 - Chain profile `ops/chains/robinhood.json` with `rig`, `usdc`, `treasury`, the four `stocks`, and the
-  adapters (`oracle`, `eligibility`, or `contracts/deployments/4663-adapters.json` from `deploy-adapters`).
+  adapters (`oracle`, `eligibility`, or `contracts/deployments/4663-adapters.json` written by `deploy-adapters`).
 - `ops/chains/robinhood.json` `pools` names the WETH pool per stock (discovered 2026-09-08); the keeper
   and flusher keys hold ≥ 0.05 ETH each.
 
@@ -74,7 +74,7 @@ OPERATOR_KEY=0x… pnpm rounds-admin launch --token 0x<RIG> --genesis next-hour 
 `--genesis` accepts `next-hour` (default, at least two minutes out), `+<seconds>` or a unix time.
 The app, keeper, watcher and admin read the token and genesis from the chain, so no variable or
 file changes at launch. If the token address is known at deploy time, omit `--prelaunch` and pass `--rig 0x<VRAM>` (the
-chain profile's `rig` is the 2026-09-05 seasons' token and is never used for the round mine): genesis is
+chain profile's `rig` is never used for the round mine): genesis is
 then the next full hour unless `--genesis <unix>` is given. The script refuses invalid params
 before spending gas and aborts if the predicted addresses do not match (it means the deployer key sent
 another transaction in between: never share the deployer key with a keeper or a bot). It writes

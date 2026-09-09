@@ -35,7 +35,7 @@ contract FailSafeTest is SeasonTestBase {
         assertEq(mine.pending(a, 0), 0, "settled and claimed; nothing new");
     }
 
-    /// @dev Retro 2026-09-05 §6.1: the unmined remainder no longer waits for the redemption window.
+    /// @dev The unmined remainder no longer waits for the redemption window.
     function test_unmined_remainder_sweeps_to_treasury_at_close() public {
         fundPlayer(ann, 1_000e18, 0);
         uint256 a = activateRig(ann, 1_000e18);

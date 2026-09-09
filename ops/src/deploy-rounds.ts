@@ -190,7 +190,7 @@ async function main() {
     // --prelaunch: the token does not exist yet. rig and genesis stay zero and `rounds-admin launch`
     // sets both once, so the mine can be deployed, verified, funded and wired to the site days ahead.
     const prelaunch = hasFlag("--prelaunch");
-    // The profile's `rig` is the 2026-09-05 seasons' token, not $VRAM: a live deploy must name the token explicitly.
+    // A live deploy must name the token explicitly; the profile's `rig` is never used for the round mine.
     rig = prelaunch ? ("0x0000000000000000000000000000000000000000" as Address) : ((arg("--rig") ?? "") as Address);
     usdc = chain.usdc as Address;
     oracle = (chain.oracle && !zero.test(chain.oracle) ? chain.oracle : adapters?.oracle) as Address;
@@ -198,7 +198,7 @@ async function main() {
     treasury = (arg("--treasury") ?? chain.treasury) as Address;
     stocks = syms.map((s) => chain.stocks?.[s] as Address);
     for (const [k, v] of Object.entries({ usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
-    if (!prelaunch && (!/^0x[0-9a-fA-F]{40}$/.test(rig) || zero.test(rig))) throw new Error("pass --rig <the $VRAM address> (the chain profile's rig is the legacy seasons' token), or --prelaunch to deploy before the token exists");
+    if (!prelaunch && (!/^0x[0-9a-fA-F]{40}$/.test(rig) || zero.test(rig))) throw new Error("pass --rig <the $VRAM address> (the chain profile's rig is not used), or --prelaunch to deploy before the token exists");
     syms.forEach((s, i) => { if (!stocks[i] || zero.test(stocks[i])) throw new Error(`profile is missing stock ${s}`); });
     genesis = prelaunch ? 0 : arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
     weth = (chain as { external?: { weth?: string } }).external?.weth as Address;

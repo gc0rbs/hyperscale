@@ -6,7 +6,7 @@ import {ISeasonMine} from "../../src/interfaces/ISeasonMine.sol";
 import {IRedemptionVault} from "../../src/interfaces/IRedemptionVault.sol";
 import {ISeasonFactory} from "../../src/interfaces/ISeasonFactory.sol";
 
-/// @dev Client decision 2026-09-08 (retro §6.1 + the 24 h escape hatch): the vault operator can abort a
+/// @dev Client decision 2026-09-08 (the 24 h escape hatch): the vault operator can abort a
 ///      season inside the rescue window. It is cancelled: every stake comes back in full, every
 ///      fragment of the season is void, and the whole pool and reserve return to the operator at once
 ///      instead of after the 30-day window. The site states the window.

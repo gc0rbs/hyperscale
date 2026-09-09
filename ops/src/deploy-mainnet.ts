@@ -52,7 +52,7 @@ async function main() {
   mkdirSync(DEPLOYMENTS, { recursive: true });
 
   if (stage === "factory") {
-    const baseUri = arg("--base-uri", "https://stockminer.fi/api/frag/{id}.json")!;
+    const baseUri = arg("--base-uri", process.env.FRAG_BASE_URI ?? "https://<final domain>/api/frag/{id}.json")!;
     const md = await deploy("Deployers.sol", "MineDeployer");
     const fd = await deploy("Deployers.sol", "FragmentsDeployer");
     const vd = await deploy("Deployers.sol", "VaultDeployer");
