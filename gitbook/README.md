@@ -4,7 +4,7 @@ description: Virtual GPUs. Stock-token rewards. A new pot every hour.
 
 # Welcome to Hyperscaler
 
-The game lives at [hyperscaling.xyz](https://hyperscaling.xyz).
+The game lives at [hyperscaling.xyz](https://www.hyperscaling.xyz).
 
 Hyperscaler is an AI-compute strategy game on Robinhood Chain. You stake **$VRAM** to bring a virtual GPU online, burn $VRAM on upgrades to raise its throughput, and earn **shards** of real Robinhood Stock Tokens: NVDA, MU, SNDK and QQQ.
 
