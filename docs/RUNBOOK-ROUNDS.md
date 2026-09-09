@@ -54,7 +54,7 @@ pnpm deploy-rounds mainnet --chain robinhood --prelaunch --dry-run   # predicted
 pnpm deploy-rounds mainnet --chain robinhood --prelaunch             # three transactions, rig and genesis zero
 ```
 
-The shard metadata URL defaults to `https://hyperscaling.xyz/api/frag/{id}.json` (the client's domain,
+The shard metadata URL defaults to `https://www.hyperscaling.xyz/api/frag/{id}.json` (the client's domain,
 2026-09-09) and is baked into `StockFragments` for good; override with `--base-uri` or `FRAG_BASE_URI`
 only if the domain changes before the deploy.
 
