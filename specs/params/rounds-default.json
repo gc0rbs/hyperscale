@@ -1,0 +1,31 @@
+{
+  "name": "rounds-default",
+  "notes": "Defaults for the continuous round mine (docs/13-ROUNDS.md). Addresses come from the chain profile; genesis is the next full hour at deployment. Upgrade, cooling, heat and overclock tables are the docs/03 values with per-shift cooling renamed per-round.",
+  "roundSeconds": 3600,
+  "claimSeconds": 900,
+  "stocks": [
+    { "symbol": "NVDA", "name": "NVIDIA" },
+    { "symbol": "MU", "name": "Micron Technology" },
+    { "symbol": "SNDK", "name": "Sandisk" },
+    { "symbol": "QQQ", "name": "Invesco QQQ" }
+  ],
+  "fragPerToken": 1000000,
+  "minStakeWeight": "100",
+  "activationFeeBps": 100,
+  "exitFeeBps": 300,
+  "gpuMultBps": [10000, 12000, 14000, 16000, 18000, 20000],
+  "gpuCostBps": [400, 600, 900, 1300, 1800],
+  "coolCostBps": [300, 500, 800],
+  "heatPerOc": [40, 30, 22, 15],
+  "coolPerRound": [10, 18, 26, 36],
+  "heatMax": 100,
+  "ocCostBps": 200,
+  "ocBoostBps": 5000,
+  "maxActiveOc": 3,
+  "ocRoundSpan": 1,
+  "pauseGraceSeconds": 1800,
+  "cashOutFeeBps": 100,
+  "maxPriceAgeSeconds": 345600,
+  "quoteToken": "USDG",
+  "fundingNote": "Pots are funded from the Pons trading tax on $RIG (3%, possibly 5%): the fee wallet swaps fees into the four Stock Tokens and calls RoundMine.fund(stock, amount, rounds), typically a day (24 rounds) at a time. Anyone may fund; the operator can unschedule rounds that have not started."
+}

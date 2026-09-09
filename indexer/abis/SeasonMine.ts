@@ -147,6 +147,16 @@ export const SeasonMineAbi = [
             "name": "treasury",
             "type": "address",
             "internalType": "address"
+          },
+          {
+            "name": "rescueWindowSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "maxPriceAgeSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
           }
         ]
       },
@@ -161,6 +171,26 @@ export const SeasonMineAbi = [
         "internalType": "address"
       }
     ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "BURN_ADDRESS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "abort",
+    "inputs": [],
+    "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -261,6 +291,25 @@ export const SeasonMineAbi = [
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "claimableCap",
+    "inputs": [
+      {
+        "name": "blockIdx",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -670,6 +719,16 @@ export const SeasonMineAbi = [
             "name": "treasury",
             "type": "address",
             "internalType": "address"
+          },
+          {
+            "name": "rescueWindowSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "maxPriceAgeSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
           }
         ]
       }
@@ -818,6 +877,19 @@ export const SeasonMineAbi = [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "rescueDeadline",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "stateMutability": "view"
@@ -1467,6 +1539,11 @@ export const SeasonMineAbi = [
   },
   {
     "type": "error",
+    "name": "NotOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotOwner",
     "inputs": []
   },
@@ -1489,6 +1566,11 @@ export const SeasonMineAbi = [
   {
     "type": "error",
     "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RescueWindowClosed",
     "inputs": []
   },
   {

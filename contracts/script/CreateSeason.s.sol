@@ -124,5 +124,7 @@ contract CreateSeason is Script {
         p.cashOutFeeBps = uint16(vm.parseJsonUint(j, ".params.cashOutFeeBps"));
         p.pauseGraceSeconds = uint32(vm.parseJsonUint(j, ".params.pauseGraceSeconds"));
         p.treasury = vm.parseJsonAddress(j, ".params.treasury");
+        p.rescueWindowSeconds = uint32(vm.parseJsonUint(j, ".params.rescueWindowSeconds"));
+        p.maxPriceAgeSeconds = uint32(vm.parseJsonUint(j, ".params.maxPriceAgeSeconds"));
     }
 }

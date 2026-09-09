@@ -5,12 +5,10 @@
   "explorerApi": "https://robinhoodchain.blockscout.com/api",
   "explorer": "https://robinhoodchain.blockscout.com",
   "mocks": false,
-  "notes": "Robinhood Chain mainnet (Arbitrum Orbit, gas in ETH). The public RPC is rate-limited; point ROBINHOOD_RPC at a QuickNode/Dwellir/ArrowRPC endpoint for the keeper and watcher. $RIG is launched on Pons and graduates to a Uniswap v3 RIG/WETH pool (1% tier) whose position is locked by the Pons locker; there is no fungible LP token, so LP staking is off (lpToken zero). Fill rig with the graduated token address, deploy OpenEligibility and ChainlinkOracle (feeds above), set treasury. Testnet: chain id 46630 at https://rpc.testnet.chain.robinhood.com (verified).",
-  "rig": "0x3c31029d4eb1cd8bca6b26e03af647de5dfa943f",
+  "notes": "Robinhood Chain mainnet (Arbitrum Orbit, gas in ETH). The public RPC is rate-limited; point ROBINHOOD_RPC at a QuickNode/Dwellir/ArrowRPC endpoint for the keeper and watcher. $VRAM is a Pons launch; the round mine is deployed with --prelaunch and receives the token through launch(), so rig stays zero here. Pons pools have no fungible LP token, so LP staking is off (lpToken zero). Deploy OpenEligibility and ChainlinkOracle (feeds below) with deploy-adapters and pass their addresses to the deploy. Testnet: chain id 46630 at https://rpc.testnet.chain.robinhood.com.",
+  "rig": "0x0000000000000000000000000000000000000000",
   "lpToken": "0x0000000000000000000000000000000000000000",
   "usdc": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-  "oracle": "0x1f3c31dd21928fcd846a51a5edfa116d4fe250d7",
-  "eligibility": "0x482f3bdf7abab6929076a58bf1bd50c95bc8a056",
   "treasury": "0x3E5d37a7a93d67E7D6e92866c8610aC500b952e2",
   "stocks": {
     "NVDA": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
@@ -33,7 +31,31 @@
     "QQQ": "0x80901d846d5D7B030F26B480776EE3b29374C2ae"
   },
   "feedsNote": "Chainlink proxies on chain 4663 (reference-data-directory feeds-robinhood-mainnet.json, 2026-09-04): 8 decimals, 24 h heartbeat, 0.5% deviation. NVDA verified live at $230.24. Also available: SPY 0x319724394D3A0e3669269846abE664Cd621f9f6A, ETH/USD 0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9, USDG/USD 0x61B7e5650328764B076A108EFF5fa7282a1B9aD2. Deploy ChainlinkOracle(stocks, feeds) and put its address in `oracle`; deploy OpenEligibility for `eligibility`.",
-  "factory": "0x9ed850b183d7b9523cbc9673d82a4071ce74d52a",
-  "deployedNote": "Mainnet 2026-09-05 from deployer 0x0F89e3Ce3e4646341De2f71C0Da2C7cea5CeD0a2: factory, OpenEligibility, ChainlinkOracle (feeds verified live). rig stays zero until the Pons launch.",
-  "rigNote": "$RIG \"Stock Miner\" (RIG, 18 decimals, 1e27 supply) verified on chain 2026-09-05"
+  "feeWallet": "0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0",
+  "feeWalletNote": "Pons tax recipient (client, 2026-09-08). Receives the trading tax in ETH; its key is FUNDER_KEY on the funding service only. Swaps into the four Stock Tokens and calls RoundMine.fund via fund-rounds --loop.",
+  "pools": {
+    "NVDA": {
+      "pool": "0x62AB521f71431f78ac374CdbadC6cda3c8916b6C",
+      "fee": 500
+    },
+    "MU": {
+      "pool": "0xFD4911302Ba5c25D153a6912b394a72d0A9601F2",
+      "fee": 3000
+    },
+    "SNDK": {
+      "pool": "0x995c1Ad5Eb998b1BdD89F515C4BB64760c411b62",
+      "fee": 3000
+    },
+    "QQQ": {
+      "pool": "0xA40D00a55d43bA2d188039DCF88bD68f4F133E78",
+      "fee": 3000
+    }
+  },
+  "poolsNote": "Uniswap v3 pools of each Stock Token against WETH on chain 4663, discovered 2026-09-08 via factory.getPool: the deepest WETH pool per stock (NVDA 0.05%: 1.7e22 liquidity; MU 0.3%: 5.2e20; SNDK 0.3%: 3.0e20; QQQ 0.3%: 2.8e21). FeeFunder swaps against these; the owner can re-point with setLegs.",
+  "feeShareBps": {
+    "NVDA": 1500,
+    "MU": 2000,
+    "SNDK": 2500,
+    "QQQ": 4000
+  }
 }

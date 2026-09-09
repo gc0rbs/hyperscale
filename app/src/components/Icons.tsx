@@ -90,8 +90,8 @@ export function FramedIcon({ name, size = 44, className = "" }: { name: IconName
 /** The supplied brand artwork; the viewport excludes its transparent outer padding. */
 export function LogoMark({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="222 268 822 810" aria-hidden="true" focusable="false">
-      <image href="/brand/stock-miner-logo.png" width="1254" height="1254" />
+    <svg width={size} height={size} viewBox="140 140 980 980" aria-hidden="true" focusable="false">
+      <image href="/brand/hyperscaler-logo.png" width="1254" height="1254" />
     </svg>
   );
 }

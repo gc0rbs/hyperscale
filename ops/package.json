@@ -17,7 +17,13 @@
     "deploy-demo": "tsx src/deploy-demo.ts",
     "guardian": "tsx src/guardian.ts",
     "deploy-adapters": "tsx src/deploy-adapters.ts",
-    "deploy-mainnet": "tsx src/deploy-mainnet.ts"
+    "deploy-mainnet": "tsx src/deploy-mainnet.ts",
+    "deploy-rounds": "tsx src/deploy-rounds.ts",
+    "flush-fees": "tsx src/flush-fees.ts",
+    "fund-rounds": "tsx src/fund-rounds.ts",
+    "rounds-keeper": "tsx src/rounds-keeper.ts",
+    "rounds-watch": "tsx src/rounds-watch.ts",
+    "rounds-admin": "tsx src/rounds-admin.ts"
   },
   "dependencies": {
     "viem": "2.21.55"

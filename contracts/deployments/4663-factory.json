@@ -1,9 +1,0 @@
-{
-  "chainId": 4663,
-  "deployer": "0x0F89e3Ce3e4646341De2f71C0Da2C7cea5CeD0a2",
-  "factory": "0x9ed850b183d7b9523cbc9673d82a4071ce74d52a",
-  "mineDeployer": "0x0f6edba3f04b68b6c25fc19d3bdcf97d4ba41d73",
-  "fragmentsDeployer": "0xade0a0ab4f563f7632202b7852a919af27489216",
-  "vaultDeployer": "0xecb7d4dd77de3e5e950cc91c5d74fa327db5609f",
-  "baseUri": "https://stockminer.fi/api/frag/{id}.json"
-}

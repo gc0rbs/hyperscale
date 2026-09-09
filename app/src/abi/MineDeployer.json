@@ -165,6 +165,16 @@
             "name": "treasury",
             "type": "address",
             "internalType": "address"
+          },
+          {
+            "name": "rescueWindowSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "maxPriceAgeSeconds",
+            "type": "uint32",
+            "internalType": "uint32"
           }
         ]
       },

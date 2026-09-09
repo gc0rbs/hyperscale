@@ -76,7 +76,8 @@ contract SeasonFactory is ISeasonFactory {
             redemptionDays: params.redemptionDays,
             fragPerToken: params.fragPerToken,
             stocks: params.stocks,
-            poolTokens: params.poolTokens
+            poolTokens: params.poolTokens,
+            maxPriceAge: params.maxPriceAgeSeconds
         });
         if (vaultDeployer.deploy(c) != vault) revert AddressMismatch("vault");
 
@@ -133,5 +134,8 @@ contract SeasonFactory is ISeasonFactory {
             revert InvalidParams("fees");
         }
         if (p.redemptionDays == 0 || p.pauseGraceSeconds == 0) revert InvalidParams("windows");
+        // Client decision 2026-09-08: the operator escape hatch is short by construction.
+        if (p.rescueWindowSeconds > 7 days) revert InvalidParams("rescue window");
+        if (p.maxPriceAgeSeconds < 1 hours) revert InvalidParams("price age");
     }
 }

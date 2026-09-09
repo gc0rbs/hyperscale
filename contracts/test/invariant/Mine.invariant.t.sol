@@ -11,10 +11,23 @@ contract MineInvariantTest is SeasonTestBase {
 
     function setUp() public override {
         super.setUp();
-        h = new MineHandler(mine, rig, lp, OPEN);
+        h = new MineHandler(mine, rig, lp, OPEN, oracle);
         rig.transfer(address(h), 400_000_000e18);
         targetContract(address(h));
-        bytes4[] memory sel = new bytes4[](9);
+        // Redemption in kind needs the eligibility allowlist and the stock tokens' hooks to accept
+        // the handler's actors; cash-out needs a fresh oracle price (refreshed by the handler's warp).
+        for (uint256 i; i < 5; ++i) {
+            address a = h.actors(i);
+            elig.set(a, true);
+            for (uint256 b; b < 4; ++b) {
+                stocks[b].setAllowed(a, true);
+            }
+        }
+        for (uint256 b; b < 4; ++b) {
+            stocks[b].setAllowed(treasury, true);
+            stocks[b].setAllowed(address(this), true);
+        }
+        bytes4[] memory sel = new bytes4[](12);
         sel[0] = h.warp.selector;
         sel[1] = h.activate.selector;
         sel[2] = h.upgradeGpu.selector;
@@ -24,6 +37,9 @@ contract MineInvariantTest is SeasonTestBase {
         sel[6] = h.exitRig.selector;
         sel[7] = h.pauseCycle.selector;
         sel[8] = h.emergencyWithdraw.selector;
+        sel[9] = h.abort.selector;
+        sel[10] = h.rescueOrSweepUnmined.selector;
+        sel[11] = h.redeem.selector;
         targetSelector(FuzzSelector({addr: address(h), selectors: sel}));
     }
 
@@ -95,6 +111,25 @@ contract MineInvariantTest is SeasonTestBase {
         assertEq(mine.lastX(), h.cancelLastX());
         assertEq(mine.workInShift(), h.cancelWork());
         assertEq(mine.closeX(), 0);
+    }
+
+    /// Invariant 11: once closed, what a block can still mint in total never
+    /// exceeds `claimableCap`, and the vault holds at least the stock those fragments can redeem, even
+    /// after the unmined remainder was swept or rescued.
+    function invariant_11_cap_bounds_claims_and_vault_backing() public view {
+        if (mine.closeX() == 0) return;
+        for (uint8 b; b < 4; ++b) {
+            uint256 sum = mine.mintedFragments(b);
+            for (uint256 i; i < h.rigCount(); ++i) {
+                sum += mine.pending(h.rigIds(i), b);
+            }
+            uint256 cap = mine.claimableCap(b);
+            assertLe(sum, cap, "claims exceed the cap");
+            uint256 outstanding = sum - h.ghostRedeemed(b); // still redeemable, whole fragments
+            assertGe(
+                stocks[b].balanceOf(address(vault)), (outstanding * WAD) / 1_000_000, "vault under-backed"
+            );
+        }
     }
 
     /// Invariant 7: heat and overclock bounds.

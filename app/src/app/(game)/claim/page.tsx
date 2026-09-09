@@ -1,7 +1,8 @@
 "use client";
 import { useEffect } from "react";
 import { useTx } from "@/lib/use-tx";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment } from "@/app/providers";
+import { RoundsClaimRedirect } from "./rounds-redirect";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Btn, Chip, Label, Mono, Panel } from "@/components/ui";
 import { seasonMineAbi } from "@/lib/contracts";
@@ -13,6 +14,8 @@ import { useChainNow } from "@/lib/use-now";
 import { useMyRigs } from "@/lib/use-season";
 
 export default function ClaimPage() {
+  const dep = useAnyDeployment();
+  if (dep.kind === "rounds") return <RoundsClaimRedirect />;
   return <SeasonShell>{(snap) => <Claim snap={snap} />}</SeasonShell>;
 }
 

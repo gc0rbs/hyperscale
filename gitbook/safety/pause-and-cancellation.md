@@ -28,7 +28,7 @@ The guardian can unpause before the grace period ends and the season continues a
 | Stakes | Every player recovers their full deposit with `emergencyWithdraw` |
 | Fragments already claimed | Stay in your wallet, redeemable from the vault |
 | Fragments not yet claimed | **Forfeited** |
-| Burned $RIG | Stays burned |
+| Burned $VRAM | Stays burned |
 | The pool and the USDG reserve | Sweepable to the treasury immediately |
 
 A mine that has already closed cannot be paused at all: `pause` reverts once the close is recorded. A pause that started earlier stops blocking claims and withdrawals the moment the close is recorded, so a lost or compromised guardian key can never strand earned fragments after a normal ending.

@@ -27,9 +27,15 @@ const FRIENDLY: Record<string, string> = {
   WindowClosed: "The redemption window has closed.",
   NotClosed: "Redemption opens when the mine closes.",
   InsufficientReserve: "The USDG reserve cannot cover this cash-out. Redeem in kind instead.",
+  Halted: "The mine is halted. Withdraw your stake with Emergency withdraw.",
+  NotHalted: "Emergency withdraw only works once the mine is halted. Use Decommission instead.",
+  NothingToClaim: "Nothing to claim for the last round.",
+  ClaimWindowClosed: "The claim window for that round has closed; the remainder rolled into the next pot.",
+  ReserveInsufficient: "The USDG reserve cannot cover this cash-out. Redeem in kind, or cash out a smaller amount.",
+  RoundStarted: "That round has already started.",
   "insufficient funds": "Not enough ETH for gas.",
-  "insufficient allowance": "Approve RIG first.",
-  "transfer amount exceeds balance": "Not enough RIG in the wallet.",
+  "insufficient allowance": "Approve the token first.",
+  "transfer amount exceeds balance": "Not enough tokens in the wallet.",
 };
 
 export function friendlyError(e: unknown): string {

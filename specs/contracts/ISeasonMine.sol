@@ -45,6 +45,8 @@ interface ISeasonMine {
         uint16 cashOutFeeBps;
         uint32 pauseGraceSeconds;
         address treasury;
+        uint32 rescueWindowSeconds; // operator may abort until openTime + this; 0 disables
+        uint32 maxPriceAgeSeconds; // cash-out refuses an oracle price older than this
     }
 
     struct Rig {
@@ -96,6 +98,8 @@ interface ISeasonMine {
     error AlreadyClaimed(uint8 blockIdx);
     error PoolExhausted(uint8 blockIdx);
     error PauseGraceNotElapsed();
+    error NotOperator();
+    error RescueWindowClosed();
 
     // ── events ──────────────────────────────────────────────────────────────
     event RigActivated(
@@ -131,6 +135,12 @@ interface ISeasonMine {
     function emergencyWithdraw(uint256 rigId) external;
 
     // ── admin (emergency only) ──────────────────────────────────────────────
+    /// @notice Operator escape hatch, only until `openTime + rescueWindowSeconds` (the rescue window)
+    ///         and only while the season is neither closed nor cancelled. Cancels the season: every rig
+    ///         recovers its full deposit with `emergencyWithdraw`, every fragment of this season
+    ///         (claimed or not) is void, and the vault's `rescue()` returns the whole pool and reserve
+    ///         to the operator at once. Labelled on the site. Client decision 2026-09-08.
+    function abort() external;
     /// @notice Guardian emergency stop; reverts once the season has closed. Claims and post-close
     ///         withdrawals ignore a pause after the close is persisted, so earned fragments can never
     ///         be stranded by a lost guardian key.
@@ -151,6 +161,8 @@ interface ISeasonMine {
     function ocExpiring(uint16 shiftIdx) external view returns (uint256);
     function ratePerWork(uint8 blockIdx) external view returns (uint256);
     function mintedFragments(uint8 blockIdx) external view returns (uint256);
+    /// @notice Whole fragments block `b` can mint in total: poolTokens[b] × fragPerToken / 1e18.
+    function fragmentSupply(uint8 blockIdx) external view returns (uint256);
     function rigs(uint256 rigId) external view returns (Rig memory);
     function rigHash(uint256 rigId) external view returns (uint256);
     /// @notice settled + simulated-unsettled fragments for a block, in whole fragments
@@ -161,4 +173,11 @@ interface ISeasonMine {
     function overclockCost(uint256 rigId) external view returns (uint256);
     function fragments() external view returns (address);
     function vault() external view returns (address);
+    /// @notice Last second at which `abort` is allowed (openTime + rescueWindowSeconds).
+    function rescueDeadline() external view returns (uint64);
+    /// @notice Upper bound on whole fragments block `b` can still mint in total (minted + claimable)
+    ///         once the season is closed: the full supply for a found block, the paid work's worth for
+    ///         the block the close landed in, zero for later blocks. Reverts while open. The vault keeps
+    ///         this many tokens' worth behind when it returns the unmined remainder.
+    function claimableCap(uint8 blockIdx) external view returns (uint256);
 }

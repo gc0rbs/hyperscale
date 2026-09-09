@@ -2,7 +2,9 @@
 import { useEffect } from "react";
 import { useTx } from "@/lib/use-tx";
 import { useReads } from "@/lib/reads";
-import { useDeployment } from "@/app/providers";
+import { useAnyDeployment, useDeployment } from "@/app/providers";
+import { RoundShell } from "@/components/rounds/RoundShell";
+import { RoundRedeem } from "@/components/rounds/RoundRedeem";
 import { SeasonShell } from "@/components/SeasonShell";
 import { Btn, Mono } from "@/components/ui";
 import { eligibilityAbi, redemptionVaultAbi, stockFragmentsAbi } from "@/lib/contracts";
@@ -12,6 +14,8 @@ import { useActiveAddress } from "@/lib/use-account";
 import { useChainNow } from "@/lib/use-now";
 
 export default function RedeemPage() {
+  const dep = useAnyDeployment();
+  if (dep.kind === "rounds") return <RoundShell dark={false}>{(snap) => <RoundRedeem snap={snap} />}</RoundShell>;
   return <SeasonShell dark={false}>{(snap) => <Redeem snap={snap} />}</SeasonShell>;
 }
 

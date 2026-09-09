@@ -6,34 +6,38 @@ This section is the plain-language version of the guarantees the contracts enfor
 
 | Guarantee | How |
 | --- | --- |
-| Your stake is returned in full at close | The mine holds deposits and nothing else; `withdraw` has no fee and no deadline |
-| Nobody can change a season's rules after creation | No proxies, no setters, no difficulty adjustment. The contracts are immutable |
-| The only admin power is pause, and only while open | The treasury address can `pause` and `unpause` an open mine. It cannot pause a closed one, block claims or withdrawals after close, mint, move stakes, change parameters or cancel directly |
-| A block never pays more than its pool | `minted fragments ≤ pool × 1,000,000` is checked inside every claim |
-| Your pay does not depend on other rigs | Earned = your hashrate × your seconds × a fixed rate per block |
-| Nothing accrues by the clock alone | Zero hashrate earns zero, however long |
+| Your stake is returned | `exit` returns the deposit minus the 3% fee at any time; after a halt, `emergencyWithdraw` returns it in full with no fee and no deadline |
+| Nobody can change the rules | No proxies, no setters. Round length, claim window, fees and upgrade tables are fixed at deployment |
+| A round never pays more than its pot | Every claim is a share of the round's recorded pot; the sum of claims cannot exceed it |
+| Your share is your work | Reward = pot × your work in the round ÷ everyone's work in the round, from exact hash × seconds accounting |
+| Unclaimed rewards stay in the game | What is not claimed in the 15-minute window is added to the next round's pot, never taken by the operator |
 | Upgrade spend is burned, not collected | Every upgrade payment is a transfer to `0x…dEaD` |
-| A pause cannot trap your stake | After the grace period (30 min default), `emergencyWithdraw` returns your deposit |
-| Redemption is not at the operator's discretion | Any fragment holder can redeem or cash out inside the window; the operator cannot withdraw the pool, only sweep after the window |
-| No randomness, no oracle in the mine | Outcomes are a deterministic function of stake and spend. The only oracle use is the cash-out price |
+| A pause cannot trap your stake | After the grace period (30 min default) `emergencyWithdraw` returns your deposit and the mine halts |
+| Claimed fragments are always backed | The vault must hold the stock behind every un-redeemed fragment; even a rescue after a halt leaves that behind |
+| No randomness, no oracle in the mine | Outcomes are a deterministic function of stake, spend and time. The only oracle use is the cash-out price |
+
+## Powers the team has, and says so
+
+| Power | Who | What it means for you |
+| --- | --- | --- |
+| **Halt the mine** | Operator, any time | No further round closes, no claim window opens. Your deposit comes back in full. Fragments you already claimed stay redeemable. The unclaimed and running pots return to the operator |
+| **Pause** | Treasury key | Blocks actions for up to the grace period; the clock keeps running. Past the grace period players halt it themselves |
+
+The team is publicly known and these powers are stated here and on the site. They exist so a broken launch can be unwound in minutes instead of leaving money locked.
 
 ## Depends on people or external systems
 
 | Item | Who | What if it fails |
 | --- | --- | --- |
-| Funding the pool before open | Operator | The season cannot open unfunded |
-| Sizing the difficulty | Operator | A too-hard season ends at the cap with part of the pool unmined; that part rolls forward. A too-easy one is over in minutes |
-| Using pause only for real incidents | Treasury key holder | A pause blocks your actions but not the clock. If it outlives the grace period you can withdraw and the season cancels, forfeiting unclaimed fragments |
-| Chainlink price feeds | Chainlink | Cash-out pauses on a stale price. In-kind redemption is unaffected |
-| Robinhood Stock Tokens | Robinhood | They are issued and priced by Robinhood; they carry no ownership or voting rights in the underlying company |
+| Funding the pots | The team's fee wallet | A round with no fees in pays only the rollover; the site shows it |
+| Chainlink price feeds | Chainlink | Cash-out pauses on a stale price (four-day cap covers weekends). In-kind redemption is unaffected |
+| Robinhood Stock Tokens | Robinhood | Issued and priced by Robinhood; no ownership or voting rights in the underlying company |
 | The chain's sequencer | Robinhood Chain | If the chain stalls you cannot act; work keeps accruing by timestamp when it resumes |
-| The geo-fence | The site | It is a front-end control. Eligibility is your responsibility under the terms |
+| The keeper | The team | Rounds close on the clock regardless; a missed poke only delays the claim window until the next transaction |
 
 ## What you can lose
 
-* **Every $RIG you burn on upgrades**, in all cases.
-* **The early-exit fee** (3% default) if you leave before close.
-* **Unclaimed fragments**, if a season is cancelled after an over-long pause, or if you do not redeem inside the 30-day window.
-* **Value**, because $RIG and the Stock Tokens are volatile and the fragments you earn are worth whatever the stock is worth when you redeem.
-
-Read the rest of this section for each point in detail.
+* **Every $VRAM you burn on upgrades**, in all cases.
+* **The exit fee** (3% default) when you leave.
+* **A round's share**, if you do not claim inside its 15-minute window. It rolls into the next pot.
+* **Value**, because $VRAM and the Stock Tokens are volatile and fragments are worth whatever the stock is worth when you redeem.

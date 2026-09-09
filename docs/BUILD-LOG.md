@@ -394,56 +394,6 @@ build in CI but have not been run end to end on a host from this session.
 - Known gaps still open (from the audit's coverage list): indexer automated tests, wrong-chain with a
   real wallet extension, refresh during confirmation, visual regression.
 
-## 2026-09-05 – mainnet deployer, $RIG on the site, pre-open screen, header status
-
-Plan: get the contracts onto Robinhood Chain mainnet (4663) without Forge's forked simulation (the
-public RPC rate-limits it), make the site show the real token once Pons launches, and give the mine a
-proper face before it opens.
-
-What shipped:
-- `ops deploy-mainnet factory|adapters|season`: one transaction at a time with viem, same deployment
-  files as the Forge scripts. `season` simulates `SeasonFactory.create` first and refuses a plan whose
-  params changed after `plan` (paramsHash check). Rehearsed end to end on Anvil.
-- Landing "Buy token" dialog: contract address with copy, official purchase link and Blockscout link,
-  driven by `NEXT_PUBLIC_RIG_ADDRESS` / `NEXT_PUBLIC_RIG_BUY_URL`; "coming soon" until both exist.
-- `OpeningSoon`: the pre-open screen used both before a season exists (`/mine` without a deployment)
-  and between creation and `openTime` (countdown, pools, work shares, activate / get $RIG actions).
-- Header status cluster from the launch mockup (`design/launch/53`): live dot, season name, phase chip
-  in the shared chrome; the duplicate phase chip left the mine page.
-- Railway image runs the traced standalone server under plain `node` (crash traces reach the deploy
-  log; the earlier "Ready then dead" was the custom domain targeting port 8080, see RUNBOOK §10c).
-
-What's next: fund the deployer (`0x0F89…D0a2`) with ~0.05 ETH, get the $RIG address from the Pons
-launch, then factory → adapters → plan → season → fund on 4663; set the app's `NEXT_PUBLIC_*` and
-redeploy; put stockminer.fi behind Cloudflare so the geo-fence header exists.
-
-Known gaps: the Pons token page URL format is unverified, so the buy link is an env value rather
-than derived from the address; mainnet deployment JSONs must be force-added (gitignored).
-
-## 2026-09-05 – Railway hosting live; testnet season; launch comms
-
-**What shipped**
-- `docs/LAUNCH-SOCIAL-GUIDE.md`: 72-hour launch post plan, token-only, with copy guardrails from docs/07.
-- Railway: `app/Dockerfile` (Next.js), `railway/{app,indexer,keeper,watch}.json`, `/api/health`
-  liveness route. Project `shimmering-inspiration` runs `app`, `indexer`, `keeper`, `Postgres`;
-  app at `https://app-production-8f29.up.railway.app`. RUNBOOK §10c is the procedure.
-- Ops: chain profiles accept `${VAR:-default}` (the Robinhood profiles already used it, but `expand`
-  only handled `${VAR}`); `loadDeployment` falls back to `MINE_ADDRESS` env; `fund --mint-mocks`
-  allowed only with a DEPLOY_MOCKS factory deployment (the logo-mark branch's check, adopted on merge); `robinhood-testnet.json` set to `mocks: true` with
-  the Blockscout explorer API.
-- Main merged (PR #3) with the audit remediation branch; this branch rebuilt on top of it, dropping
-  its duplicates of the geo-fence, Dockerfiles, chain profile and Next upgrade in favour of the
-  remediated versions.
-
-**Testnet season 1 (chain 46630)**: factory + mocks, season sized 1M hash / 1h / 2h cap, funded,
-Railway pointed at it. Re-created on the remediated contracts after the merge (addresses in the Railway
-variables and `contracts/deployments/46630.json`, not in git).
-
-**Known gaps**: Railway services still deploy from `railway up`, not from GitHub (dashboard step);
-three stray Postgres services and the five empty `@stock-miner/*` services from the original import
-need deleting in the dashboard; Cloudflare zone pending the domain; the mock oracle's timestamps are
-fixed at deploy time, so cash-out on the testnet needs an `oracle.set` refresh before use.
-
 ## 2026-09-04 – Interactive public landing page
 
 Plan: replace the chain-dependent home screen with four accessible editorial sections explaining
@@ -668,3 +618,96 @@ doc 11, copy samples and the list of decisions (name, token symbol) that gate an
 
 What's next: pick name and symbol (doc 12 §9), then one app copy/units PR and one docs/social PR.
 Known gaps: no contract or param changes proposed; NVIDIA trademarks deliberately avoided in tier names.
+
+## 2026-09-08 – Escape hatch and fee-funded pools (plan)
+
+Input: two client requirements:
+(a) the deployer can pull the pool back out during the first 24 h of a season, labelled on the site;
+(b) prize pools are funded from the Pons trading tax on $RIG (3%, possibly 5%), not from the client's
+own wallet.
+
+Plan, in order:
+1. Contracts (test-first). `SeasonParams` gains `rescueWindowSeconds` and `maxPriceAgeSeconds`.
+   `SeasonMine.abort()` for the vault operator inside the rescue window: before open it cancels the
+   season (stakes back via `emergencyWithdraw`), after open it closes the season at that instant
+   (earned fragments stay claimable, stakes back via `withdraw`). `SeasonMine.claimableCap(b)` bounds
+   what a closed season can still mint per block. `RedemptionVault.rescue()` (operator, after an
+   abort) and `sweepUnmined()` (anyone, after any close) return the unmined remainder immediately,
+   keeping `claimableCap` behind; `topUpReserve()` lets anyone add USDG after funding; the cash-out
+   staleness cap becomes a season parameter (weekends). `emergencyWithdraw` works on any cancelled
+   season. Interfaces change in `specs/contracts/` first.
+2. Ops: launch sheet (`ops/launch/*.json`) + `pnpm launch` that refuses to run until every field is
+   signed off and the wallet holds assets and gas, simulates every call, then creates, funds and
+   verifies; `pnpm rescue`, `pnpm sweep-unmined`; keeper low-gas alert; fund refuses a reserve below
+   the pool's value share unless overridden; a `poolFunding` section that sizes the pool from the
+   Pons-fee wallet's balances.
+3. App: season registry from the factory (current season + claim/redeem for every past season,
+   cancelled ones hidden), rescue-window notice wherever the pool is shown, fractional in-kind
+   redemption, Pons-fee funding copy.
+4. Docs: CLAUDE.md hard rules (user decision), docs/05 §3/§6/§8, DECISIONS, RUNBOOK launch
+   section (one operator, sheet, rehearsal, rescue), gitbook safety page, this log.
+
+## 2026-09-08 – Rounds (plan)
+
+Client decisions in DECISIONS (same date): hourly rounds, 15-minute claims, rollover, fee-stream funding.
+Plan: `specs/contracts/IRoundMine.sol`, `IRoundFragments.sol`, `IRoundVault.sol` first; then
+test-first in `contracts/test/rounds/` (unit: rounds close on the clock, work share, claim window,
+rollover, funding schedule, unschedule, halt; invariants 1–8 of docs/13 §4); then `contracts/src/rounds/`;
+then a deploy script, ops (`fund-rounds`, keeper that pokes at round boundaries, `halt`, `rescue`),
+app mine screen (countdown, live pot, your share, claim), docs and gitbook.
+
+## 2026-09-08 – Rounds: what shipped / what's next / known gaps
+
+**Shipped (branch `claude/mainnet-launch-postmortem-cri2up`)**
+- Contracts: `RoundMine`, `RoundVault` (docs/13): hourly rounds closing on the clock, pot per stock per
+  round split by exact work share, 15-minute claim window, rollover of unclaimed pots, per-round funding
+  schedule anyone can fill, operator `unschedule` (rounds not started) and `halt`, guardian `pause`,
+  catch-up capped at 48 rounds per call with `NotCaughtUp` on actions. 14 unit/scenario tests and 8
+  invariants (`contracts/test/rounds/`). Season contracts gained the 24 h `abort` + `rescue` (full pool
+  back, client decision), `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds`; 87 tests green.
+- Ops: `deploy-rounds` (Anvil demo + mainnet, predicted addresses, dry run), `fund-rounds`,
+  `rounds-keeper` (boundary poke, catch-up, low-gas alert), `rounds-watch`, `rounds-admin`
+  (status / halt / unschedule / rescue / pause, `--yes` to broadcast), Railway configs; 31 ops tests.
+  E2E on Anvil: fund → boundary → keeper poke → status → watch.
+- App: rounds deployment from runtime env or `<chainId>-rounds.json` (season UI kept as the
+  previous mode), `/mine` round view (countdown, pots with rollover, share, projected cut, claim
+  panel, rig cards, halt state, client notices), activate, redeem any time with fractional in-kind,
+  header round status, round-close notification; 24 app tests. E2E with Playwright on Anvil: activate →
+  overclock → round close → claim (fragments minted) → fractional redeem. Screenshots in
+  `app/test-results/rounds/` (gitignored).
+- Docs: docs/13, DECISIONS, CLAUDE.md hard rules, `RUNBOOK-ROUNDS.md`, GitBook rounds page and safety
+  overview, tokenomics fee-funding section, audit-package addendum.
+
+**What's next**
+1. Client: confirm the Pons tax asset and recipient wallet, then decide who holds `FUNDER_KEY`.
+2. Rehearse `docs/RUNBOOK-ROUNDS.md` §1 end to end including the Railway path; deploy with
+   `deploy-rounds mainnet`; verify on Blockscout; set `NEXT_PUBLIC_ROUNDS_*` / `ROUNDS_*`.
+4. Audit addendum questions (AUDIT-PACKAGE §1b) to the auditor before mainnet.
+
+**Known gaps**
+- No Ponder indexer for rounds (`indexer/` still indexes a season); the app reads the chain directly
+  and the leaderboard for rounds is chain-read only.
+- The Python simulation still models seasons; no economic sim of pot sizes vs. fee volume yet.
+- Halt / emergency-withdraw and browser notifications were unit-tested but not driven in the browser.
+- The demo deploy's operator on Anvil is account 1 (the ops `clients()` fallback), which the runbook
+  now states.
+- Copy in shared season components (rig room, hash stream) still uses mining words.
+
+## 2026-09-09 – Rebrand to Hyperscaler / $VRAM: what shipped / what's next / known gaps
+
+**Shipped.** The client's design handoff applied as one pass (DECISIONS 2026-09-09): `app/src/lib/brand.ts`;
+green design tokens; the landing page rebuilt on the handoff's markup and CSS (`landing.css` is the
+handoff's stylesheet plus the app-chrome extras); the four WebGL scenes ported from the handoff's
+build (processor, server node, processor cards, shard module, with the orbiting shard atmosphere and
+SVG fallbacks) into `scene-engine.ts` / `hero-materials.ts` / `SceneCanvas.tsx`; the green H logo;
+share card and metadata; copy in the rounds UI, terms, how-it-works, GitBook, README and CLAUDE.md;
+the dev token renamed VRAM; no token address hard-coded on the site; mainnet
+`deploy-rounds` now requires the metadata base URI.
+
+**Next.** From the client: the final domain (then `FRAG_BASE_URI`), the $VRAM address and Pons link
+after the launch, and whether the launch pair line ("VRAM / NVDA") is right. Screenshot review of the
+landing page on desktop and mobile against the handoff.
+
+**Known gaps.** The handoff's original source was not available (only the built site), so the scene
+port is a faithful re-derivation, not a copy; the season-era screens (`RigCard`, `PurchaseSheet`,
+`mine/new`) still say RIG because season mode keeps its own dev token name; nothing live runs on it.

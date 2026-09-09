@@ -5,9 +5,9 @@ A rig is one deposit. You can own as many rigs as you like, and opening another 
 ## Activate
 
 1. Open **Mine**, then **Activate a rig**.
-2. Choose the amount of $RIG to stake. The minimum stake weight is set per season (default **100 RIG**).
+2. Choose the amount of $VRAM to stake. The minimum stake weight is set per season (default **100 VRAM**).
 3. Review the preview. It shows the stake, the activation fee, and your rig's starting hashrate.
-4. Approve $RIG, then confirm the activation.
+4. Approve $VRAM, then confirm the activation.
 
 | Item | Amount (defaults) | Where it goes |
 | --- | --- | --- |

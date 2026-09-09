@@ -1,9 +1,9 @@
 # Upgrades
 
-Upgrades are the only way $RIG leaves your hands permanently. Every upgrade is priced as a percentage of your rig's stake, so a rig of any size faces the same relative price, and every upgrade payment is sent to the burn address `0x…dEaD`. It cannot be recovered by anyone, including the operator, including if the season is cancelled.
+Upgrades are the only way $VRAM leaves your hands permanently. Every upgrade is priced as a percentage of your rig's stake, so a rig of any size faces the same relative price, and every upgrade payment is sent to the burn address `0x…dEaD`. It cannot be recovered by anyone, including the operator, including if the season is cancelled.
 
 {% hint style="warning" %}
-Before every purchase the app shows: the $RIG that will be burned, the hashrate you will have afterwards, and the fraction of the mine's remaining work the purchase covers. Upgrades do not carry over to the next season.
+Before every purchase the app shows: the $VRAM that will be burned, the hashrate you will have afterwards, and the fraction of the mine's remaining work the purchase covers. Upgrades do not carry over to the next season.
 {% endhint %}
 
 ## GPU tiers: permanent multiplier

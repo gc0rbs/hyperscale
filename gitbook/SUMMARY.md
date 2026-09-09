@@ -1,16 +1,16 @@
 # Table of contents
 
-* [Welcome to Hyperscale](README.md)
+* [Welcome to Hyperscaler](README.md)
 
 ## Getting started
 
-* [What is Hyperscale?](getting-started/what-is-stock-miner.md)
+* [What is Hyperscaler?](getting-started/what-is-stock-miner.md)
 * [Eligibility, wallet and network](getting-started/eligibility-and-wallet.md)
 * [Your first rig](getting-started/your-first-rig.md)
 
 ## Playing
 
-* [Seasons, blocks and shifts](playing/seasons-and-blocks.md)
+* [Rounds: the hourly pot](playing/rounds.md)
 * [Hashrate and rewards](playing/hashrate-and-rewards.md)
 * [Upgrades](playing/upgrades.md)
 * [Heat and overclocking](playing/heat-and-overclocking.md)
@@ -25,7 +25,6 @@
 * [Immutable contracts and the one admin power](safety/immutable-contracts.md)
 * [What burns, what returns](safety/what-burns-what-returns.md)
 * [Pause and cancellation](safety/pause-and-cancellation.md)
-* [The cap](safety/the-cap.md)
 * [Oracle and cash-out](safety/oracle-and-cash-out.md)
 * [Testing and audits](safety/testing-and-audits.md)
 * [Known limitations](safety/known-limitations.md)
@@ -33,7 +32,6 @@
 
 ## Reference
 
-* [Season parameters](reference/season-parameters.md)
 * [Formulas](reference/formulas.md)
 * [Contracts and addresses](reference/contracts-and-addresses.md)
 * [FAQ](reference/faq.md)

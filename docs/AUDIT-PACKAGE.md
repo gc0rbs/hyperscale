@@ -25,11 +25,32 @@ invariants in §5.3), `docs/03-GAME-DESIGN.md` (formulas), `docs/01-PRD.md` (req
 
 Compiler: solc 0.8.28, via-IR, optimizer 200 runs, EVM `cancun`. OpenZeppelin 5.2.0.
 
+## 1b. Addendum 2026-09-08: the round mine and the season escape hatch
+
+New scope for the same auditor, on top of §1 (interfaces in `specs/contracts/IRound*.sol`, spec
+`docs/13-ROUNDS.md`, decisions in `docs/DECISIONS.md` 2026-09-08):
+
+| Contract | Role |
+|---|---|
+| `contracts/src/rounds/RoundMine.sol` | continuous mine: hourly rounds close on the clock; pot per stock per round split by exact work share; 15-minute claim window; unclaimed rolls over; per-round funding schedule; operator `halt`/`unschedule`; guardian `pause`; catch-up capped at 48 rounds per call with `NotCaughtUp` on actions |
+| `contracts/src/rounds/RoundVault.sol` | holds the stock and USDG reserve; redeem / cash out any time; `release` for unscheduling (mine only); `rescue` after a halt keeps the stock behind un-redeemed fragments |
+| `contracts/src/StockFragments.sol` | reused unchanged: one permanent instance, id = stock index |
+| `SeasonMine.abort` / `RedemptionVault.rescue`, `sweepUnmined`, `topUpReserve`, `maxPriceAgeSeconds` | season-era additions (season mode: operator cancel inside a 24 h rescue window returning the whole pool; unmined remainder sweeps at close |
+
+Trust changes: the operator (deployer key) now holds `halt`, `unschedule` and `rescue` on the round
+mine and `abort` on seasons, all stated publicly on the site; rewards within a round are a share of
+the pot (the pot is a fee stream, unknown in advance), settled per round from exact hash × seconds
+accounting with no accumulator. Tests: `contracts/test/rounds/` (13 scenarios, 8 invariants, docs/13
+§4) and `contracts/test/unit/Abort.t.sol`. Questions we would like answered: the catch-up cap and
+`NotCaughtUp` posture; rounding of `pot × work / roundWork` per stock; the `pot(r,s)` view's rollover
+chain for unclosed rounds; the halt-plus-open-claim-window interaction (claims stop at halt; the
+window's share returns to the operator with the rescue).
+
 ## 2. Trust assumptions
 
 1. **Season contracts are immutable.** No proxies, no setters, no difficulty adjustment. The only
    privileged function is `pause`/`unpause` by the season's `treasury` address.
-2. **$RIG** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
+2. **$VRAM** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
    the two-block launch window, no fee-on-transfer). Upgrade spend is transferred from the player to
    `SeasonMine.BURN_ADDRESS` (`0x…dEaD`). `contracts/src/tokens/RIG.sol` is the dev/test token.
 3. **The LP token** path is present but off for v1 (`lpToken` zero; the Pons pool is Uniswap v3 with
@@ -195,7 +216,7 @@ No high-severity finding. Full output: run the command above (the JSON is not co
   all 32 shifts are crossed in one call (the keeper keeps it short). Fine for an Arbitrum-family chain.
 - **`rigsOf(owner)`** is unbounded; only a view.
 - **LP weight is fixed at creation** from a 24 h sampled average of the pool; a large post-creation
-  change in pool composition changes the RIG-equivalence of new LP rigs. Seasons open soon after
+  change in pool composition changes the VRAM-equivalence of new LP rigs. Seasons open soon after
   creation, which keeps the gap short.
 - **Difficulty is never adjusted.** A badly sized season runs short, or ends at the cap
   (`maxDurationSeconds`, default 2× the planned pace) with part of the pool unmined; that remainder is

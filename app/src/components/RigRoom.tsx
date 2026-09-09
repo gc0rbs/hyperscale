@@ -1,5 +1,6 @@
 "use client";
-import type { RigSnapshot } from "@/lib/season-model";
+/** What the room needs from a rig; both the season RigSnapshot and the rounds RoundRig satisfy it. */
+export interface RigVisual { id: bigint; gpuTier: number; coolingTier: number; state: { inactive: boolean; activeOc: number } }
 
 /**
  * The rig room (brief §1): every rig is an isometric machine drawn from its own state, in the language
@@ -7,7 +8,7 @@ import type { RigSnapshot } from "@/lib/season-model";
  * slats count the GPU tier, cyan fins for cooling tiers, and a glow that grows with active overclocks.
  * Pure SVG, no bitmaps, so a hundred rigs cost nothing and every one is different.
  */
-export function RigRoom({ rigs, selected, onSelect }: { rigs: RigSnapshot[]; selected?: bigint; onSelect?: (id: bigint) => void }) {
+export function RigRoom({ rigs, selected, onSelect }: { rigs: RigVisual[]; selected?: bigint; onSelect?: (id: bigint) => void }) {
   const cols = Math.max(2, Math.min(4, Math.ceil(Math.sqrt(Math.max(rigs.length, 1)))));
   return (
     <div
@@ -37,7 +38,7 @@ export function RigRoom({ rigs, selected, onSelect }: { rigs: RigSnapshot[]; sel
 }
 
 /** Isometric tower: width 64, depth 64, height by GPU tier; slats amber, fins cyan; glow by overclock. */
-export function RigMachine({ rig, selected, onClick, scale = 1 }: { rig: RigSnapshot; selected?: boolean; onClick?: () => void; scale?: number }) {
+export function RigMachine({ rig, selected, onClick, scale = 1 }: { rig: RigVisual; selected?: boolean; onClick?: () => void; scale?: number }) {
   const active = !rig.state.inactive;
   const oc = active ? rig.state.activeOc : 0;
   const tier = rig.gpuTier;
