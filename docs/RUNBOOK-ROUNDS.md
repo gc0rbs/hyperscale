@@ -50,14 +50,13 @@ confirm the served page shows the Anvil mine before touching mainnet.
 
 ```
 export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://…      # the operator key
-export FRAG_BASE_URI=https://<final domain>/api/frag/{id}.json   # immutable on the fragments contract: confirm the domain first
 pnpm deploy-rounds mainnet --chain robinhood --prelaunch --dry-run   # predicted addresses, paramsHash
 pnpm deploy-rounds mainnet --chain robinhood --prelaunch             # three transactions, rig and genesis zero
 ```
 
-The script refuses to deploy to mainnet without the metadata URL (`--base-uri` or `FRAG_BASE_URI`):
-the shard metadata address is baked into `StockFragments` for good, so the site's domain must be
-known before this step.
+The shard metadata URL defaults to `https://hyperscaling.xyz/api/frag/{id}.json` (the client's domain,
+2026-09-09) and is baked into `StockFragments` for good; override with `--base-uri` or `FRAG_BASE_URI`
+only if the domain changes before the deploy.
 
 `--prelaunch` deploys the mine without a token or genesis so everything below (verification, hosting,
 funding, keeper, watcher, rehearsal against the real addresses) is done days ahead. Players see

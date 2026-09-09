@@ -47,7 +47,7 @@ use the sequential viem deployer instead. It sends one transaction at a time and
 
 ```
 export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://rpc.mainnet.chain.robinhood.com
-pnpm deploy-mainnet factory [--base-uri https://<final domain>/api/frag/{id}.json]   # step 1
+pnpm deploy-mainnet factory [--base-uri https://hyperscaling.xyz/api/frag/{id}.json]   # step 1
 pnpm deploy-mainnet adapters --chain robinhood                                      # step 1b, prints every feed's live price
 pnpm deploy-mainnet season --season seasons/season-1.json [--dry-run]               # step 3, simulates create first
 ```
@@ -223,7 +223,7 @@ addresses from `contracts/deployments/<chainId>.json`, or commit that file and l
 unset. `NEXT_PUBLIC_RPC_URL` should be a dedicated endpoint. Set `NEXT_PUBLIC_WC_PROJECT_ID` for
 WalletConnect (mobile wallets); injected wallets work without it. The project (type App, Reown
 dashboard) is `88a3136a4e95ed0e552697cd35d54650`, a public identifier shipped in the client bundle;
-set its allowed domain to the app's public origin, the final domain. The geo-fence
+set its allowed domain to the app's public origin, `https://hyperscaling.xyz`. The geo-fence
 (`app/src/middleware.ts`) is on in production and blocks US, CA, GB and CH by the edge country header,
 returning the `/restricted` page with HTTP 451. **The fence is off by client decision** (`NEXT_PUBLIC_GEOFENCE=0`);
 the country header it would read needs Cloudflare in front, so
@@ -258,7 +258,7 @@ Dockerfile with the repo root as context and is described by a config file in `r
 
 | Service | Config | Image | Variables |
 |---|---|---|---|
-| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (the final domain was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` (fence off for season 1, client decision) |
+| `app` | `railway/app.json` | `app/Dockerfile` | `NEXT_PUBLIC_*` from `app/.env.example`, `PORT=3000`; **every domain on the service (Railway or custom) must target port 3000**. A mismatched target port shows as 502 "Application failed to respond" while the logs say "Ready" (`https://hyperscaling.xyz` was added with 8080 on 2026-09-05). `NEXT_PUBLIC_GEOFENCE=0` (fence off for season 1, client decision) |
 | `indexer` | `railway/indexer.json` | `indexer/Dockerfile` | `DATABASE_URL` (Railway Postgres reference), `DATABASE_SCHEMA` (one per season), `CHAIN_ID`, `PONDER_RPC_URL_<chainId>`, `SEASON_MINE_ADDRESS`, `STOCK_FRAGMENTS_ADDRESS`, `REDEMPTION_VAULT_ADDRESS`, `START_BLOCK` |
 | `keeper` | `railway/keeper.json` | `ops/Dockerfile` | `CHAIN_ID`, `RPC_URL`, `KEEPER_KEY`, `MINE_ADDRESS` |
 | `watch` | `railway/watch.json` | `ops/Dockerfile` | as keeper without the key, plus `VAULT_ADDRESS`, `ALERT_WEBHOOK_URL` |

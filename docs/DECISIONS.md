@@ -336,8 +336,9 @@ site says what the contracts do: a new pot every hour, claims for fifteen minute
 at any time, deposit back on decommission minus the exit fee, and the operator halt stated in the FAQ.
 The handoff's "LAUNCH PAIR VRAM / NVDA" line was left out until the Pons pair is confirmed.
 
-**Open.** The final domain (the shard metadata URL is immutable on `StockFragments`; the mainnet
-deploy now refuses to run without `--base-uri` / `FRAG_BASE_URI`), the $VRAM contract address and
+**Domain.** `hyperscaling.xyz` (client, same day): the default shard metadata URL and app origin.
+
+**Open.** The $VRAM contract address and
 the Pons purchase link (hosting env `NEXT_PUBLIC_RIG_ADDRESS`, `NEXT_PUBLIC_RIG_BUY_URL`).
 
 ## 2026-09-08 – Escape hatch, fee funding, hourly rounds (client decisions)

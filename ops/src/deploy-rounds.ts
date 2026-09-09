@@ -218,9 +218,9 @@ async function main() {
   const mineAddr = getContractAddress({ from: account.address, nonce });
   const fragAddr = getContractAddress({ from: account.address, nonce: nonce + 1n });
   const vaultAddr = getContractAddress({ from: account.address, nonce: nonce + 2n });
-  // The metadata URL is immutable on StockFragments, so mainnet must name the final domain explicitly.
-  const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : process.env.FRAG_BASE_URI);
-  if (!baseUri || !/^https?:\/\/\S+\{id\}\S*$/.test(baseUri)) throw new Error("mainnet needs --base-uri https://<final domain>/api/frag/{id}.json (or FRAG_BASE_URI): it is immutable on the fragments contract");
+  // The metadata URL is immutable on StockFragments: the site lives at hyperscaling.xyz (client, 2026-09-09).
+  const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : (process.env.FRAG_BASE_URI ?? "https://hyperscaling.xyz/api/frag/{id}.json"));
+  if (!baseUri || !/^https?:\/\/\S+\{id\}\S*$/.test(baseUri)) throw new Error("mainnet needs a valid --base-uri https://hyperscaling.xyz/api/frag/{id}.json (or FRAG_BASE_URI): it is immutable on the fragments contract");
   const vaultConfig = {
     mine: mineAddr, fragments: fragAddr, usdc, eligibility, oracle, operator: account.address,
     cashOutFeeBps: Number(tpl.cashOutFeeBps), fragPerToken: BigInt(params.fragPerToken), maxPriceAge: Number(tpl.maxPriceAgeSeconds), stocks,
