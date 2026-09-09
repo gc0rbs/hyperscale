@@ -5,7 +5,7 @@ import Link from "next/link";
  * on the mine screen footer and repeated in /how-it-works and /terms. Short and plain on purpose.
  */
 export const ROUND_NOTICES = [
-  "Pots are funded by the Pons trading tax on $RIG, swapped into Stock Tokens and added to the running round as fees arrive. A round with no fees pays only what rolled over.",
+  "Pots are funded by the Pons trading tax on $VRAM, swapped into Stock Tokens and added to the running round as fees arrive. A round with no fees pays only what rolled over.",
   "The operator can halt the mine at any time and take back the unclaimed and running pots. Stakes always come back in full, and shards you have already claimed stay redeemable.",
 ] as const;
 

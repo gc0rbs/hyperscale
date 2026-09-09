@@ -1,6 +1,6 @@
 # Rounds: the hourly pot
 
-Hyperscale runs continuously. Every hour is a **round**. Your nodes keep working across rounds; you never re-enter.
+Hyperscaler runs continuously. Every hour is a **round**. Your nodes keep working across rounds; you never re-enter.
 
 ## What happens every hour
 
@@ -13,7 +13,7 @@ Only the latest closed round can be claimed. There is no catching up on older ro
 
 ## Where the pot comes from
 
-The pots are funded by the trading tax on $RIG (set on Pons by the team). The tax is paid to a contract that swaps it into the four Stock Tokens on Robinhood Chain and adds them to the running round's pot every few minutes, so you can watch the pot grow during the hour. No person holds the fees on the way. The pot is locked the moment the round closes. The site shows the current pot and how much of it rolled over from the last round; a round with no fees pays only the rollover, and the site says so.
+The pots are funded by the trading tax on $VRAM (set on Pons by the team). The tax is paid to a contract that swaps it into the four Stock Tokens on Robinhood Chain and adds them to the running round's pot every few minutes, so you can watch the pot grow during the hour. No person holds the fees on the way. The pot is locked the moment the round closes. The site shows the current pot and how much of it rolled over from the last round; a round with no fees pays only the rollover, and the site says so.
 
 ## Fragments
 
@@ -21,4 +21,4 @@ The pots are funded by the trading tax on $RIG (set on Pons by the team). The ta
 
 ## Your stake
 
-You stake $RIG once per node. Leaving costs a 3% exit fee; the node's work in the round it leaves still counts. If the mine is ever halted, every deposit comes back in full with no fee.
+You stake $VRAM once per node. Leaving costs a 3% exit fee; the node's work in the round it leaves still counts. If the mine is ever halted, every deposit comes back in full with no fee.

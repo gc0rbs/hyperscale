@@ -12,7 +12,7 @@ import { claimWindow, formatClock, roundAt, secondsToRoundEnd, type RoundSnapsho
 import { useActiveAddress } from "@/lib/use-account";
 import { useChainNow } from "@/lib/use-now";
 
-/** Bring a node online: approve RIG, then RoundMine.activate(amount). Stake = capacity, fixed per node. */
+/** Bring a node online: approve VRAM, then RoundMine.activate(amount). Stake = capacity, fixed per node. */
 export function RoundActivate({ snap }: { snap: RoundSnapshot }) {
   const dep = useRoundsDeployment();
   const router = useRouter();
@@ -60,22 +60,22 @@ export function RoundActivate({ snap }: { snap: RoundSnapshot }) {
     <div className="p-4 md:px-8 md:py-6 max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
       <Panel className="flex flex-col gap-6" data-testid="activate">
         <div className="font-display leading-none uppercase tracking-[0.02em] text-[64px] font-medium">Bring a node online</div>
-        <label className="flex flex-col gap-2"><Label>Stake · $RIG</Label><input data-testid="amount" value={amountStr} onChange={(ev) => setAmountStr(ev.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-12 px-4 bg-mine-panel2 border border-mine-line rounded-sm font-data text-[22px] text-mine-fg outline-none focus:border-signal" /><Mono className="text-mine-muted text-[12px]">balance {formatRig(rigBal)} RIG</Mono></label>
+        <label className="flex flex-col gap-2"><Label>Stake · $VRAM</Label><input data-testid="amount" value={amountStr} onChange={(ev) => setAmountStr(ev.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-12 px-4 bg-mine-panel2 border border-mine-line rounded-sm font-data text-[22px] text-mine-fg outline-none focus:border-signal" /><Mono className="text-mine-muted text-[12px]">balance {formatRig(rigBal)} RIG</Mono></label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Stat label="Throughput" value={formatThroughput(hash)} sub="Gen 0, before upgrades" />
           <Stat label="Share at join" value={`${share.toFixed(2)}%`} sub="of cluster throughput" />
-          <Stat label="Activation fee" value={`${formatRig(fee)} RIG`} sub="to treasury, in RIG" />
+          <Stat label="Activation fee" value={`${formatRig(fee)} VRAM`} sub="to treasury, in VRAM" />
           <Stat label="Stake" value="fixed per node" sub={`decommission any time, ${p.exitFeeBps / 100}% fee`} />
         </div>
         <div className="text-mine-muted text-[13px]">Capacity is fixed per node. To add more, bring another node online. Upgrades are priced as a share of this stake and burned.</div>
         {tx.error && <div className="text-[12px] text-[var(--heat-hot)] font-data break-all" data-testid="tx-error">{tx.error}</div>}
         <div className="flex gap-2 items-center flex-wrap">
           <Btn tone="ember" className="h-12 px-6" onClick={go} disabled={!account || tx.busy || tooSmall || insufficient || !canJoin} data-testid="activate-submit">
-            {tx.status === "wallet" ? "Confirm in wallet…" : tx.status === "mining" ? "Mining…" : needApprove ? "Approve RIG" : "Bring online"}
+            {tx.status === "wallet" ? "Confirm in wallet…" : tx.status === "mining" ? "Mining…" : needApprove ? "Approve VRAM" : "Bring online"}
           </Btn>
           {!account && <span className="text-mine-muted text-[13px]">Connect a wallet first.</span>}
-          {tooSmall && <span className="text-mine-muted text-[13px]">Minimum stake is {formatRig(p.minStakeWeight)} RIG.</span>}
-          {insufficient && account && !tooSmall && <span className="text-mine-muted text-[13px]">Not enough RIG for the stake plus the fee.</span>}
+          {tooSmall && <span className="text-mine-muted text-[13px]">Minimum stake is {formatRig(p.minStakeWeight)} VRAM.</span>}
+          {insufficient && account && !tooSmall && <span className="text-mine-muted text-[13px]">Not enough VRAM for the stake plus the fee.</span>}
           {!canJoin && <span className="text-mine-muted text-[13px]">{snap.halted ? "The mine is halted." : "The mine is paused."}</span>}
         </div>
       </Panel>

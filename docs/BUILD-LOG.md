@@ -745,3 +745,23 @@ app mine screen (countdown, live pot, your share, claim), docs and gitbook.
 - The demo deploy's operator on Anvil is account 1 (the ops `clients()` fallback), which the runbook
   now states.
 - Copy in shared season components (rig room, hash stream) still uses mining words.
+
+## 2026-09-09 – Rebrand to Hyperscaler / $VRAM: what shipped / what's next / known gaps
+
+**Shipped.** The client's design handoff applied as one pass (DECISIONS 2026-09-09): `app/src/lib/brand.ts`;
+green design tokens; the landing page rebuilt on the handoff's markup and CSS (`landing.css` is the
+handoff's stylesheet plus the app-chrome extras); the four WebGL scenes ported from the handoff's
+build (processor, server node, processor cards, shard module, with the orbiting shard atmosphere and
+SVG fallbacks) into `scene-engine.ts` / `hero-materials.ts` / `SceneCanvas.tsx`; the green H logo;
+share card and metadata; copy in the rounds UI, terms, how-it-works, GitBook, README and CLAUDE.md;
+the dev token renamed VRAM; the hard-coded legacy RIG address removed from the site; mainnet
+`deploy-rounds` now requires the metadata base URI.
+
+**Next.** From the client: the final domain (then `FRAG_BASE_URI`), the $VRAM address and Pons link
+after the launch, and whether the launch pair line ("VRAM / NVDA") is right. Screenshot review of the
+landing page on desktop and mobile against the handoff.
+
+**Known gaps.** The handoff's original source was not available (only the built site), so the scene
+port is a faithful re-derivation, not a copy; the season-era screens (`RigCard`, `PurchaseSheet`,
+`mine/new`) still say RIG because they serve the 2026-09-05 seasons under that token; the GitBook
+season pages keep the season vocabulary for the same reason.

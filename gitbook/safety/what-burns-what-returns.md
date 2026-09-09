@@ -12,7 +12,7 @@
 
 ## Why burn instead of collect
 
-The upgrade spend is the game's only sink and it goes to an address nobody controls. $RIG has no burn function, so a burn is a transfer to the dead address; the nominal supply stays one billion while the circulating supply only goes down. You can verify every burn on the explorer as a transfer to `0x000000000000000000000000000000000000dEaD`.
+The upgrade spend is the game's only sink and it goes to an address nobody controls. $VRAM has no burn function, so a burn is a transfer to the dead address; the nominal supply stays one billion while the circulating supply only goes down. You can verify every burn on the explorer as a transfer to `0x000000000000000000000000000000000000dEaD`.
 
 ## Burned means burned
 

@@ -22,7 +22,7 @@ A separate reference implementation of the accounting, written in Python for the
 
 ## Scenario tests
 
-Full seasons are replayed end to end: the worked example from the game design, a season ended by the cap, a season on a burn-less token like $RIG, pause and cancellation, and the app's own browser test which activates, upgrades, overclocks, finds a block, claims, closes, withdraws and redeems against a local chain.
+Full seasons are replayed end to end: the worked example from the game design, a season ended by the cap, a season on a burn-less token like $VRAM, pause and cancellation, and the app's own browser test which activates, upgrades, overclocks, finds a block, claims, closes, withdraws and redeems against a local chain.
 
 ## Static analysis
 

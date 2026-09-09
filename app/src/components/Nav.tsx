@@ -30,7 +30,7 @@ export function Nav() {
   return (
     <div className="lp-chrome">
       <header className="lp-header">
-        <div className="lp-brand"><Link href="/" className="lp-logo" aria-label="Hyperscale home"><LogoMark size={34} /></Link>{dep.kind === "rounds" ? <RoundStatus /> : <SeasonStatus />}</div>
+        <div className="lp-brand"><Link href="/" className="lp-logo" aria-label="Hyperscaler home"><LogoMark size={34} /></Link>{dep.kind === "rounds" ? <RoundStatus /> : <SeasonStatus />}</div>
         <nav className="lp-desktop-nav" aria-label="Main navigation">{links()}</nav>
         <div className="lp-header-actions"><WalletButton /></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>

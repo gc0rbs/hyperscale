@@ -1,10 +1,10 @@
 # Table of contents
 
-* [Welcome to Hyperscale](README.md)
+* [Welcome to Hyperscaler](README.md)
 
 ## Getting started
 
-* [What is Hyperscale?](getting-started/what-is-stock-miner.md)
+* [What is Hyperscaler?](getting-started/what-is-stock-miner.md)
 * [Eligibility, wallet and network](getting-started/eligibility-and-wallet.md)
 * [Your first rig](getting-started/your-first-rig.md)
 

@@ -34,8 +34,8 @@ const FRIENDLY: Record<string, string> = {
   ReserveInsufficient: "The USDG reserve cannot cover this cash-out. Redeem in kind, or cash out a smaller amount.",
   RoundStarted: "That round has already started.",
   "insufficient funds": "Not enough ETH for gas.",
-  "insufficient allowance": "Approve RIG first.",
-  "transfer amount exceeds balance": "Not enough RIG in the wallet.",
+  "insufficient allowance": "Approve the token first.",
+  "transfer amount exceeds balance": "Not enough tokens in the wallet.",
 };
 
 export function friendlyError(e: unknown): string {

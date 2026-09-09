@@ -21,7 +21,7 @@ No. The contracts have no setters and no proxies. The only admin power is pause,
 **What happens if the mine is paused?**
 You cannot act, but your rig keeps earning at its current hashrate. If the pause outlives the grace period (30 minutes default), you can withdraw your full stake, which cancels the season and forfeits unclaimed fragments. Claim as blocks are found to avoid that.
 
-**Can I get my upgrade $RIG back if I exit or the season is cancelled?**
+**Can I get my upgrade $VRAM back if I exit or the season is cancelled?**
 No. Upgrades are sent to the burn address the moment you buy them.
 
 **Can I add to a rig's stake?**
@@ -37,7 +37,7 @@ In kind gives you the Stock Token at exactly one token per million fragments wit
 Either the Chainlink price is older than 26 hours (markets closed for a long stretch) or the USDG reserve is spent. In-kind redemption is unaffected.
 
 **I am in the US / Canada / UK / Switzerland. Can I play?**
-No. Robinhood Stock Tokens are not available to persons in those jurisdictions and neither is Hyperscale.
+No. Robinhood Stock Tokens are not available to persons in those jurisdictions and neither is Hyperscaler.
 
 **Is this gambling?**
 There is no randomness. Outcomes are a deterministic function of stake, spend and everyone else's participation. Whether a prize competition without chance is regulated depends on your jurisdiction; the terms govern.

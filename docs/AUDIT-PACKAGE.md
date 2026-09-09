@@ -50,7 +50,7 @@ window's share returns to the operator with the rescue).
 
 1. **Season contracts are immutable.** No proxies, no setters, no difficulty adjustment. The only
    privileged function is `pause`/`unpause` by the season's `treasury` address.
-2. **$RIG** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
+2. **$VRAM** is a Pons-launched ERC-20 (fixed 1B supply, 18 decimals, no burn function, no hooks after
    the two-block launch window, no fee-on-transfer). Upgrade spend is transferred from the player to
    `SeasonMine.BURN_ADDRESS` (`0x…dEaD`). `contracts/src/tokens/RIG.sol` is the dev/test token.
 3. **The LP token** path is present but off for v1 (`lpToken` zero; the Pons pool is Uniswap v3 with
@@ -216,7 +216,7 @@ No high-severity finding. Full output: run the command above (the JSON is not co
   all 32 shifts are crossed in one call (the keeper keeps it short). Fine for an Arbitrum-family chain.
 - **`rigsOf(owner)`** is unbounded; only a view.
 - **LP weight is fixed at creation** from a 24 h sampled average of the pool; a large post-creation
-  change in pool composition changes the RIG-equivalence of new LP rigs. Seasons open soon after
+  change in pool composition changes the VRAM-equivalence of new LP rigs. Seasons open soon after
   creation, which keeps the gap short.
 - **Difficulty is never adjusted.** A badly sized season runs short, or ends at the cap
   (`maxDurationSeconds`, default 2× the planned pace) with part of the pool unmined; that remainder is

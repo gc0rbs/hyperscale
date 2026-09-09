@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FramedIcon } from "@/components/Icons";
 import { ROUND_NOTICES } from "@/components/rounds/RoundNotices";
 
-export const metadata = { title: "Hyperscale · How rewards work" };
+export const metadata = { title: "Hyperscaler · How rewards work" };
 
 const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="flex flex-col gap-3 max-w-[720px]">
@@ -17,7 +17,7 @@ export default function HowItWorks() {
     <main className="min-h-screen bg-mine-bg text-mine-fg px-4 md:px-8 py-16 flex flex-col gap-14 max-w-[1100px] mx-auto">
       <div className="flex flex-col gap-4">
         <h1 className="font-display leading-[0.9] uppercase text-[80px] md:text-[128px] font-bold">How rewards work</h1>
-        <p className="text-mine-muted text-[17px] max-w-[640px]">Hyperscale is a game of work, not time. This page explains exactly what pays, what burns, and what ends a season. It is the reference the terms point to.</p>
+        <p className="text-mine-muted text-[17px] max-w-[640px]">Hyperscaler pays by work: every hour the pot is split by the compute each GPU served. This page explains exactly what pays, what burns, and what stops the game. It is the reference the terms point to; the season sections at the end apply only to the 2026-09-05 seasons.</p>
       </div>
 
       <Sec title="Rounds: the continuous mine">
@@ -38,13 +38,13 @@ export default function HowItWorks() {
         <p>One million fragments of a block equal one Robinhood Stock Token of that block&apos;s stock. Fragments are not transferable.</p>
       </Sec>
 
-      <Sec title="Upgrades burn RIG">
+      <Sec title="Upgrades burn VRAM">
         <div className="flex gap-3 items-center"><FramedIcon name="rig" size={40} /><FramedIcon name="cooling" size={40} /><FramedIcon name="overclock" size={40} /></div>
-        <p>GPU tiers, cooling tiers and overclocks are paid in RIG, priced as a share of your rig&apos;s stake, and sent to a burn address. That RIG is gone permanently, whatever happens afterwards. Upgrades do not carry over to the next season.</p>
+        <p>GPU tiers, cooling tiers and overclocks are paid in VRAM, priced as a share of your rig&apos;s stake, and sent to a burn address. That VRAM is gone permanently, whatever happens afterwards. Upgrades do not carry over to the next season.</p>
       </Sec>
 
       <Sec title="Stakes come back">
-        <p>Your staked RIG is returned in full when the season closes. You can leave earlier at any time with an early-exit fee (default 3%); fragments earned so far are kept. A 1% activation fee is charged when a rig is created.</p>
+        <p>Your staked VRAM is returned in full when the season closes. You can leave earlier at any time with an early-exit fee (default 3%); fragments earned so far are kept. A 1% activation fee is charged when a rig is created.</p>
       </Sec>
 
       <Sec title="The cap">
@@ -56,11 +56,11 @@ export default function HowItWorks() {
       </Sec>
 
       <Sec title="Emergency stop">
-        <p>The only administrative power over a live season is a pause. If a pause lasts longer than the grace period (default 30 minutes), any player can withdraw their stake, which cancels the season: unclaimed fragments are forfeited and the pool goes to the treasury. Burned RIG is never refunded.</p>
+        <p>The only administrative power over a live season is a pause. If a pause lasts longer than the grace period (default 30 minutes), any player can withdraw their stake, which cancels the season: unclaimed fragments are forfeited and the pool goes to the treasury. Burned VRAM is never refunded.</p>
       </Sec>
 
       <Sec title="Who can play">
-        <p>Robinhood Stock Tokens are not available to persons in the United States, Canada, the United Kingdom or Switzerland, and neither is Hyperscale. Stock Tokens are tokenized debt instruments that track a share price; they carry no voting or ownership rights. Nothing here is investment advice, and every duration shown in the app is an estimate.</p>
+        <p>Robinhood Stock Tokens are not available to persons in the United States, Canada, the United Kingdom or Switzerland, and neither is Hyperscaler. Stock Tokens are tokenized debt instruments that track a share price; they carry no voting or ownership rights. Nothing here is investment advice, and every duration shown in the app is an estimate.</p>
       </Sec>
 
       <div className="flex gap-4 text-[14px]"><Link href="/terms" className="text-signal inline-block py-2">Terms</Link><Link href="/" className="text-signal inline-block py-2">Back to the mine</Link></div>

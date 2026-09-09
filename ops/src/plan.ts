@@ -8,7 +8,7 @@
  *        [--treasury 0x…] [--usdc-reserve 50000] [--samples 24] [--allow-spot]
  *        [--pool-usd 10000 [--prices prices.json]]
  *
- * - lpWeightPerToken = rigPerLp × lpBonusBps / 1e4, where rigPerLp is the RIG-equivalent value of one
+ * - lpWeightPerToken = rigPerLp × lpBonusBps / 1e4, where rigPerLp is the VRAM-equivalent value of one
  *   LP token sampled hourly over the last 24 h from the pair's reserves (Uniswap v2 shape), or given
  *   with --rig-per-lp when there is no pair (Anvil mocks) or no archive node (--allow-spot uses the
  *   latest block only, and says so).

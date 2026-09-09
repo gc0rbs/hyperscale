@@ -69,7 +69,7 @@ export function OpeningSoon({ openTime, now, symbols, pool, workShare, staked, e
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               {canActivate && <Link href="/mine/new" className="h-12 px-5 rounded-sm inline-flex items-center gap-3 bg-ember text-[#1A1408] text-[14px] font-semibold" data-testid="opening-activate">Activate a rig <span aria-hidden>↗</span></Link>}
-              {RIG_BUY_URL && <a href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" className={`h-12 px-5 rounded-sm inline-flex items-center gap-3 text-[14px] font-semibold ${canActivate ? "border border-mine-line text-mine-fg" : "bg-ember text-[#1A1408]"}`} data-testid="opening-buy">Get $RIG <span aria-hidden>↗</span></a>}
+              {RIG_BUY_URL && <a href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" className={`h-12 px-5 rounded-sm inline-flex items-center gap-3 text-[14px] font-semibold ${canActivate ? "border border-mine-line text-mine-fg" : "bg-ember text-[#1A1408]"}`} data-testid="opening-buy">Get $VRAM <span aria-hidden>↗</span></a>}
               <Link href="/#how-it-works" className="h-12 px-5 rounded-sm inline-flex items-center gap-3 border border-mine-line text-mine-fg text-[14px] font-semibold">How it works</Link>
             </div>
             {RIG_ADDRESS && <Mono className="text-[11px] text-mine-dim break-all">$RIG · {RIG_ADDRESS}</Mono>}

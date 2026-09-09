@@ -147,7 +147,7 @@ async function main() {
     const live = (await pub.readContract({ abi: roundMineAbi, address: dep.mine, functionName: "params" })) as { rig: Address; genesis: bigint };
     if (Number(live.genesis) !== 0) throw new Error(`already launched: rig ${live.rig}, genesis ${live.genesis}`);
     const token = arg("--token") as Address | undefined;
-    if (!token || !/^0x[0-9a-fA-F]{40}$/.test(token) || /^0x0{40}$/i.test(token)) throw new Error("--token <the $RIG address> is required");
+    if (!token || !/^0x[0-9a-fA-F]{40}$/.test(token) || /^0x0{40}$/i.test(token)) throw new Error("--token <the $VRAM address> is required");
     const genesisArg = arg("--genesis", "next-hour")!;
     const genesis = genesisArg === "next-hour" ? Math.ceil((now + 120) / 3600) * 3600 : genesisArg.startsWith("+") ? now + Number(genesisArg.slice(1)) : Number(genesisArg);
     if (!(genesis > now)) throw new Error(`genesis ${genesis} is not in the future (now ${now})`);

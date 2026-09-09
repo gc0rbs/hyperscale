@@ -1,14 +1,16 @@
-# Hyperscale – project memory for Claude Code sessions
+# Hyperscaler – project memory for Claude Code sessions
 
 Read this first. It is short on purpose; the detail lives in `docs/`.
 
 ## What this is
-This repo is **Hyperscale**, forked from `gc0rbs/stock-miner` on 2026-09-06. The product fiction is an
-AI-compute cluster (nodes, throughput, inference jobs, epochs, shards); see `docs/12-REBRAND-AI-INFERENCE.md`
-for the term map. Contract identifiers and the docs below still use the mining vocabulary on purpose.
+This repo is **Hyperscaler** (renamed from Hyperscale with the $VRAM token on 2026-09-09, design
+handoff; forked from `gc0rbs/stock-miner` on 2026-09-06). The product fiction is an AI-compute
+cluster (GPUs, throughput, rounds, shards); see `docs/12-REBRAND-AI-INFERENCE.md` for the term map.
+User-facing names come from `app/src/lib/brand.ts`. Contract identifiers, env variables
+(`NEXT_PUBLIC_RIG_*`, `rig` in chain profiles) and the docs below keep the mining vocabulary on purpose.
 
-A virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake $RIG (a
-Pons-launched ERC-20) to run virtual rigs, burn $RIG on upgrades, and earn Stock Token fragments.
+A virtual mining game on Robinhood Chain (Arbitrum Orbit L2, chain 4663). Players stake $VRAM (a
+Pons-launched ERC-20) to run virtual rigs, burn $VRAM on upgrades, and earn Stock Token fragments.
 **Since 2026-09-08 the mine is continuous with hourly rounds** (`docs/13-ROUNDS.md`, contracts in
 `contracts/src/rounds/`): each round's pot comes from the Pons fee stream, is split by work done in
 that hour, is claimable for 15 minutes, and rolls over if unclaimed. The season contracts

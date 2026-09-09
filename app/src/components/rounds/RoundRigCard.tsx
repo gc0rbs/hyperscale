@@ -23,7 +23,7 @@ export function RoundRigCard({ rig, snap, onAction }: { rig: RoundRig; snap: Rou
     <div className={`bg-mine-panel border border-mine-line border-t-2 border-t-ember rounded-md p-5 flex flex-col gap-[18px] ${off ? "opacity-60" : ""}`} data-testid={`rig-${rig.id}`}>
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3"><div className="font-display leading-none uppercase tracking-[0.02em] text-[40px] font-semibold">Node #{String(rig.id).padStart(4, "0")}</div>{off && <Chip>Decommissioned</Chip>}</div>
-        <Mono className="text-mine-muted text-[12px]">stake {formatRig(rig.amount)} RIG</Mono>
+        <Mono className="text-mine-muted text-[12px]">stake {formatRig(rig.amount)} VRAM</Mono>
       </div>
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Throughput" value={split(formatThroughput(off ? 0n : rig.hash))} />
@@ -36,14 +36,14 @@ export function RoundRigCard({ rig, snap, onAction }: { rig: RoundRig; snap: Rou
       <OcSlots active={rig.activeOc} max={p.maxActiveOc} expiresLabel={`expire end of round ${rig.ocExpiryRound}`} />
       {snap.halted && !off && (
         <div className="flex flex-col gap-2" data-testid={`halt-${rig.id}`}>
-          <div className="text-[12px] text-ember">The mine is halted. Your full stake of {formatRig(rig.amount)} RIG comes back, no fee.</div>
+          <div className="text-[12px] text-ember">The mine is halted. Your full stake of {formatRig(rig.amount)} VRAM comes back, no fee.</div>
           <Btn tone="signal" className="h-11" onClick={() => onAction({ kind: "withdraw", rig })}>Emergency withdraw {formatRig(rig.amount)} RIG</Btn>
         </div>
       )}
       {!snap.halted && !off && (
         <div className="flex flex-col gap-2">
           <Btn tone="ember" className="h-11" disabled={!canOc} onClick={() => onAction({ kind: "overclock", rig })} title={rig.heat + p.heatPerOc[rig.coolingTier] > p.heatMax ? "Thermal load would exceed the max; wait for the round boundary or buy cooling" : undefined}>
-            <Icon name="overclock" size={16} tone="currentColor" /> Overclock <Cost>burn {formatRig(ocCost)} RIG</Cost>
+            <Icon name="overclock" size={16} tone="currentColor" /> Overclock <Cost>burn {formatRig(ocCost)} VRAM</Cost>
           </Btn>
           <div className="grid grid-cols-2 gap-2">
             <Btn className="px-2.5" disabled={frozen || rig.gpuTier >= 5} onClick={() => onAction({ kind: "gpu", rig })}><Icon name="rig" size={16} /> Gen {rig.gpuTier + 1} <Cost>burn {formatRig(gpuCost)}</Cost></Btn>

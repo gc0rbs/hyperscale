@@ -1,42 +1,43 @@
-# What is Hyperscale?
+# What is Hyperscaler?
 
-Hyperscale is a **season**. A season is one deployment of the mine with fixed rules: four reward blocks, each paying fragments of one Robinhood Stock Token, and a fixed amount of **work** needed to find each block. Players point hashrate at the mine by staking $RIG. When the total work reaches a block's difficulty, the block is found and the next one starts. When block 4 is found, the mine closes permanently.
+Hyperscaler is one permanent game with **hourly rounds**. Every round has a pot of four Robinhood Stock Tokens, filled by the trading tax on $VRAM while the round runs. Players point throughput at the game by staking $VRAM on a virtual GPU. When the round closes, the pot is split by the share of that hour's work each GPU did.
 
 ## The loop
 
-1. **Stake $RIG to activate a rig.** Your stake is your rig's weight and comes back at the end.
-2. **Your rig works every second** it is active. Work is hashrate multiplied by seconds.
-3. **Each block pays a fixed rate** of fragments per unit of work. Your rig earns its own work at that rate. Nobody dilutes you.
-4. **Burn $RIG on upgrades** to raise your hashrate: permanent GPU tiers, permanent cooling tiers, and short overclock bursts.
-5. **Claim** the fragments of any block that has been found, at any time.
-6. **At close**, withdraw your stake and redeem fragments for the Stock Token itself or for USDG at the Chainlink price.
+1. **Stake $VRAM to activate a GPU.** Your stake is your GPU's weight and comes back when you decommission it (minus a 3% exit fee).
+2. **Your GPU works every second** it is active. Work is throughput multiplied by seconds.
+3. **Every hour the pot is split by work.** If you did 3% of the hour's work, you get 3% of that hour's pot, in each of the four stocks. Your share is relative: more throughput from others means a smaller share of the same pot.
+4. **Burn $VRAM on upgrades** to raise your throughput: permanent GPU tiers, permanent cooling tiers, and short overclock bursts.
+5. **Claim** within fifteen minutes of the close. One click claims every GPU you own. Unclaimed shards roll into the next pot for everyone.
+6. **Redeem** shards for the Stock Token itself, or for USDG at the Chainlink price, at any time.
 
-## What "virtual mining" means
+## What "virtual compute" means
 
-Nothing is hashed. Your browser does no work and can be closed. Hashrate is a number the contract computes from your stake and upgrades, and the contract credits work by the chain's clock at a fixed rate per unit of work. It is a staking programme whose payout schedule is driven by progress, not by time, and which lets you buy a bigger share of that progress by burning $RIG.
+Nothing is computed on your device. Your browser does no work and can be closed. Throughput is a number the contract computes from your stake and upgrades, and the contract credits work by the chain's clock. It is a staking programme whose payout is a share of a fee-funded pot, split by work every hour, and which lets you buy a bigger share of that work by burning $VRAM.
 
 ## What other players change, and what they do not
 
 | Changes with other players | Never changes |
 | --- | --- |
-| How fast blocks are found (the **ETA**) | Your fragments per second at a given hashrate |
-| How long the season lasts | The pay rate of each block |
-| How often you need to re-buy overclocks in wall-clock terms | The fraction of the mine an upgrade covers |
-| Your share of the total hash (a leaderboard number) | The total pool of each block |
+| Your share of each round's pot (their work dilutes yours) | The length of a round (one hour) and the claim window (fifteen minutes) |
+| Your position on the leaderboard | The fact that the whole pot is paid out: to claimants now, or to the next round |
+| How much $VRAM changes hands, and so how big the pot is | The fraction of the game an upgrade covers |
 
-A block's pool is split exactly among the work done in that block. If you did 3% of the work in block 2, you earned 3% of block 2's pool. More hashrate from others makes the block end sooner, so you spend fewer seconds in it, but every second was paid at the same rate.
+## The four rewards
 
-## Why four blocks and why an index last
+| Stock | What it is | Default share of the fees |
+| --- | --- | --- |
+| NVDA | NVIDIA · GPUs | 15% |
+| MU | Micron · memory | 20% |
+| SNDK | Sandisk · storage | 25% |
+| QQQ | Nasdaq-100 ETF · the index that owns the datacentres | 40% |
 
-| Block | Stock | Share of the pool's value | Share of the work |
-| --- | --- | --- | --- |
-| 1 | NVDA | 15% | 20% |
-| 2 | MU | 20% | 25% |
-| 3 | SNDK | 25% | 25% |
-| 4 | QQQ | 40% | 30% |
-
-Value escalates so the finale is the richest per unit of work. That rewards staying, and it makes block 4 the moment everyone overclocks. The finale is an index token so the biggest prize is the least volatile.
+The fee stream is split across the four stocks by these shares before it is swapped, so every round's pot has all four in it.
 
 {% hint style="warning" %}
-Every duration you see in the app is an estimate computed from the current total hashrate. The only hard time in a season is the **cap**, shown from the start as the latest possible end. See [The cap](../safety/the-cap.md).
+The pot for a round is whatever the fee stream brought in during that hour plus the previous round's unclaimed remainder. It is locked the moment the round closes; the site shows it filling during the hour. A round with no fees pays only the rollover, and the site says so.
 {% endhint %}
+
+## The 2026-09-05 seasons
+
+Before rounds, the game ran in **seasons**: one deployment with four reward blocks, a fixed pool, and a six-hour cap, closing for good when block four was found. The seasons launched on 2026-09-05 keep running under those rules until their redemption windows close; see [Seasons, blocks and shifts](../playing/seasons-and-blocks.md).

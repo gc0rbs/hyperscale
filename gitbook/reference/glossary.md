@@ -5,7 +5,7 @@
 | Season | One deployment of the mine: fixed parameters, four reward blocks, then permanent close and a redemption window. Length is an outcome of participation |
 | Mine | The `SeasonMine` contract and the game state it holds |
 | Rig | A single stake deposit with its upgrades, heat and hashrate. A wallet can own many |
-| Stake weight (W) | The RIG value of a rig's deposit, fixed at activation |
+| Stake weight (W) | The VRAM value of a rig's deposit, fixed at activation |
 | Hashrate (H) | An on-chain number: stake × GPU multiplier + overclock boost. Nothing is actually hashed |
 | Work | Hashrate × seconds. The mine's unit of progress |
 | Difficulty | The amount of work that finds a block. Fixed at creation |
@@ -13,9 +13,9 @@
 | Found | A block is found the instant its cumulative work reaches its difficulty. Its fragments become claimable |
 | Shift | One eighth of a block's work. Overclocks expire and heat decays at shift ends |
 | Virtual mining | Paying rewards per unit of virtual work; no proof of work |
-| GPU tier | Permanent hashrate multiplier bought by burning $RIG |
+| GPU tier | Permanent hashrate multiplier bought by burning $VRAM |
 | Cooling tier | Permanent upgrade that lowers heat per overclock and raises heat removed at each shift end |
-| Overclock | +50% base hashrate per active overclock until the end of the next shift; costs $RIG and heat |
+| Overclock | +50% base hashrate per active overclock until the end of the next shift; costs $VRAM and heat |
 | Heat | 0 to 100 per rig; rises with overclocks, falls at shift ends; blocks overclocks when full |
 | Reward block | One of four pools, each with its own stock and difficulty |
 | Fragment | ERC-1155 unit; 1,000,000 fragments = 1 Stock Token of that block's stock. Non-transferable |

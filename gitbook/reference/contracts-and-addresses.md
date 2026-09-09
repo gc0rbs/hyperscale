@@ -13,7 +13,7 @@
 
 | Token | Address |
 | --- | --- |
-| $RIG | Published at launch on Pons |
+| $VRAM | Published at launch on Pons |
 | USDG (cash-out quote token, 6 decimals) | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
 | NVDA Stock Token | `0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC` |
 | MU Stock Token | `0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD` |

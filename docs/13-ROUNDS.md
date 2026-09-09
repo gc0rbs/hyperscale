@@ -9,7 +9,7 @@
 ## 1. Why
 
 Seasons needed a pool fixed in advance, a launch night per season and a 30-day tail. The client's
-funding is now a stream (the Pons trading tax on $RIG) and the product needs a payout every hour, not
+funding is now a stream (the Pons trading tax on $VRAM) and the product needs a payout every hour, not
 every season. So: one permanent mine, rounds of one hour, a pot per round filled from the fee stream,
 split among the rigs by the work they did in that hour, claimable for fifteen minutes, and whatever is
 not claimed rolls into the next pot.
@@ -19,7 +19,7 @@ not claimed rolls into the next pot.
 - **Time.** `genesis` is the mine's first round start. Round `r` covers
   `[genesis + r·L, genesis + (r+1)·L)` with `L = roundSeconds` (3600). Rounds close on the clock; no
   transaction is needed for a round to end, and the first transaction after a boundary records it.
-- **Rigs.** Stake $RIG once (weight `W` = amount; stake immutable per rig), pay the activation fee to
+- **Rigs.** Stake $VRAM once (weight `W` = amount; stake immutable per rig), pay the activation fee to
   the treasury, and mine every round until `exit` (deposit minus `exitFeeBps` back; the rig's work in
   the round it left still counts). Upgrades, cooling, heat and overclocks are unchanged in shape:
   GPU tiers multiply base hash, cooling lowers heat per overclock and speeds decay (one decay step per
@@ -83,7 +83,7 @@ not claimed rolls into the next pot.
 | `genesis` | deploy time, rounded up to the next hour; or 0 with `rig = 0` for a pre-token deployment, set once by `launch` | |
 | `roundSeconds` / `claimSeconds` | 3600 / 900 | claim < round |
 | `fragPerToken` | 1,000,000 | |
-| `minStakeWeight`, `activationFeeBps`, `exitFeeBps` | 100 RIG, 100, 300 | |
+| `minStakeWeight`, `activationFeeBps`, `exitFeeBps` | 100 VRAM, 100, 300 | |
 | `gpuMultBps[6]`, `gpuCostBps[5]`, `coolCostBps[3]`, `heatPerOc[4]`, `coolPerRound[4]`, `heatMax`, `ocCostBps`, `ocBoostBps`, `maxActiveOc`, `ocRoundSpan` | docs/03 values | `ocRoundSpan` 1: expires at the end of the next round |
 | `cashOutFeeBps`, `maxPriceAgeSeconds`, `pauseGraceSeconds` | 100, 4 days, 1800 | |
 
@@ -95,7 +95,7 @@ not claimed rolls into the next pot.
 3. A rig's work in a closed round never changes afterwards; a round's work never changes after close.
 4. `Σ_rigs rigWork[r] == roundWork[r]` up to one work unit of rounding per rig per segment.
 5. Vault stock balance ≥ (minted − redeemed) × 1e18 / fragPerToken + unclaimed pots + the running pot.
-6. Mine RIG balance == Σ outstanding deposits.
+6. Mine VRAM balance == Σ outstanding deposits.
 7. `heat ≤ heatMax`, `activeOc ≤ maxActiveOc`.
 8. After a halt nothing accrues, no round closes, deposits return in full.
 

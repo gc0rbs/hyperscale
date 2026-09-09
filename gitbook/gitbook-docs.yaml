@@ -2,11 +2,11 @@
 # https://gitbook.com/docs/docs-as-code/git-sync/content-configuration
 $schema: https://api.gitbook.com/gitbook-docs.yaml
 site:
-  title: Hyperscale
+  title: Hyperscaler
   structure:
     - type: space
       key: stock-miner
-      title: Hyperscale
+      title: Hyperscaler
       path: docs
       default: true
       content:

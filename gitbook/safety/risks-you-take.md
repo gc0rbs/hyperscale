@@ -2,9 +2,9 @@
 
 ## Market risk
 
-* **$RIG** is a small-cap token with a fixed supply. Its price can fall while your stake is locked; the stake is returned in $RIG, not in dollars.
+* **$VRAM** is a small-cap token with a fixed supply. Its price can fall while your stake is locked; the stake is returned in $VRAM, not in dollars.
 * **Stock Tokens** track the price of a share or index. The fragments you earn are worth whatever the underlying is worth when you redeem, and they do not pay dividends or carry voting rights.
-* Your **burn** is priced in $RIG at the time of purchase. If $RIG rises afterwards, you burned more value than it looked like.
+* Your **burn** is priced in $VRAM at the time of purchase. If $VRAM rises afterwards, you burned more value than it looked like.
 
 ## Game risk
 
@@ -21,7 +21,7 @@
 
 ## Legal risk
 
-Stock Tokens are regulated instruments not available in some jurisdictions, and Hyperscale is offered under the same restriction. Using the site through a VPN from a restricted region breaks the terms and may break your local law. Nothing in these docs or the app is investment advice.
+Stock Tokens are regulated instruments not available in some jurisdictions, and Hyperscaler is offered under the same restriction. Using the site through a VPN from a restricted region breaks the terms and may break your local law. Nothing in these docs or the app is investment advice.
 
 ## What we ask of you
 

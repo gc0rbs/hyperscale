@@ -37,7 +37,7 @@ The team is publicly known and these powers are stated here and on the site. The
 
 ## What you can lose
 
-* **Every $RIG you burn on upgrades**, in all cases.
+* **Every $VRAM you burn on upgrades**, in all cases.
 * **The exit fee** (3% default) when you leave.
 * **A round's share**, if you do not claim inside its 15-minute window. It rolls into the next pot.
-* **Value**, because $RIG and the Stock Tokens are volatile and fragments are worth whatever the stock is worth when you redeem.
+* **Value**, because $VRAM and the Stock Tokens are volatile and fragments are worth whatever the stock is worth when you redeem.

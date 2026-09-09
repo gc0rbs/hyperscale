@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Icon, LogoMark } from "@/components/Icons";
+import { LogoMark } from "@/components/Icons";
+import { BRAND, TOKEN_TICKER } from "@/lib/brand";
 import { RIG_ADDRESS, RIG_BUY_URL, RIG_EXPLORER_URL } from "@/lib/token";
-import { MineralScene } from "./MineralScene";
+import { Atmosphere, SceneCanvas } from "./SceneCanvas";
 import { useScrollChapters } from "./useScrollChapters";
 
+/** Landing copy from the Hyperscaler design handoff (2026-09-09), adjusted to the hourly round mine (docs/13). */
 const REWARDS = [
-  { ticker: "NVDAx", name: "NVIDIA", category: "The intelligence layer", detail: "The first block mines fragments of NVDAx, a token tracking NVIDIA stock.", mark: "◉" },
-  { ticker: "TSLAx", name: "TESLA", category: "A different kind of electric", detail: "The second block moves to TSLAx, a token tracking Tesla stock.", mark: "T" },
-  { ticker: "AAPLx", name: "APPLE", category: "Think in fragments", detail: "The third block mines AAPLx, a token tracking Apple stock.", mark: "a" },
-  { ticker: "SPYx", name: "S&P 500", category: "The bigger picture", detail: "The final block mines SPYx, a token tracking an S&P 500 ETF.", mark: "↗" },
+  { ticker: "NVDA", name: "NVIDIA", category: "NVIDIA · GPUs", detail: "Redeem NVDA shards for tokens that track NVIDIA stock.", mark: "01" },
+  { ticker: "MU", name: "MICRON", category: "MICRON · Memory", detail: "Redeem MU shards for tokens that track Micron stock.", mark: "02" },
+  { ticker: "SNDK", name: "SANDISK", category: "SANDISK · Storage", detail: "Redeem SNDK shards for tokens that track Sandisk stock.", mark: "03" },
+  { ticker: "QQQ", name: "NASDAQ 100 ETF", category: "NASDAQ-100 ETF", detail: "Redeem QQQ shards for tokens that track the Nasdaq-100 ETF.", mark: "04" },
 ];
 
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
@@ -29,7 +31,7 @@ const HERO_STARS = Array.from({ length: 240 }, (_, index) => {
     y: `${(sample(78.233) * 100).toFixed(3)}%`,
     radius: (0.35 + sample(39.425) * 0.45).toFixed(3),
     opacity: (0.25 + sample(93.175) * 0.5).toFixed(3),
-    color: index % 13 === 0 ? "#45dce4" : "#c08a35",
+    color: index % 13 === 0 ? "#53db72" : "#758079",
   };
 });
 
@@ -60,30 +62,34 @@ export function LandingPage() {
     return () => { observer.disconnect(); root.classList.remove("landing-active", "lp-motion-ready"); };
   }, []);
 
+  const buyLink = (onPick?: () => void) => RIG_BUY_URL
+    ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" onClick={onPick}>Buy {TOKEN_TICKER}</a>
+    : <button className="lp-buy-token" onClick={() => { onPick?.(); purchaseDialog.current?.showModal(); }}>Buy {TOKEN_TICKER}</button>;
+
   return (
     <div className="stock-landing">
       <a className="lp-skip" href="#main-content">Skip to content</a>
       <header className="lp-header">
-        <Link href="/" className="lp-logo" aria-label="Hyperscale home"><LogoMark size={34} /></Link>
-        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">The game</a><a href="#the-mine">The rewards</a><a href="#questions">Good to know</a>{RIG_BUY_URL ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">Buy $RIG</a> : <button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy $RIG</button>}</nav>
-        <div className="lp-header-actions"><Link className="lp-nav-cta" href="/mine"><span>Enter the mine</span><Arrow diagonal /></Link></div>
+        <Link href="/" className="lp-logo" aria-label={`${BRAND} home`}><LogoMark size={34} /></Link>
+        <nav className="lp-desktop-nav" aria-label="Main navigation"><a href="#how-it-works">How it works</a><a href="#the-mine">Rewards</a><a href="#questions">FAQs</a>{buyLink()}</nav>
+        <div className="lp-header-actions"><Link className="lp-nav-cta" href="/mine"><span>Open game</span><Arrow diagonal /></Link></div>
         <button className="lp-menu-toggle" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "−" : "+"}</button>
-        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>The game</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>The rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>Good to know</a>{RIG_BUY_URL ? <a className="lp-buy-token" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">Buy $RIG</a> : <button className="lp-buy-token" onClick={() => purchaseDialog.current?.showModal()}>Buy $RIG</button>}</nav>}
+        {menuOpen && <nav id="mobile-navigation" className="lp-mobile-nav" aria-label="Mobile navigation"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a><a href="#the-mine" onClick={() => setMenuOpen(false)}>Rewards</a><a href="#questions" onClick={() => setMenuOpen(false)}>FAQs</a>{buyLink(() => setMenuOpen(false))}</nav>}
       </header>
       <dialog ref={purchaseDialog} className="lp-purchase-dialog" aria-labelledby="purchase-title" aria-describedby="purchase-description" onClick={(event) => { if (event.target === event.currentTarget) purchaseDialog.current?.close(); }}>
-        <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>$RIG.</span></h2>
+        <div className="lp-purchase-content"><LogoMark size={64} /><h2 id="purchase-title">GET <span>{TOKEN_TICKER}.</span></h2>
           {RIG_ADDRESS ? (
             <>
-              <p id="purchase-description">$RIG is the only token the mine accepts. Check the contract address before you buy; anything else with the name is not it.</p>
+              <p id="purchase-description">{TOKEN_TICKER} is the only token the game accepts. Check the contract address before you buy; anything else with the name is not it.</p>
               <div className="lp-ca" data-testid="rig-ca"><span className="lp-ca-label">Contract address · Robinhood Chain</span><code className="lp-ca-address">{RIG_ADDRESS}</code><button type="button" className="lp-ca-copy" onClick={copyAddress} aria-live="polite">{copied ? "Copied" : "Copy"}</button></div>
               <div className="lp-purchase-actions">
-                {RIG_BUY_URL && <a className="lp-button lp-button-gold" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" data-testid="rig-buy">Buy $RIG <Arrow diagonal /></a>}
+                {RIG_BUY_URL && <a className="lp-button lp-button-primary" href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer" data-testid="rig-buy">Buy {TOKEN_TICKER} <Arrow diagonal /></a>}
                 {RIG_EXPLORER_URL && <a className="lp-button lp-button-outline" href={RIG_EXPLORER_URL} target="_blank" rel="noopener noreferrer">View on Blockscout <Arrow diagonal /></a>}
                 <form method="dialog"><button className="lp-text-link lp-purchase-close">Close</button></form>
               </div>
             </>
           ) : (
-            <><p id="purchase-description">Coming soon. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-gold">Got it <Arrow /></button></form></>
+            <><p id="purchase-description">Coming soon on Pons. The official purchase page isn’t live yet.</p><form method="dialog"><button className="lp-button lp-button-primary">Got it <Arrow /></button></form></>
           )}
         </div>
       </dialog>
@@ -94,42 +100,65 @@ export function LandingPage() {
             {HERO_STARS.map((star, index) => <circle key={index} cx={star.x} cy={star.y} r={star.radius} fill={star.color} opacity={star.opacity} />)}
           </svg>
           <div className="lp-hero-copy lp-reveal">
-            <h1 id="hero-title">MINE YOUR<br /><span>NEXT MOVE.</span></h1>
-            <p>Build a virtual rig. Unearth stock-token rewards.<br className="lp-desktop-break" /> Make every move count.</p>
-            <div className="lp-hero-actions"><Link href="/mine/new" className="lp-button lp-button-gold">Start mining <Arrow diagonal /></Link><a href="#how-it-works" className="lp-text-link">How it works <span>↓</span></a></div>
-            <div className="lp-hero-note"><span className="lp-tiny-cross">+</span> ALL THE STRATEGY. NONE OF THE HARDWARE.</div>
+            <h1 id="hero-title">BUILD A VIRTUAL GPU.<br /><span>EARN STOCK TOKENS.</span></h1>
+            <p><strong>{BRAND} is an AI-compute strategy game.</strong> Build a virtual GPU, work through hourly rounds, and earn tokens that track stocks.</p>
+            <div className="lp-hero-actions"><Link href="/mine/new" className="lp-button lp-button-primary">Set up your GPU <Arrow diagonal /></Link><a href="#how-it-works" className="lp-text-link">How it works <span>↓</span></a></div>
+            <div className="lp-hero-note"><span className="lp-tiny-cross">+</span> PLAY IN YOUR BROWSER. NO PHYSICAL GPU NEEDED.</div>
           </div>
           <div className="lp-hero-art">
-            <MineralScene kind="core" value={coreProgress} label="A luminous amber crystal with a cyan edge, surrounded by golden shards and a fine orbital dust trail. The fragments expand as you scroll." />
-            <div className="lp-core-callout"><span className="lp-callout-line" /><span>THERE’S MORE<br />BENEATH THE SURFACE.</span></div>
+            <SceneCanvas kind="core" value={coreProgress} label="A vivid green silicon processor with softly illuminated green circuitry. Its board, memory modules and cooling layers separate smoothly as you scroll." />
+            <div className="lp-core-callout"><span className="lp-callout-line" /><span>YOUR VIRTUAL GPU.<br />BUILT TO UPGRADE.</span></div>
           </div>
-          <div className="lp-hero-bottom"><span><span className="lp-gold">04</span> BLOCKS. <span className="lp-gold">01</span> SHARED MINE. YOUR NEXT MOVE.</span><a href="#how-it-works">SCROLL TO GO DEEPER <span>↓</span></a></div>
+          <div className="lp-hero-bottom"><span><span className="lp-power">01</span> NEW ROUND EVERY HOUR. <span className="lp-power">04</span> STOCK-TOKEN REWARDS.</span><a href="#how-it-works">SEE HOW TO PLAY <span>↓</span></a></div>
         </section>
 
-        <div className="lp-reward-strip" aria-label="Example stock-token rewards"><span className="lp-strip-label">IN THE MINE<span>STOCK-TOKEN REWARDS</span></span>{REWARDS.map((item) => <a href="#the-mine" key={item.ticker}><span className="lp-stock-symbol">{item.mark}</span><span>{item.ticker}<small>{item.name}</small></span><span className="lp-strip-plus">+</span></a>)}</div>
+        <div className="lp-reward-strip" aria-label="Example stock-token rewards"><span className="lp-strip-label">TOKENS YOU CAN EARN<span>FOUR REWARD TYPES</span></span>{REWARDS.map((item) => <a href="#the-mine" key={item.ticker}><span className="lp-stock-symbol">{item.mark}</span><span>{item.ticker}<small>{item.name}</small></span><span className="lp-strip-plus">+</span></a>)}</div>
 
         <section ref={rig} id="how-it-works" className="lp-rig-section lp-section lp-scroll-story" aria-labelledby="rig-title">
-          <div className="lp-story-stage"><div className="lp-rig-layout">
-            <div className="lp-section-copy lp-reveal"><h2 id="rig-title">SMALL RIG.<br /><span>BIG AMBITIONS.</span></h2><p>Your rig is your way into the mine. Deposit the game’s token, <strong>$RIG</strong>, to switch it on. It works while you’re away, collecting fragments as the mine moves forward.</p><div className="lp-feature"><span className="lp-feature-icon"><Icon name="overclock" /></span><div><h3>Make it your machine.</h3><p>Add GPU power, improve cooling, or time a temporary boost. More power means more fragments per second.</p></div></div><div className="lp-small-note">Your deposited tokens unlock when the season ends. Optional upgrades spend $RIG permanently.</div></div>
-            <div className="lp-rig-art"><MineralScene kind="rig" value={rigPower} label="A virtual mining rig grows from a starter build through two upgrades as you scroll, adding amber processors and cyan cooling fins." /></div>
+          <div className="lp-story-stage"><Atmosphere variant="rig" /><div className="lp-rig-layout">
+            <div className="lp-section-copy lp-reveal">
+              <h2 id="rig-title">START WITH {TOKEN_TICKER}.<br /><span>UPGRADE YOUR GPU.</span></h2>
+              <ol className="lp-steps" aria-label="How to play">
+                <li><strong>Deposit {TOKEN_TICKER}.</strong><p>Use the game’s token to activate your virtual GPU.</p></li>
+                <li><strong>Earn while you’re away.</strong><p>Your GPU works through every round and earns reward pieces called shards.</p></li>
+                <li><strong>Upgrade for more power.</strong><p>Spend {TOKEN_TICKER} on better hardware, cooling or a temporary boost to earn a bigger share of every round.</p></li>
+              </ol>
+              <p className="lp-cost-note"><strong>Know the costs.</strong> Your deposit comes back when you decommission your GPU, minus a small exit fee. Setup has a fee, and {TOKEN_TICKER} spent on upgrades is permanently burned.</p>
+            </div>
+            <div className="lp-rig-art"><SceneCanvas kind="rig" value={rigPower} label="A virtual server node scales through three configurations as you scroll. Additional compute sleds come online and green liquid cooling lights up." /></div>
           </div></div>
         </section>
 
         <section ref={mine} id="the-mine" className="lp-mine-section lp-section lp-scroll-story" aria-labelledby="mine-title">
-          <div className="lp-story-stage"><div className="lp-mine-heading lp-reveal"><h2 id="mine-title">THE DEEPER YOU GO.<br /><span>THE MORE YOU DISCOVER.</span></h2><p>Everyone works through the same four blocks. Each one holds a different stock-token reward. Your rig’s work earns you little pieces of it. We call them fragments.</p></div>
+          <div className="lp-story-stage"><Atmosphere variant="reward" /><div className="lp-mine-heading lp-reveal"><h2 id="mine-title">EVERY HOUR, A NEW POT.<br /><span>FOUR REWARDS INSIDE.</span></h2><p>Each round’s pot holds pieces of four different stock tokens. These pieces are called <strong>shards</strong>. Your share is your GPU’s work over everyone’s.</p></div>
           <div className="lp-mine-layout">
-            <div className="lp-block-art"><div key={reward} className="lp-block-index" aria-hidden="true">0{reward + 1}</div><MineralScene kind="reward" value={rewardPose} label={`A luminous, faceted amber crystal representing the ${REWARDS[reward].ticker} reward block.`} /></div>
-            <div className="lp-block-list lp-reveal"><div className="lp-block-list-label">FOUR BLOCKS. ONE SHARED MINE.<span>01 — 04</span></div>{REWARDS.map((item, index) => <div key={item.ticker} className={`lp-block-option ${reward === index ? "is-selected" : ""}`} aria-current={reward === index ? "step" : undefined}><span className="lp-block-number">0{index + 1}</span><span className="lp-block-name"><strong>{item.ticker}</strong><small>{item.category}</small></span><span className="lp-block-arrow">{reward === index ? "↗" : "·"}</span></div>)}<p key={reward} className="lp-reward-detail">{REWARDS[reward].detail}</p></div>
+            <div className="lp-block-art"><div key={reward} className="lp-block-index" aria-hidden="true">0{reward + 1}</div><SceneCanvas kind="reward" value={rewardPose} label={`Four processor cards representing the reward pot, with the ${REWARDS[reward].ticker} card brought forward as you scroll.`} /></div>
+            <div className="lp-block-list lp-reveal"><div className="lp-block-list-label">YOUR REWARDS, EVERY ROUND<span>01 — 04</span></div><ol className="lp-reward-options" aria-label="Rewards in the pot">{REWARDS.map((item, index) => <li key={item.ticker} className={`lp-block-option ${reward === index ? "is-selected" : ""}`} aria-current={reward === index ? "step" : undefined}><span className="lp-block-number">0{index + 1}</span><span className="lp-block-name"><strong>{item.ticker}</strong><small>{item.category}</small></span><span className="lp-block-arrow">{reward === index ? "↗" : "·"}</span></li>)}</ol><p key={reward} className="lp-reward-detail">{REWARDS[reward].detail}</p></div>
           </div>
-          <div className="lp-mine-footnote lp-reveal"><span className="lp-small-gem">◇</span><p><strong>Progress sets the pace.</strong> Blocks open through the mine’s combined work. The season ends after block four, or when its maximum duration is reached.</p><span>EVERY MOVE MATTERS.</span></div></div>
+          <div className="lp-mine-footnote lp-reveal"><span className="lp-small-gem" aria-hidden="true">⌁</span><p><strong>The pot fills from trading fees on {TOKEN_TICKER}.</strong> It is locked when the round closes, split by work, and claimable for fifteen minutes. Whatever goes unclaimed rolls into the next round.</p></div></div>
         </section>
 
         <section id="the-rewards" className="lp-collect-section lp-section" aria-labelledby="collect-title">
-          <div className="lp-collect-layout"><div className="lp-collect-copy lp-reveal"><h2 id="collect-title">FRAGMENTS.<br />MEET <span>STOCKS.</span></h2><p>Those little pieces have a bigger purpose. Claim your fragments and exchange them for the matching stock token.</p><div className="lp-equation"><span><strong>1,000,000</strong><small>FRAGMENTS</small></span><span className="lp-equals">=</span><span><strong>1</strong><small>STOCK TOKEN</small></span></div><p className="lp-collect-note">Redeem smaller amounts proportionally. Stock tokens track the underlying asset; they aren’t direct share ownership. Availability depends on eligibility and the season’s rules.</p><Link href="/mine/new" className="lp-button lp-button-dark">Make your first move <Arrow diagonal /></Link></div><div className="lp-token-art"><MineralScene kind="token" value={assembled ? 1 : 0} label="Golden mineral fragments orbit an engraved stock-token coin and assemble around it when activated." /><button className="lp-scene-action" onClick={() => setAssembled(!assembled)} aria-pressed={assembled}><span className="lp-action-icon">{assembled ? "−" : "+"}</span>{assembled ? "Scatter the fragments" : "Bring it together"}<span className="lp-action-hint">TRY IT</span></button><span className="lp-token-caption">LITTLE PIECES. BIGGER POSSIBILITIES.</span></div></div>
-          <div id="questions" className="lp-questions lp-reveal"><div><h3>A FEW GOOD<br />QUESTIONS.</h3></div><div className="lp-faq-list"><details><summary>Do I need a mining computer?<span>+</span></summary><p>No. Your rig is virtual and runs through the game’s contracts. Your browser doesn’t mine cryptocurrency or use your computer’s processing power to earn rewards. You can close the page and your active rig keeps working.</p></details><details><summary>What happens to the tokens I deposit?<span>+</span></summary><p>Your deposited stake can be withdrawn when the season closes. Leaving early has a fee. Activation also has a fee, and $RIG spent on optional upgrades is permanently burned. Review the current season’s costs before joining.</p></details><details><summary>How do I collect my rewards?<span>+</span></summary><p>Claim fragments from completed blocks, then redeem them during the season’s redemption window. Eligible wallets can receive the matching stock token; a USDC cash-out may be available subject to reserves and fees. Rewards depend on your rig’s work and the season’s funded pool.</p></details></div></div>
+          <Atmosphere variant="token" />
+          <div className="lp-collect-layout"><div className="lp-collect-copy lp-reveal"><h2 id="collect-title">REDEEM SHARDS.<br /><span>GET STOCK TOKENS.</span></h2>
+            <ol className="lp-steps lp-steps-compact" aria-label="How to redeem rewards">
+              <li><strong>Claim your shards.</strong><p>One click after each round closes, inside the fifteen-minute claim window.</p></li>
+              <li><strong>Exchange for stock tokens.</strong><p>Redeem at any time. Smaller amounts redeem proportionally.</p></li>
+            </ol>
+            <div className="lp-equation"><span><strong>1,000,000</strong><small>SHARDS</small></span><span className="lp-equals">=</span><span><strong>1</strong><small>STOCK TOKEN</small></span></div>
+            <p className="lp-collect-note"><strong>Stock tokens track stocks.</strong> They aren’t direct share ownership. Redemption depends on eligibility; a USDG cash-out may be available depending on reserves and fees.</p>
+            <Link href="/mine/new" className="lp-button lp-button-dark">Set up your GPU <Arrow diagonal /></Link></div>
+            <div className="lp-token-art"><SceneCanvas kind="token" value={assembled ? 1 : 0} label="Glowing square shards assemble into a stock-token module when activated." /><button className="lp-scene-action" onClick={() => setAssembled(!assembled)} aria-pressed={assembled}><span className="lp-action-icon">{assembled ? "−" : "+"}</span>{assembled ? "Separate the shards" : "Assemble a token"}<span className="lp-action-hint">PREVIEW</span></button><span className="lp-token-caption">SHARDS COMBINE INTO STOCK TOKENS.</span></div></div>
+          <div id="questions" className="lp-questions lp-reveal"><div><h3>BEFORE<br />YOU PLAY.</h3></div><div className="lp-faq-list">
+            <details><summary>Do I need a real GPU?<span>+</span></summary><p><strong>No special hardware is needed.</strong> The GPUs and the work are virtual. Your GPU keeps working when you close the page.</p></details>
+            <details><summary>What is a round?<span>+</span></summary><p><strong>A round is one hour of the shared game.</strong> Everyone’s virtual GPUs work through the same round. When it closes, the pot is split by the work each GPU did, and claims are open for fifteen minutes. Anything unclaimed rolls into the next pot.</p></details>
+            <details><summary>What does it cost?<span>+</span></summary><ul className="lp-answer-list"><li><strong>Setup:</strong> Starting a GPU has a fee.</li><li><strong>Deposit:</strong> Comes back when you decommission your GPU, minus a small exit fee.</li><li><strong>Upgrades:</strong> The {TOKEN_TICKER} you spend is permanently burned.</li></ul><p>Review the fees shown before you deposit.</p></details>
+            <details><summary>How are rewards paid?<span>+</span></summary><ul className="lp-answer-list"><li><strong>Claim:</strong> Collect shards within fifteen minutes of a round closing.</li><li><strong>Redeem:</strong> Eligible wallets exchange shards for the matching stock token at any time.</li><li><strong>Cash payout:</strong> May be available, depending on reserves and fees.</li></ul><p>Rewards depend on your GPU’s work and on the trading fees that funded the round.</p></details>
+            <details><summary>Can the team stop the game?<span>+</span></summary><p><strong>Yes.</strong> The operator can halt the game at any time and take back the unclaimed and running pots. Deposits always come back in full, and shards you have already claimed stay redeemable. The <Link href="/terms">Terms</Link> spell this out.</p></details>
+          </div></div>
         </section>
       </main>
-      <footer className="lp-footer"><div className="lp-footer-top"><Link href="/" className="lp-logo"><LogoMark size={36} /><span>STOCK MINER</span></Link><span>A LITTLE STRATEGY. A NEW FRONTIER.</span><a href="#main-content">BACK TO THE SURFACE ↑</a></div>{RIG_ADDRESS && <div className="lp-footer-ca" data-testid="footer-ca"><span>$RIG CONTRACT · ROBINHOOD CHAIN</span><code>{RIG_ADDRESS}</code><button type="button" onClick={copyAddress}>{copied ? "COPIED" : "COPY"}</button>{RIG_EXPLORER_URL && <a href={RIG_EXPLORER_URL} target="_blank" rel="noopener noreferrer">BLOCKSCOUT ↗</a>}{RIG_BUY_URL && <a href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">BUY $RIG ↗</a>}</div>}<div className="lp-footer-bottom"><span>© {new Date().getFullYear()} STOCK MINER</span><span>A VIRTUAL MINING GAME. REAL DECISIONS.</span><Link href="/seasons">Explore seasons <Arrow diagonal /></Link></div></footer>
+      <footer className="lp-footer"><div className="lp-footer-top"><Link href="/" className="lp-logo"><LogoMark size={36} /><span>{BRAND.toUpperCase()}</span></Link><span>VIRTUAL GPUS. STOCK-TOKEN REWARDS.</span><a href="#main-content">BACK TO THE TOP ↑</a></div>{RIG_ADDRESS && <div className="lp-footer-ca" data-testid="footer-ca"><span>{TOKEN_TICKER} CONTRACT · ROBINHOOD CHAIN</span><code>{RIG_ADDRESS}</code><button type="button" onClick={copyAddress}>{copied ? "COPIED" : "COPY"}</button>{RIG_EXPLORER_URL && <a href={RIG_EXPLORER_URL} target="_blank" rel="noopener noreferrer">BLOCKSCOUT ↗</a>}{RIG_BUY_URL && <a href={RIG_BUY_URL} target="_blank" rel="noopener noreferrer">BUY {TOKEN_TICKER} ↗</a>}</div>}<div className="lp-footer-bottom"><span>© {new Date().getFullYear()} {BRAND.toUpperCase()}</span><span>PLAY IN YOUR BROWSER.</span><Link href="/mine">Open game <Arrow diagonal /></Link></div></footer>
     </div>
   );
 }

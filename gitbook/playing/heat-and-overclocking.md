@@ -21,7 +21,7 @@ With no cooling, three overclocks cost 120 heat, which is impossible. Two cost 8
 
 * **Block 4.** It holds 40% of the season's value for 30% of the work, so a unit of hashrate there earns the most fragments. Expect the whole mine to overclock in the finale, which shortens it.
 * **When you are about to leave.** An overclock covers a fixed slice of the mine at a fixed cost. If you will not be around to re-buy, one burst before you go is fine.
-* **Not when a GPU tier still pays.** Early in a season a permanent tier covers more work per $RIG burned than a burst does.
+* **Not when a GPU tier still pays.** Early in a season a permanent tier covers more work per $VRAM burned than a burst does.
 
 ## Long-haul mode
 

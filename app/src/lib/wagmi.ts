@@ -47,7 +47,7 @@ export function makeWagmiConfig(chainId: number, rpcUrl: string) {
   const wcId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
   const connectors = [
     injected(),
-    ...(wcId ? [walletConnect({ projectId: wcId, showQrModal: true, metadata: { name: "Hyperscale", description: "Run the compute, own the chips, on Robinhood Chain", url: process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"), icons: [] } })] : []),
+    ...(wcId ? [walletConnect({ projectId: wcId, showQrModal: true, metadata: { name: "Hyperscaler", description: "Virtual GPUs. Stock-token rewards. On Robinhood Chain.", url: process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"), icons: [] } })] : []),
     ...(devAccounts ? [mock({ accounts: DEV_ACCOUNTS as [Address, ...Address[]], features: { reconnect: true } })] : []),
   ];
   return createConfig({

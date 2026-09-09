@@ -1,18 +1,20 @@
-# Hyperscale
+# Hyperscaler
 
-**Run the compute. Own the chips.** An AI-compute game on Robinhood Chain, forked from
-[stock-miner](https://github.com/gc0rbs/stock-miner) on 2026-09-06. Same contracts and math; the
-fiction is a GPU cluster serving four inference jobs, paid in shards of NVDA, MU, SNDK and QQQ.
-The rebrand concept and term map live in `docs/12-REBRAND-AI-INFERENCE.md`; the app and docs are
-still being moved to the new vocabulary, so the mining terms below remain accurate in the code.
+**Virtual GPUs. Stock-token rewards.** An AI-compute game on Robinhood Chain, forked from
+[stock-miner](https://github.com/gc0rbs/stock-miner) on 2026-09-06 and renamed Hyperscaler with the
+$VRAM token on 2026-09-09 (design handoff). The fiction is a GPU cluster; the payout is shards of
+NVDA, MU, SNDK and QQQ Stock Tokens. The term map lives in `docs/12-REBRAND-AI-INFERENCE.md`;
+contract identifiers keep the mining vocabulary on purpose, so the mining terms below remain
+accurate in the code.
 
-A progress-based "virtual mining" game on Robinhood Chain. Players stake **$RIG** (a Pons-launched
-ERC-20) to activate virtual rigs, burn $RIG on GPU / cooling / overclock upgrades to raise their
-hashrate, and mine **Stock Token fragments** (NVDA, MU, SNDK, QQQ) across four reward blocks. A block
-is *found* when the mine has accumulated its difficulty in hash-work; how long that takes depends only
-on how much hashrate is pointed at it. Seasons are sized for about three hours with a six-hour cap.
-When the fourth block is found (or the cap is reached) the mine closes permanently; stakes are
-returned and fragments are redeemed for Stock Tokens or USDG.
+Players stake **$VRAM** (a Pons-launched ERC-20) to activate a virtual GPU, burn $VRAM on GPU /
+cooling / overclock upgrades to raise its throughput, and earn **Stock Token shards**. Since
+2026-09-08 the game runs continuously in **hourly rounds** (`docs/13-ROUNDS.md`): the Pons trading
+tax on $VRAM is swapped into the four Stock Tokens and fills the running round's pot; at the close
+the pot is split by the work each GPU did that hour, claims are open for fifteen minutes, and
+anything unclaimed rolls into the next pot. Shards redeem for the Stock Token or a USDG cash-out at
+any time. The 2026-09-05 mainnet seasons (four reward blocks, fixed pool, a six-hour cap) run out
+under the season contracts, which stay in the repo for that reason.
 
 - **Public docs (players, safety):** `gitbook/` (GitBook Git Sync via `.gitbook.yaml`).
 - **Internal specs:** `docs/` (PRD, game design, tech specs, runbook, audit package, decisions).
@@ -50,7 +52,7 @@ CI (`.github/workflows/ci.yml`) runs the same groups plus slither. The build fol
 | 1 | [PRD](docs/01-PRD.md) | What we are building, for whom, requirements, scope, success metrics |
 | 2 | [Mining model](docs/02-MINING-MODEL.md) | **How mining works**, why difficulty replaces the clock, why it is not browser mining |
 | 3 | [Game design](docs/03-GAME-DESIGN.md) | Rigs, upgrades, heat, shifts, reward blocks, formulas, worked examples |
-| 4 | [Tokenomics](docs/04-TOKENOMICS.md) | $RIG supply, sinks, LP bonus, prize-pool and difficulty sizing |
+| 4 | [Tokenomics](docs/04-TOKENOMICS.md) | $VRAM supply, sinks, LP bonus, prize-pool and difficulty sizing |
 | 5 | [Contracts spec](docs/05-TECH-SPEC-CONTRACTS.md) | On-chain architecture, work-based accounting math, interfaces, security |
 | 6 | [App spec](docs/06-TECH-SPEC-APP.md) | Frontend, indexer, live "mining" UI, ETA display, ops tooling |
 | 7 | [Compliance & risk](docs/07-COMPLIANCE-AND-RISK.md) | Stock Token constraints, eligibility, legal review items |

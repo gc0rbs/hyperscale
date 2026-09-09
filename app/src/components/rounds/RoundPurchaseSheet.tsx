@@ -57,7 +57,7 @@ export function RoundPurchaseSheet({ action, snap, onClose, onDone }: { action: 
     fn = "exit";
   } else {
     title = "Emergency withdraw";
-    effect = `Full stake of ${formatRig(rig.amount)} RIG back, no fee`;
+    effect = `Full stake of ${formatRig(rig.amount)} VRAM back, no fee`;
     detail = "The mine is halted: nothing accrues and no round closes again.";
     fn = "emergencyWithdraw";
   }
@@ -91,7 +91,7 @@ export function RoundPurchaseSheet({ action, snap, onClose, onDone }: { action: 
         <div className="flex flex-col gap-3">
           <Row k="You get" v={effect} />
           <Row k="Detail" v={detail} />
-          {burn > 0n && <Row k="You burn" v={<span className="text-ember">{formatRig(burn)} RIG · permanently</span>} />}
+          {burn > 0n && <Row k="You burn" v={<span className="text-ember">{formatRig(burn)} VRAM · permanently</span>} />}
           {estimate && <Row k="Note" v={<span className="text-signal">{estimate}</span>} />}
         </div>
         {burn > 0n && <div className="text-[11px] text-mine-dim">Each round&apos;s pot is split by compute served in that round. What a round pays depends on what was funded and on everyone else&apos;s throughput. Not a return.</div>}
@@ -99,7 +99,7 @@ export function RoundPurchaseSheet({ action, snap, onClose, onDone }: { action: 
         <div className="flex gap-2">
           <Btn onClick={onClose} disabled={tx.busy}>Cancel</Btn>
           <Btn tone={action.kind === "exit" || action.kind === "withdraw" ? "signal" : "ember"} className="flex-1 h-11" onClick={submit} disabled={tx.busy || !account}>
-            {tx.status === "wallet" ? "Confirm in wallet…" : tx.status === "mining" ? "Mining…" : needsApprove ? "Approve RIG first" : burn > 0n ? "Confirm burn" : "Confirm"}
+            {tx.status === "wallet" ? "Confirm in wallet…" : tx.status === "mining" ? "Mining…" : needsApprove ? "Approve VRAM first" : burn > 0n ? "Confirm burn" : "Confirm"}
           </Btn>
         </div>
       </div>

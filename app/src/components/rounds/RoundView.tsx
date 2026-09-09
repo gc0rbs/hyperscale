@@ -51,7 +51,7 @@ export function RoundView({ snap }: { snap: RoundSnapshot }) {
     return (
       <div className="p-4 md:px-8 md:py-6 max-w-[760px] flex flex-col gap-4" data-testid="not-launched">
         <div className="font-display leading-none uppercase tracking-[0.02em] text-[56px] font-semibold">Not live yet</div>
-        <div className="text-mine-muted text-[15px] leading-relaxed">The cluster is deployed and verified but waits for the $RIG token to exist. The team launches it with one transaction the moment the token is live; round 0 opens at the genesis they set then. Anything already scheduled into the pots pays out from round 0.</div>
+        <div className="text-mine-muted text-[15px] leading-relaxed">The cluster is deployed and verified but waits for the $VRAM token to exist. The team launches it with one transaction the moment the token is live; round 0 opens at the genesis they set then. Anything already scheduled into the pots pays out from round 0.</div>
         <RoundNotices />
       </div>
     );
@@ -101,7 +101,7 @@ export function RoundView({ snap }: { snap: RoundSnapshot }) {
           </Panel>
           <Panel className="flex flex-col gap-3">
             <Label>How the pot fills</Label>
-            <div className="text-[13px] text-mine-muted leading-relaxed" data-testid="pot-fills">Trading fees on $RIG flow into this round&apos;s pot as they arrive. The pot is locked the moment round {cur} closes, and whatever nobody claims in the {p.claimSeconds / 60} minutes after rolls into round {cur + 1}.</div>
+            <div className="text-[13px] text-mine-muted leading-relaxed" data-testid="pot-fills">Trading fees on $VRAM flow into this round&apos;s pot as they arrive. The pot is locked the moment round {cur} closes, and whatever nobody claims in the {p.claimSeconds / 60} minutes after rolls into round {cur + 1}.</div>
             {snap.pot.every((x) => x === 0n) && <div className="text-[13px] text-ember" data-testid="pot-empty">No fees have come in yet this round.</div>}
           </Panel>
           {!snap.halted && <HashStream hashWad={myHash} />}

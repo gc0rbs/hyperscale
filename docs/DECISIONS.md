@@ -322,6 +322,33 @@ The token stays **$RIG**: it launched on Pons on 2026-09-05, so only copy change
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
 
+## 2026-09-09 – Rebrand to Hyperscaler / $VRAM (client design handoff)
+
+**Decision.** The product is **Hyperscaler**; the game token is **$VRAM**, a new Pons launch that does
+not exist yet (the mine is deployed pre-token and receives the address through `launch`). The visual
+direction is the client's design handoff (https://ebony-solace-64d7.here.now/, fetched 2026-09-09):
+graphite surfaces, brushed alloy, a green accent (`--lp-power #00c805`, `--lp-signal #53db72`), the
+green "H" logo, a processor / server-node / processor-cards / shard-module scene set in place of the
+mineral scenes, and the copy structure "Build a virtual GPU. Earn stock tokens."
+
+**Applied.** `specs/design/tokens.*` accents moved to green (`--ember` is now the power green,
+`--signal` the light green; heat stays red); `app/src/lib/brand.ts` is the single source of the
+name, ticker and tagline; the landing page, share card, metadata, GitBook, terms and how-it-works
+use the new names; `contracts/src/tokens/RIG.sol` (the Anvil stand-in token) is named
+"Hyperscaler VRAM" / "VRAM". The hard-coded 2026-09-05 RIG address and Pons buy link were removed
+from the site: they are the legacy seasons' token, not $VRAM. Contract identifiers, the
+`NEXT_PUBLIC_RIG_*` variables and `rig` in chain profiles keep their names.
+
+**Copy departures from the handoff.** The handoff's copy was written for the season era ("four
+jobs", "the cluster closes", "payout window"). Where it conflicted with the round mine (docs/13) the
+site says what the contracts do: a new pot every hour, claims for fifteen minutes, rollover, redeem
+at any time, deposit back on decommission minus the exit fee, and the operator halt stated in the FAQ.
+The handoff's "LAUNCH PAIR VRAM / NVDA" line was left out until the Pons pair is confirmed.
+
+**Open.** The final domain (the shard metadata URL is immutable on `StockFragments`; the mainnet
+deploy now refuses to run without `--base-uri` / `FRAG_BASE_URI`), the $VRAM contract address and
+the Pons purchase link (hosting env `NEXT_PUBLIC_RIG_ADDRESS`, `NEXT_PUBLIC_RIG_BUY_URL`).
+
 ## 2026-09-08 – Post-launch rebuild: escape hatch, fee funding, hourly rounds (client decisions)
 
 - **24 h escape hatch on seasons.** The vault operator (the deployer) can `abort()` a season until

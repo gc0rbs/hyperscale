@@ -1,4 +1,4 @@
-/* Stock Miner design tokens – source of truth for the app theme.
+/* Hyperscaler design tokens – source of truth for the app theme.
    One world, two densities, both on the landing page's mineral black (docs/DECISIONS.md 2026-09-04):
    the SHELL (navigation, claim, redeem, leaderboard: calm, spacious) and the MINE (the game view:
    dense, mechanical). The shell is one step lighter than the mine so the seam still reads.
@@ -22,13 +22,14 @@
   --mine-muted:      #ADA9A3;
   --mine-dim:        #6A6C74;
 
-  /* ── Accents (landing gold and cyan) ────────────────────────── */
-  --ember:           #FFB33E;   /* energy: hashrate, overclock, burn */
-  --ember-deep:      #C9821B;
-  --ember-tint:      rgba(255, 179, 62, 0.14);
-  --signal:          #45DCE4;   /* progress: ETA, found, claimable */
-  --signal-deep:     #1E97AD;
-  --signal-tint:     rgba(69, 220, 228, 0.14);
+  /* ── Accents ($VRAM green, design handoff 2026-09-09) ───────── */
+  --ember:           #00C805;   /* power: throughput, overclock, burn (the landing's --lp-power) */
+  --ember-deep:      #00A806;
+  --ember-tint:      rgba(0, 200, 5, 0.14);
+  --signal:          #53DB72;   /* progress: countdown, claimable (the landing's --lp-signal) */
+  --signal-deep:     #298140;
+  --signal-tint:     rgba(83, 219, 114, 0.14);
+  --ok:              #43D17A;
   --live:            #3FE28B;   /* header status dot only: the mine is open */
   --heat-hot:        #E5533D;   /* heat gauge top end and errors only */
 

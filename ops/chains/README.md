@@ -5,7 +5,7 @@ One JSON per target chain, read by `ops plan` and the runbook. `anvil.json` is c
 filled and the season addresses still zero; `robinhood-testnet.json` is a placeholder set. Every zero
 address below has to be filled in once the corresponding assumption in `docs/01-PRD.md` §10 is verified.
 
-$RIG is launched on Pons: a plain ERC-20 (1B supply, 18 decimals, no burn function), graduating to a
+$VRAM is launched on Pons: a plain ERC-20 (1B supply, 18 decimals, no burn function), graduating to a
 Uniswap v3 RIG/WETH pool whose position is an NFT held by the Pons locker. The mine burns by
 transferring to the dead address, and LP staking is off (`lpToken` zero, decided 2026-09-04).
 
@@ -13,7 +13,7 @@ transferring to the dead address, and LP staking is off (`lpToken` zero, decided
 |---|---|---|
 | `chainId`, `rpcUrl` | Robinhood Chain testnet id and an RPC (archive access preferred: `plan` samples 24h of LP state) | §10.1 chain is an Arbitrum Orbit L2 with standard JSON-RPC |
 | `explorerApi` | Blockscout/Etherscan-style verify endpoint; also `[etherscan]` in `contracts/foundry.toml` | §10.1 |
-| `rig` | The $RIG ERC-20: the graduated Pons token. Any standard ERC-20 works; upgrade spend is transferred to `0x…dEaD`. `contracts/src/tokens/RIG.sol` is the test/dev token | §10.4 |
+| `rig` | The $VRAM ERC-20: the graduated Pons token. Any standard ERC-20 works; upgrade spend is transferred to `0x…dEaD`. `contracts/src/tokens/RIG.sol` is the test/dev token | §10.4 |
 | `lpToken`, `lpPairKind` | Leave zero: the Pons pool is Uniswap v3 (NFT positions), so LP staking is off in v1 (Q3 closed). The v2-shape sampling in `plan` stays for a future full-range wrapper token | §10.3 |
 | `usdc` | The quote token for `RedemptionVault.cashOut`: USDG on Robinhood Chain (`0x5fc5…d168`); the vault reads its `decimals()` at construction | §10.1 |
 | `oracle` | `ChainlinkOracle(stocks, feeds)` over the per-token Chainlink feeds (addresses from docs.chain.link, network robinhood; fill `feeds` first). Feeds: 8 decimals, 24 h heartbeat, 0.5% deviation; the vault's staleness cap is 26 h | §10.5 oracle |

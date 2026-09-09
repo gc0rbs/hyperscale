@@ -190,14 +190,15 @@ async function main() {
     // --prelaunch: the token does not exist yet. rig and genesis stay zero and `rounds-admin launch`
     // sets both once, so the mine can be deployed, verified, funded and wired to the site days ahead.
     const prelaunch = hasFlag("--prelaunch");
-    rig = prelaunch ? ("0x0000000000000000000000000000000000000000" as Address) : (chain.rig as Address);
+    // The profile's `rig` is the 2026-09-05 seasons' token, not $VRAM: a live deploy must name the token explicitly.
+    rig = prelaunch ? ("0x0000000000000000000000000000000000000000" as Address) : ((arg("--rig") ?? "") as Address);
     usdc = chain.usdc as Address;
     oracle = (chain.oracle && !zero.test(chain.oracle) ? chain.oracle : adapters?.oracle) as Address;
     eligibility = (chain.eligibility && !zero.test(chain.eligibility) ? chain.eligibility : adapters?.eligibility) as Address;
     treasury = (arg("--treasury") ?? chain.treasury) as Address;
     stocks = syms.map((s) => chain.stocks?.[s] as Address);
     for (const [k, v] of Object.entries({ usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
-    if (!prelaunch && (!rig || zero.test(rig))) throw new Error("profile is missing rig (pass --prelaunch to deploy before the token exists)");
+    if (!prelaunch && (!/^0x[0-9a-fA-F]{40}$/.test(rig) || zero.test(rig))) throw new Error("pass --rig <the $VRAM address> (the chain profile's rig is the legacy seasons' token), or --prelaunch to deploy before the token exists");
     syms.forEach((s, i) => { if (!stocks[i] || zero.test(stocks[i])) throw new Error(`profile is missing stock ${s}`); });
     genesis = prelaunch ? 0 : arg("--genesis") ? Number(arg("--genesis")) : Math.ceil((now + 60) / 3600) * 3600; // next full hour
     weth = (chain as { external?: { weth?: string } }).external?.weth as Address;
@@ -217,7 +218,9 @@ async function main() {
   const mineAddr = getContractAddress({ from: account.address, nonce });
   const fragAddr = getContractAddress({ from: account.address, nonce: nonce + 1n });
   const vaultAddr = getContractAddress({ from: account.address, nonce: nonce + 2n });
-  const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : "https://hyperscale.fi/api/frag/{id}.json")!;
+  // The metadata URL is immutable on StockFragments, so mainnet must name the final domain explicitly.
+  const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : process.env.FRAG_BASE_URI);
+  if (!baseUri || !/^https?:\/\/\S+\{id\}\S*$/.test(baseUri)) throw new Error("mainnet needs --base-uri https://<final domain>/api/frag/{id}.json (or FRAG_BASE_URI): it is immutable on the fragments contract");
   const vaultConfig = {
     mine: mineAddr, fragments: fragAddr, usdc, eligibility, oracle, operator: account.address,
     cashOutFeeBps: Number(tpl.cashOutFeeBps), fragPerToken: BigInt(params.fragPerToken), maxPriceAge: Number(tpl.maxPriceAgeSeconds), stocks,
