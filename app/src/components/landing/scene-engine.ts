@@ -17,6 +17,7 @@ export type SceneKind = "core" | "rig" | "reward" | "token";
 export interface SceneController { setValue: (value: number) => void; dispose: () => void }
 
 const TAU = Math.PI * 2;
+const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const clamp = THREE.MathUtils.clamp;
 const smooth = (value: number) => { const t = clamp(value, 0, 1); return t * t * (3 - 2 * t); };
 /** Deterministic pseudo-random in [0, 1): the composition is authored, not rolled per visit. */
@@ -508,17 +509,37 @@ function buildAtmosphere(kind: SceneKind): Atmosphere {
     reward: { x: 3.24, y: 2.05, tilt: 0.24, depth: 1.25, count: 24, phase: 3.4, channel: 1 },
     token: { x: 2.66, y: 2.6, tilt: -0.28, depth: 0.9, count: 18, phase: 4.6, channel: 1 },
   }[kind];
-  const { count } = orbit;
+  // Debris field: every fragment has its own random direction, distance, size and tumble, so the cloud
+  // reads as an explosion frozen mid-burst rather than a ring (client note 2026-09-09).
+  const count = Math.round(orbit.count * 1.7);
+  const chipCount = 72;
   const material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.7, roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.12, emissive: SILICON_PALETTE.power, emissiveIntensity: 0.13 });
   const shards = new THREE.InstancedMesh(shardGeometry(), material, count);
-  const chips = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.12), material, 48);
+  const chips = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.12), material, chipCount);
   for (const instanced of [shards, chips]) {
     instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     instanced.frustumCulled = false;
     root.add(instanced);
   }
   for (let i = 0; i < count; i++) shards.setColorAt(i, new THREE.Color(i % 3 === 0 ? SILICON_PALETTE.mint : i % 4 === 0 ? 0x67dc85 : 0x00d90a));
-  for (let i = 0; i < 48; i++) chips.setColorAt(i, new THREE.Color(i % 3 === 0 ? 0xc8e4d0 : i % 5 === 0 ? 0x1c5d32 : 0x00e516));
+  for (let i = 0; i < chipCount; i++) chips.setColorAt(i, new THREE.Color(i % 3 === 0 ? 0xc8e4d0 : i % 5 === 0 ? 0x1c5d32 : 0x00e516));
+  interface Debris { dir: THREE.Vector3; dist: number; size: number; stretch: THREE.Vector3; spin: THREE.Vector3; tumble: number; delay: number; wobble: number }
+  const scatter = (salt: number, r: number) => (hash(salt, r) - 0.5) * 2;
+  function debris(i: number, salt: number, inner: number, outer: number, minSize: number, maxSize: number): Debris {
+    // Direction: random on the sphere, squashed to the scene's ellipse so the field frames the subject.
+    const dir = new THREE.Vector3(scatter(i, salt + 1.1), scatter(i, salt + 2.3) * (orbit.y / orbit.x), scatter(i, salt + 3.7) * 0.55).normalize();
+    // Distance: most fragments near the blast front, a long tail flung far out.
+    const dist = inner + (outer - inner) * Math.pow(hash(i, salt + 4.9), 0.55);
+    // Size: log-uniform, so big slabs and tiny chips share the same field.
+    const size = minSize * Math.pow(maxSize / minSize, hash(i, salt + 6.1));
+    const stretch = new THREE.Vector3(0.55 + 1.6 * hash(i, salt + 7.3), 0.45 + 1.1 * hash(i, salt + 8.7), 0.6 + 0.8 * hash(i, salt + 9.1));
+    const spin = new THREE.Vector3(scatter(i, salt + 10.3), scatter(i, salt + 11.9), scatter(i, salt + 12.7));
+    const tumble = 0.35 + 1.9 * Math.pow(hash(i, salt + 13.1), 2); // a few fragments spin fast, most drift
+    return { dir, dist, size, stretch, spin, tumble, delay: hash(i, salt + 14.3) * 0.35, wobble: hash(i, salt + 15.7) * TAU };
+  }
+  const shardField = Array.from({ length: count }, (_, i) => debris(i, 31.7, orbit.x * 0.55, orbit.x * 1.55, 0.07, 0.62));
+  const chipField = Array.from({ length: chipCount }, (_, i) => debris(i, 77.3, orbit.x * 0.4, orbit.x * 1.8, 0.03, 0.26));
+  const burst = (t: number) => 1 - Math.pow(1 - clamp(t, 0, 1), 4); // ease-out-quart: hard launch, long settle
   const dummy = new THREE.Object3D();
   const point = new THREE.Vector3();
   function place(angle: number, radius: number, z: number, progress: number, out: THREE.Vector3) {
@@ -564,7 +585,7 @@ function buildAtmosphere(kind: SceneKind): Atmosphere {
       uniform vec2 uRadius;
       varying float vLight;
       void main() {
-        float a = aSeed.x + uTime * (.045 + aSeed.z * .015) * uEnergy + uProgress * .16;
+        float a = aSeed.x + uTime * (.09 + aSeed.z * .05) * uEnergy + uProgress * .16;
         float c = cos(a);
         vec2 p = vec2(sign(c) * pow(abs(c), uChannel), sin(a)) * uRadius * aSeed.y;
         p = mat2(cos(uTilt), sin(uTilt), -sin(uTilt), cos(uTilt)) * p;
@@ -597,7 +618,7 @@ function buildAtmosphere(kind: SceneKind): Atmosphere {
       uniforms.uPixelRatio.value = pixelRatio;
       dustGeometry.setDrawRange(0, narrow ? 600 : 1200);
       shards.count = narrow ? Math.ceil(0.75 * count) : count;
-      chips.count = narrow ? 32 : 48;
+      chips.count = narrow ? Math.ceil(0.6 * chipCount) : chipCount;
     },
     update(value, time, entranceFinished, yaw, pitch) {
       const progress = value / (kind === "rig" ? 5 : kind === "reward" ? 3 : 1);
@@ -608,29 +629,29 @@ function buildAtmosphere(kind: SceneKind): Atmosphere {
       rings.rotation.z = 0.045 * progress;
       root.rotation.y = 0.2 * yaw;
       root.rotation.x = 0.14 * pitch;
-      for (let i = 0; i < shards.count; i++) {
-        const base = (kind === "reward"
-          ? (Math.floor(i / 3) / Math.ceil(shards.count / 3)) * TAU + (i % 3) * 0.09
-          : (i / shards.count) * TAU + (hash(i, 18.97) - 0.5) * 0.16) + orbit.phase;
-        place(base + time * (0.025 + 0.016 * hash(i, 23.8)) + 0.16 * progress, 0.95 + 0.13 * hash(i, 7.91), (hash(i, 84.8) - 0.5) * 1.05, progress, point);
-        const entrance = entranceFinished ? 1 : THREE.MathUtils.smoothstep(time, 0.04 + (i % 7) * 0.045, 0.62 + (i % 7) * 0.045);
-        dummy.position.copy(point).multiplyScalar(1 + (1 - entrance) * 0.22);
-        dummy.rotation.set(0.7 * Math.sin(base) + 0.07 * time, 1.2 * base + 0.09 * time, base + 0.025 * time);
-        const size = (0.17 + 0.3 * hash(i, 67.9)) * entrance * (narrow ? 0.95 : 1);
-        dummy.scale.set(size * (i % 4 === 0 ? 1.65 : 0.85), size * (i % 5 === 0 ? 0.5 : 1), size);
-        dummy.updateMatrix();
-        shards.setMatrixAt(i, dummy.matrix);
-      }
-      for (let i = 0; i < chips.count; i++) {
-        const base = hash(i, 55.67) * TAU + orbit.phase;
-        place(base + 0.037 * time + 0.18 * progress, 0.8 + 0.36 * hash(i, 38.3), (hash(i, 91.2) - 0.5) * 1.45, progress, point);
-        const entrance = entranceFinished ? 1 : THREE.MathUtils.smoothstep(time, (i % 9) * 0.035, 0.55 + (i % 9) * 0.035);
-        dummy.position.copy(point);
-        dummy.rotation.set(base + 0.13 * time, i + 0.11 * time, 0.63 * i);
-        const size = (0.035 + 0.13 * Math.pow(hash(i, 2.73), 2)) * entrance;
-        dummy.scale.set(size * (i % 3 === 0 ? 1.8 : 1), size, size);
-        dummy.updateMatrix();
-        chips.setMatrixAt(i, dummy.matrix);
+      const spread = kind === "core" ? 1 + 0.35 * progress : kind === "token" ? 1 - 0.3 * progress : 1 + 0.12 * progress;
+      const fields: [THREE.InstancedMesh, Debris[]][] = [[shards, shardField], [chips, chipField]];
+      for (const [mesh, field] of fields) {
+        for (let i = 0; i < mesh.count; i++) {
+          const d = field[i];
+          // Entrance: flung out from the centre with an overshoot; afterwards the field breathes and drifts.
+          const launch = entranceFinished ? 1 : burst((time - d.delay) / 0.7);
+          const overshoot = entranceFinished ? 1 : 1 + 0.35 * Math.sin(clamp((time - d.delay) / 0.7, 0, 1) * Math.PI);
+          const breathe = 1 + 0.06 * Math.sin(time * 0.9 + d.wobble) + 0.04 * Math.sin(time * 2.3 + d.wobble * 1.7);
+          const dist = d.dist * launch * overshoot * spread * breathe;
+          dummy.position.copy(d.dir).multiplyScalar(dist);
+          dummy.position.x += 0.12 * Math.sin(time * 1.3 + d.wobble);
+          dummy.position.y += 0.1 * Math.cos(time * 1.1 + d.wobble * 2.1);
+          dummy.position.z += 0.08 * Math.sin(time * 1.7 + d.wobble * 0.6);
+          // Slow orbital drift so the field never freezes.
+          dummy.position.applyAxisAngle(AXIS_Y, time * 0.06 + 0.2 * progress);
+          const spin = time * d.tumble;
+          dummy.rotation.set(d.wobble + d.spin.x * spin, d.wobble * 1.3 + d.spin.y * spin, d.spin.z * spin);
+          const size = d.size * launch * (narrow ? 0.85 : 1);
+          dummy.scale.set(size * d.stretch.x, size * d.stretch.y, size * d.stretch.z);
+          dummy.updateMatrix();
+          mesh.setMatrixAt(i, dummy.matrix);
+        }
       }
       shards.instanceMatrix.needsUpdate = true;
       chips.instanceMatrix.needsUpdate = true;
