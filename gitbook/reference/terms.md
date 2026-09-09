@@ -1,6 +1,6 @@
 # Terms and disclosures
 
-The binding terms of use are published in the app at the Terms page of the app, and the plain-language description of how rewards are computed at [stockminer.fi/how-it-works](https://stockminer.fi/how-it-works) forms part of them. This page summarises the disclosures those documents make; if anything here differs from the app, the app governs.
+The binding terms of use are published on the app's Terms page, and the plain-language description of how rewards are computed at [stockminer.fi/how-it-works](https://stockminer.fi/how-it-works) forms part of them. This page summarises the disclosures those documents make; if anything here differs from the app, the app governs.
 
 ## Eligibility
 
