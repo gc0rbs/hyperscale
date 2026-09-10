@@ -50,14 +50,18 @@ not claimed rolls into the next pot.
   (`setCollects`: `curve.sweepFees(0)`, `hook.sweepPoolFees(poolId, 0, 0)`, `escrow.claim()`; a
   revert is swallowed, so nothing owed and a phase that is over are not errors). A flusher (the keeper
   key, holding only gas) calls `flush(minOut[])` every few minutes: the contract runs the collect
-  calls, wraps every ETH, splits the WETH across the four stocks by share (15/20/25/40 by default),
+  calls, wraps every ETH, pays the owner-set **cuts** in ETH off the top (`setCuts`: client decision
+  2026-09-10, of a 3% creator tax 2% funds the game and 0.5% goes to each of two wallets, so the cuts
+  are 1/6 + 1/6 of what the funder receives; cuts sum to less than 100%, a wallet that refuses ETH
+  reverts the flush until re-pointed), splits the remaining WETH across the four stocks by share
+  (15/20/25/40 by default),
   swaps directly against each stock's Uniswap v3 WETH pool (the contract is the swap caller and pays
   in `uniswapV3SwapCallback`, which only accepts a configured pool and only pays WETH), and funds
   every token bought into the running round in the same transaction. The minimums are quoted
   off-chain right before sending (simulate, then a 1% haircut); a moved price reverts the whole flush
   and the fees wait. No key ever holds the fees. The owner (the operator) can re-point pools and
-  shares (`setLegs`), re-wire the collect calls (`setCollects`), allow flushers, and sweep the
-  contract. A collect call can never target WETH, the mine or a configured pool.
+  shares (`setLegs`), re-wire the collect calls (`setCollects`), change the cuts (`setCuts`), allow
+  flushers, and sweep the contract. A collect call can never target WETH, the mine or a configured pool.
 - **Claim.** After round `r` closes, each rig that worked in it can `claim` during
   `[close, close + claimSeconds)` (900 s) and receives `pot[r][s] × rigWork[r] / roundWork[r]` of each
   stock as fragments (whole fragments; dust stays in the pot). Only the latest closed round is ever

@@ -712,6 +712,16 @@ landing page on desktop and mobile against the handoff.
 port is a faithful re-derivation, not a copy; the season-era screens (`RigCard`, `PurchaseSheet`,
 `mine/new`) still say RIG because season mode keeps its own dev token name; nothing live runs on it.
 
+## 2026-09-10 – FeeFunder cuts: ETH shares paid off the top of every flush
+
+**Shipped.** `IFeeFunder.Cut`, `setCuts` / `cutCount` / `cut`, `CutPaid` / `CutsSet`, `BadCuts` /
+`CutFailed`; `flush` unwraps the cut total and pays each wallet in ETH before the swaps, `wethIn` is
+what the legs spent. Two tests (12 FeeFunder, 109 total). `rounds-admin set-cuts --cuts a:bps,b:bps`
+and status shows the split. Docs 13 §2, runbook §2b, DECISIONS. Redeployed on 4663 (third funder;
+record and Railway updated). Copy: "a share of the creator fee".
+
+**Next.** The client names the two wallets: `set-cuts --cuts 0xA:1667,0xB:1667` from the operator.
+
 ## 2026-09-10 – FeeFunder for Pons V2: creator fee recipient, escrow claim
 
 **Shipped.** The client launches on Pons V2, so the V1 locker design (earlier today, below) was

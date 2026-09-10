@@ -12,7 +12,7 @@ parameters, one operator per environment.
 | Role | Env var | Powers |
 |---|---|---|
 | Deployer | `PRIVATE_KEY` | a gas-only key that deploys once; pass `--operator` so it holds no power afterwards |
-| Operator | `OPERATOR_KEY` (only where it is needed) | the mine's `operator` and the FeeFunder owner: `launch` (once), `halt`, vault `rescue`, `set-source`. Its key never has to touch a hosted environment: each of those is one transaction, also doable from the wallet through the explorer |
+| Operator | `OPERATOR_KEY` (only where it is needed) | the mine's `operator` and the FeeFunder owner: `launch` (once), `halt`, vault `rescue`, `set-source`, `set-cuts`. Its key never has to touch a hosted environment: each of those is one transaction, also doable from the wallet through the explorer |
 | FeeFunder (contract) | none | the Pons V2 creator fee recipient: `flush` sweeps and claims the creator fees from the Pons escrow, swaps and funds. No key |
 | Flusher | `FLUSHER_KEY` (the keeper key is fine) | calls `FeeFunder.flush` every few minutes with a quoted slippage bound; holds gas only |
 | Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet |
@@ -94,6 +94,17 @@ OPERATOR_KEY=0x… pnpm rounds-admin set-source --token 0x<VRAM> --yes    # setC
 pnpm rounds-admin status                                                # "3 collect calls wired", ETH claimable in the escrow
 FLUSHER_KEY=0x… pnpm flush-fees --once --dry-run                        # what the next flush would claim and buy
 ```
+
+To pay part of the fees to wallets (client decision 2026-09-10: of a 3% creator tax, 2% to the game
+and 0.5% to each of two wallets, i.e. one sixth each of what the funder receives):
+
+```
+OPERATOR_KEY=0x… pnpm rounds-admin set-cuts --cuts 0x<walletA>:1667,0x<walletB>:1667 --yes   # ETH, off the top of every flush
+OPERATOR_KEY=0x… pnpm rounds-admin set-cuts --cuts "" --yes                                  # clear: pots get 100%
+```
+
+Cuts are paid in ETH before the swaps; the pots get the remainder. Use plain wallets, not
+contracts that reject ETH (such a wallet reverts every flush until re-pointed).
 
 `set-source` reads the launch from the factory (curve, recipient, tax, buyback, phase), refuses a
 launch not quoted in ETH, warns if the recipient is not the funder or buyback is on, derives the

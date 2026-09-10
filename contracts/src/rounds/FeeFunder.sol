@@ -9,6 +9,7 @@ import {IRoundMine} from "../interfaces/IRoundMine.sol";
 
 interface IWETH9 {
     function deposit() external payable;
+    function withdraw(uint256) external;
 }
 
 interface IUniswapV3PoolMinimal {
@@ -36,6 +37,7 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
 
     uint256 internal constant BPS = 10_000;
     uint256 internal constant MAX_COLLECTS = 8;
+    uint256 internal constant MAX_CUTS = 8;
     /// @dev Uniswap v3 TickMath bounds: swap to the edge of the curve, `minOut` does the guarding.
     uint160 internal constant MIN_SQRT_RATIO_PLUS_ONE = 4295128740;
     uint160 internal constant MAX_SQRT_RATIO_MINUS_ONE = 1461446703485210103287273052203988822378723970341;
@@ -49,6 +51,7 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
     mapping(address => bool) internal _isPool;
     address[] internal _stocks;
     Collect[] internal _collects;
+    Cut[] internal _cuts;
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
@@ -70,7 +73,7 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
         }
     }
 
-    /// @dev The escrow's `claim` pays ETH here; a manual top-up may too.
+    /// @dev The escrow's `claim` and WETH's `withdraw` pay ETH here; a manual top-up may too.
     receive() external payable {}
 
     /// @inheritdoc IFeeFunder
@@ -90,9 +93,11 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
         // 2. Wrap ETH.
         uint256 ethBal = address(this).balance;
         if (ethBal > 0) IWETH9(weth).deposit{value: ethBal}();
-        // 3. Split all the WETH across the stock legs and fund the running round.
-        wethIn = IERC20(weth).balanceOf(address(this));
-        if (wethIn == 0) revert NothingToFlush();
+        uint256 total = IERC20(weth).balanceOf(address(this));
+        if (total == 0) revert NothingToFlush();
+        // 3. Pay the cuts in ETH off the top.
+        wethIn = total - _payCuts(total);
+        // 4. Split the rest across the stock legs and fund the running round.
         tokensOut = new uint256[](n);
         for (uint256 i; i < n; ++i) {
             Leg memory l = _legs[i];
@@ -143,6 +148,20 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
     }
 
     /// @inheritdoc IFeeFunder
+    function setCuts(Cut[] calldata cuts) external onlyOwner {
+        if (cuts.length > MAX_CUTS) revert BadCuts();
+        delete _cuts;
+        uint256 total;
+        for (uint256 i; i < cuts.length; ++i) {
+            if (cuts[i].to == address(0) || cuts[i].bps == 0) revert BadCuts();
+            total += cuts[i].bps;
+            _cuts.push(cuts[i]);
+        }
+        if (total >= BPS) revert BadCuts(); // the pots always get something
+        emit CutsSet(cuts);
+    }
+
+    /// @inheritdoc IFeeFunder
     function setFlusher(address flusher, bool allowed) external onlyOwner {
         flushers[flusher] = allowed;
         emit FlusherSet(flusher, allowed);
@@ -177,6 +196,14 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
         return _collects[i];
     }
 
+    function cutCount() external view returns (uint256) {
+        return _cuts.length;
+    }
+
+    function cut(uint256 i) external view returns (Cut memory) {
+        return _cuts[i];
+    }
+
     function pending() external view returns (uint256) {
         return address(this).balance + IERC20(weth).balanceOf(address(this));
     }
@@ -206,6 +233,28 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
             if (_isPool[_collects[i].target]) revert BadLegs(); // a collect target can never become a pool
         }
         emit LegsSet(legs);
+    }
+
+    /// @dev Pays every cut its share of `total`, unwrapped to ETH; returns the WETH spent on cuts.
+    ///      A wallet that refuses ETH reverts the flush (the owner re-points it with `setCuts`)
+    ///      rather than silently keeping its share.
+    function _payCuts(uint256 total) internal returns (uint256 paid) {
+        uint256 n = _cuts.length;
+        if (n == 0) return 0;
+        uint256[] memory amounts = new uint256[](n);
+        for (uint256 i; i < n; ++i) {
+            amounts[i] = (total * _cuts[i].bps) / BPS;
+            paid += amounts[i];
+        }
+        if (paid == 0) return 0;
+        IWETH9(weth).withdraw(paid);
+        for (uint256 i; i < n; ++i) {
+            if (amounts[i] == 0) continue;
+            address to = _cuts[i].to;
+            (bool ok,) = to.call{value: amounts[i]}("");
+            if (!ok) revert CutFailed(to);
+            emit CutPaid(to, amounts[i]);
+        }
     }
 
     /// @dev Exact-input swap of `amountIn` WETH on `pool`; returns the stock received.

@@ -34,25 +34,38 @@ interface IFeeFunder {
         bytes data;
     }
 
+    /// @dev A share of every flush paid out in ETH before the pots are bought (client decision
+    ///      2026-09-10: of a 3% creator tax, 2% funds the game and 0.5% goes to each of two wallets, so
+    ///      the cuts are 1/6 + 1/6 of what the funder receives). Cuts sum to less than 10_000; the
+    ///      remainder buys the pots.
+    struct Cut {
+        address to;
+        uint16 bps;
+    }
+
     error NotOwner();
     error NotFlusher();
     error NotPool();
     error BadLegs();
     error BadCollect();
+    error BadCuts();
+    error CutFailed(address to);
     error NothingToFlush();
     error Slippage(uint8 stock, uint256 out, uint256 minOut);
 
     event Flushed(address indexed by, uint256 wethIn, uint256[] tokensOut, uint64 round);
+    event CutPaid(address indexed to, uint256 amount);
+    event CutsSet(Cut[] cuts);
     event LegsSet(Leg[] legs);
     event CollectsSet(Collect[] collects);
     event FlusherSet(address indexed flusher, bool allowed);
     event Swept(address indexed to, address indexed token, uint256 amount);
 
-    /// @notice Run the collect calls, wrap all ETH, swap all WETH into the four stocks and fund the
-    ///         mine's running round. `minOut[i]` bounds leg i (the flusher quotes off-chain: simulate
+    /// @notice Run the collect calls, wrap all ETH, pay the cuts in ETH, swap the remaining WETH into
+    ///         the four stocks and fund the mine's running round. `minOut[i]` bounds leg i (the flusher quotes off-chain: simulate
     ///         with zeros, then send with a haircut). Reverts with `Slippage` if any swap pays less, and
     ///         with `NothingToFlush` when there is no WETH to spend after collecting.
-    /// @return wethIn total WETH spent on the legs (ETH collected and wrapped + WETH held)
+    /// @return wethIn WETH spent on the legs (everything collected and held, minus the cuts)
     /// @return tokensOut stock received and funded per leg
     function flush(uint256[] calldata minOut) external returns (uint256 wethIn, uint256[] memory tokensOut);
 
@@ -61,6 +74,8 @@ interface IFeeFunder {
     /// @notice Wire the Pons collect calls once the token exists (and re-point them if Pons changes).
     ///         At most 8; a target may not be zero, WETH, a configured pool or the mine.
     function setCollects(Collect[] calldata collects) external;
+    /// @notice Set the cuts paid out of every flush (at most 8, non-zero wallets, summing to < 10_000).
+    function setCuts(Cut[] calldata cuts) external;
     function setFlusher(address flusher, bool allowed) external;
     /// @notice Move ETH (`token == address(0)`) or any token held here to `to`.
     function sweep(address token, address to, uint256 amount) external;
@@ -74,6 +89,8 @@ interface IFeeFunder {
     function leg(uint256 i) external view returns (Leg memory);
     function collectCount() external view returns (uint256);
     function collect(uint256 i) external view returns (Collect memory);
+    function cutCount() external view returns (uint256);
+    function cut(uint256 i) external view returns (Cut memory);
     /// @notice ETH plus WETH held here, waiting to be flushed (what the escrow still holds for this
     ///         contract is not included; simulate `flush` to see the whole picture).
     function pending() external view returns (uint256);
