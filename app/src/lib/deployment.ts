@@ -86,7 +86,9 @@ export function getRoundsDeployment(): RoundsDeployment | null {
     return {
       kind: "rounds",
       chainId,
-      rig: envAddress("NEXT_PUBLIC_RIG_ADDRESS"),
+      // Pre-launch the token does not exist: the rounds UI reads `params().rig` from the chain, so the
+      // variable is optional here (docs/13 §2 "Pre-token deployment").
+      rig: rt("NEXT_PUBLIC_RIG_ADDRESS") ? envAddress("NEXT_PUBLIC_RIG_ADDRESS") : ("0x0000000000000000000000000000000000000000" as Address),
       usdc: envAddress("NEXT_PUBLIC_USDC_ADDRESS"),
       eligibility: envAddress("NEXT_PUBLIC_ELIGIBILITY_ADDRESS"),
       mine: envAddress("NEXT_PUBLIC_ROUNDS_MINE_ADDRESS"),
