@@ -313,10 +313,47 @@ The token symbol was left as $RIG at the time; superseded by the 2026-09-09 deci
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
 
-## 2026-09-10 – How Pons actually pays fees; the FeeFunder collects from the Pons locker
+## 2026-09-10 – Pons V2: the FeeFunder is the creator fee recipient and claims from the escrow
+
+**Supersedes the entry below (same day).** The client launches on **Pons V2**, not V1; the V1
+findings below were verified but describe the wrong product.
+
+**Finding (verified on chain 4663 from the verified `PonsV2LaunchFactory` `0x7eD5…EC7e`,
+`PonsV2BondingCurve`, `PonsV2MemeHook` `0xE5e7…e044` and `PonsV2FeeEscrow` `0xd3AF…Ac9e`
+sources).** A V2 launch names a `creatorFeeRecipient` (defaulting to the launching wallet) and a
+`creatorTaxBps` of up to 1000 (10%) charged on every trade on top of the 1% base fee (creator share
+70%). Trading starts on a bonding curve quoted in native ETH and graduates into a Uniswap v4 pool with
+the Pons meme hook. Both phases pay the creator in ETH, and neither pushes it: the curve's
+`sweepFees` and the hook's `sweepPoolFees` credit the recipient in the shared fee escrow, from which
+the recipient must `claim()` (a claim with nothing credited reverts). Sweeps are the Pons sweep
+operator's; the recipient may also sweep when no internal swap is needed (in practice the curve when
+buyback is off, and the hook only when no memecoin-side fee is pending). The recipient can be changed
+later only by the current recipient (`transferCreatorFeeRecipient`) or by the Pons owner with a 3-day
+timelock. With buyback on, part of the creator fee is locked as a five-year vest instead of paid. The
+initial buy at launch goes to the launching wallet, not to the fee recipient (the user was right).
+
+**Decision.** `FeeFunder` is entered as the **creator fee recipient at launch** (no "leave the field
+empty" step: that advice was V1's). It gains owner-set **collect calls** (`setCollects`, at most
+eight `(target, data)` pairs made with no value and reverts swallowed, never targeting WETH, the mine
+or a configured pool) that run at the start of every `flush`: `curve.sweepFees(0)`,
+`hook.sweepPoolFees(poolId, 0, 0)`, `escrow.claim()`. The token-sale leg is removed (V2 pays ETH only,
+and the graduated pool is Uniswap v4, which the funder's v3 swap could not use anyway):
+`flush(minOut[])` returns `(wethIn, tokensOut)`. `rounds-admin set-source --token` reads the launch
+from the V2 factory, checks the recipient, the ETH quote and buyback, derives the v4 pool id and sets
+the calls. The Anvil demo models the escrow and a sweeper (`MockPonsV2.sol`). The chain profile's
+`external` block now names the V2 factory, escrow and hook; V1's factory and locker are dropped.
+Recommendation to the client: buyback off, creator tax as high as the market bears (it is the whole
+pot beyond the base-fee share).
+
+**Consequences.** The FeeFunder deployed on 2026-09-10 (`0x5d4B…d60B`, V1 shape) cannot claim from the
+escrow and is replaced by a new deployment; the mine, fragments and vault are unchanged (the funder is
+not referenced by them). Fee arrival depends on Pons' sweep cadence during the hook phase when
+memecoin-side fees are pending; the flusher claims whatever has been swept every five minutes.
+
+## 2026-09-10 – (superseded, Pons V1) How Pons pays fees; the FeeFunder collects from the Pons locker
 
 **Finding (verified on chain 4663 from the verified `PonsLaunchFactory` and `PonsLaunchLocker`
-sources).** A Pons token is a plain ERC-20 with no transfer tax, so there is no "3% / 5% tax" to point
+sources; these are the V1 contracts, which the client does not use).** A Pons token is a plain ERC-20 with no transfer tax, so there is no "3% / 5% tax" to point
 at a recipient. The launch puts the full supply into a Uniswap v3 position (WETH pair, 1% fee tier)
 locked in the Pons locker. The creator's revenue is the pool fee on every trade minus the Pons
 protocol share (30% today, capped at 50%): about 0.7% of volume, paid half in WETH and half in the

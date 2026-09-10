@@ -64,7 +64,7 @@ export interface ChainProfile {
   eligibility?: Address;
   treasury?: Address;
   stocks?: Record<string, Address>;
-  /** Chain-wide contracts the round mine's funder uses: weth, uniswapV3Factory, ponsFactory, ponsLocker. */
+  /** Chain-wide contracts the round mine's funder uses: weth, uniswapV3Factory, ponsFactory, ponsFeeEscrow, ponsMemeHook. */
   external?: Record<string, Address>;
 }
 

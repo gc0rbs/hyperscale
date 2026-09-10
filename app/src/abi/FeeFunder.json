@@ -53,13 +53,52 @@
   },
   {
     "type": "function",
-    "name": "flush",
+    "name": "collect",
     "inputs": [
       {
-        "name": "minWethFromToken",
+        "name": "i",
         "type": "uint256",
         "internalType": "uint256"
-      },
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IFeeFunder.Collect",
+        "components": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "data",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "collectCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "flush",
+    "inputs": [
       {
         "name": "minOut",
         "type": "uint256[]",
@@ -69,11 +108,6 @@
     "outputs": [
       {
         "name": "wethIn",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "wethFromToken",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -194,16 +228,28 @@
   },
   {
     "type": "function",
-    "name": "pendingToken",
-    "inputs": [],
-    "outputs": [
+    "name": "setCollects",
+    "inputs": [
       {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "collects",
+        "type": "tuple[]",
+        "internalType": "struct IFeeFunder.Collect[]",
+        "components": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "data",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
       }
     ],
-    "stateMutability": "view"
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -252,66 +298,6 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setSource",
-    "inputs": [
-      {
-        "name": "s",
-        "type": "tuple",
-        "internalType": "struct IFeeFunder.Source",
-        "components": [
-          {
-            "name": "locker",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "token",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "pool",
-            "type": "address",
-            "internalType": "address"
-          }
-        ]
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "source",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct IFeeFunder.Source",
-        "components": [
-          {
-            "name": "locker",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "token",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "pool",
-            "type": "address",
-            "internalType": "address"
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -374,6 +360,31 @@
   },
   {
     "type": "event",
+    "name": "CollectsSet",
+    "inputs": [
+      {
+        "name": "collects",
+        "type": "tuple[]",
+        "indexed": false,
+        "internalType": "struct IFeeFunder.Collect[]",
+        "components": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "data",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Flushed",
     "inputs": [
       {
@@ -384,12 +395,6 @@
       },
       {
         "name": "wethIn",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "tokenIn",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -460,31 +465,6 @@
   },
   {
     "type": "event",
-    "name": "SourceSet",
-    "inputs": [
-      {
-        "name": "locker",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "token",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "pool",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Swept",
     "inputs": [
       {
@@ -510,12 +490,12 @@
   },
   {
     "type": "error",
-    "name": "BadLegs",
+    "name": "BadCollect",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "BadSource",
+    "name": "BadLegs",
     "inputs": []
   },
   {
@@ -563,22 +543,6 @@
         "type": "uint8",
         "internalType": "uint8"
       },
-      {
-        "name": "out",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "minOut",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "TokenSlippage",
-    "inputs": [
       {
         "name": "out",
         "type": "uint256",

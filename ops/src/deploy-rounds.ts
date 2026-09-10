@@ -20,6 +20,7 @@ import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseE
 import { artifact, REPO_ROOT } from "./lib/artifacts.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { ANVIL_KEYS, arg, chainId, clients, DEPLOYMENTS, hasFlag, loadAdapters, loadChainProfile } from "./lib/season.js";
+import { ponsV2Collects, ponsV2PoolId } from "./lib/rounds.js";
 
 const WAD = 10n ** 18n;
 
@@ -40,13 +41,14 @@ export interface RoundsDeployment {
   mine: Address;
   fragments: Address;
   vault: Address;
-  /** FeeFunder: the Pons fee wallet. Redirect the token's creator fees here (rounds-admin set-source). */
+  /** FeeFunder: the Pons creator fee recipient. Name it at the Pons V2 launch, then wire it (rounds-admin set-source). */
   feeFunder: Address;
   weth: Address;
   pools: Address[];
-  /** Pons: the locker that pays the creator fee share, the launch factory, the Uniswap factory (mainnet). */
-  ponsLocker?: Address;
+  /** Pons V2: the launch factory, the fee escrow, the meme hook; the Uniswap v3 factory (mainnet). */
   ponsFactory?: Address;
+  ponsFeeEscrow?: Address;
+  ponsMemeHook?: Address;
   uniswapV3Factory?: Address;
   stocks: Address[];
   symbols: string[];
@@ -251,36 +253,31 @@ async function main() {
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
   if (!same(mine, mineAddr) || !same(fragments, fragAddr) || !same(vault, vaultAddr)) throw new Error("address prediction mismatch; the deployer sent another transaction in between");
 
-  // The FeeFunder: Pons pays its tax here; the flusher (keeper) turns it into the running round's pot.
+  // The FeeFunder: the Pons V2 creator fee recipient; the flusher (keeper) turns the fees into the running round's pot.
   const legs = stocks.map((_, i) => ({ pool: pools[i], stock: i, shareBps: shareBps[i] }));
   const flusher = (arg("--flusher") as Address | undefined) ?? (process.env.FLUSHER_ADDRESS as Address | undefined);
   const feeFunder = await deploy("FeeFunder.sol", "FeeFunder", [operator, mine, weth, legs, flusher ?? "0x0000000000000000000000000000000000000000"]);
-  console.log(`[rounds] FeeFunder ${feeFunder}: the Pons fee wallet. After the token launch: rounds-admin set-source --token 0x…, then the token deployer redirects fees here${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
-  let ponsLocker: Address | undefined;
+  console.log(`[rounds] FeeFunder ${feeFunder}: enter it as the CREATOR FEE RECIPIENT when launching the token on Pons V2, then rounds-admin set-source --token 0x…${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
   let ponsFactory: Address | undefined;
+  let ponsFeeEscrow: Address | undefined;
+  let ponsMemeHook: Address | undefined;
   let uniswapV3Factory: Address | undefined;
   if (stage === "demo") {
-    // The Pons side on Anvil: a locker that pays the fee share and the token's own WETH pool, wired
-    // exactly as mainnet will be (deployer redirects fees to the funder; owner sets the source).
-    const locker = await deploy("MockPonsLocker.sol", "MockPonsLocker", [weth]);
-    const wethFirst = weth.toLowerCase() < rig.toLowerCase();
-    const rigPerEth = 1_000_000n;
-    const rigPool = await deploy("MockV3Pool.sol", "MockV3Pool", [weth, rig, 10_000, wethFirst ? rigPerEth * WAD : (WAD * WAD) / (rigPerEth * WAD)]);
-    await send("MockWETH.sol", "MockWETH", weth, "deposit", [], parseEther("5"));
-    await send("MockWETH.sol", "MockWETH", weth, "transfer", [rigPool, parseEther("5")]);
-    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "register", [rig, account.address]);
-    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "setFeeRedirect", [rig, feeFunder]);
-    await send("FeeFunder.sol", "FeeFunder", feeFunder, "setSource", [{ locker, token: rig, pool: rigPool }]);
-    // A first hour of "trading": the locker owes the funder 0.5 WETH and 200k tokens (flush-fees --once collects it).
-    await send("MockWETH.sol", "MockWETH", weth, "deposit", [], parseEther("0.5"));
-    await send("MockWETH.sol", "MockWETH", weth, "transfer", [locker, parseEther("0.5")]);
-    await send("RIG.sol", "RIG", rig, "transfer", [locker, parseEther("200000")]);
-    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "accrue", [rig, parseEther("0.5"), parseEther("200000")]);
-    ponsLocker = locker;
+    // The Pons V2 side on Anvil: the fee escrow and a "hook" holding the pending creator fees, launched
+    // with the funder as the creator fee recipient; the owner wires the collect calls as mainnet will.
+    const escrow = await deploy("MockPonsV2.sol", "MockFeeEscrow", []);
+    const hook = await deploy("MockPonsV2.sol", "MockPonsSweeper", [escrow, account.address, feeFunder]);
+    const poolId = ponsV2PoolId(rig, "0x0000000000000000000000000000000000000000", 0, 200, hook);
+    await send("FeeFunder.sol", "FeeFunder", feeFunder, "setCollects", [ponsV2Collects(hook, hook, poolId, escrow)]);
+    // A first hour of "trading": 0.5 ETH of creator fees pend on the hook (flush-fees --once sweeps and claims it).
+    await send("MockPonsV2.sol", "MockPonsSweeper", hook, "accrue", [], parseEther("0.5"));
+    ponsFeeEscrow = escrow;
+    ponsMemeHook = hook;
   } else if (stage === "mainnet") {
     const ext = (loadChainProfile(arg("--chain", "robinhood")!).external ?? {}) as Record<string, Address>;
-    ponsLocker = ext.ponsLocker;
     ponsFactory = ext.ponsFactory;
+    ponsFeeEscrow = ext.ponsFeeEscrow;
+    ponsMemeHook = ext.ponsMemeHook;
     uniswapV3Factory = ext.uniswapV3Factory;
   }
 
@@ -310,7 +307,7 @@ async function main() {
   }
 
   const out: RoundsDeployment = {
-    chainId: id, operator, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, ponsLocker, ponsFactory, uniswapV3Factory, stocks, symbols: syms,
+    chainId: id, operator, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, ponsFactory, ponsFeeEscrow, ponsMemeHook, uniswapV3Factory, stocks, symbols: syms,
     genesis, roundSeconds, claimSeconds, block: Number(await pub.getBlockNumber()), params, paramsHash: roundParamsHash(params),
   };
   const p = join(DEPLOYMENTS, `${id}-rounds.json`);
