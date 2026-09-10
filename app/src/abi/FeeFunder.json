@@ -38,6 +38,11 @@
             "internalType": "uint16"
           }
         ]
+      },
+      {
+        "name": "flusher_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"

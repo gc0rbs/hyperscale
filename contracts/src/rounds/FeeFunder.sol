@@ -59,13 +59,19 @@ contract FeeFunder is IFeeFunder, ReentrancyGuard {
         _;
     }
 
-    constructor(address owner_, address mine_, address weth_, Leg[] memory legs) {
+    /// @param flusher_ first allowed flusher (zero for none): lets a deploy-only key wire the keeper
+    ///        while `owner_` (the operator, whose key never touches a deploy host) keeps every power.
+    constructor(address owner_, address mine_, address weth_, Leg[] memory legs, address flusher_) {
         if (owner_ == address(0) || mine_ == address(0) || weth_ == address(0)) revert BadLegs();
         owner = owner_;
         mine = mine_;
         weth = weth_;
         _stocks = IRoundMine(mine_).params().stocks;
         _setLegs(legs);
+        if (flusher_ != address(0)) {
+            flushers[flusher_] = true;
+            emit FlusherSet(flusher_, true);
+        }
     }
 
     /// @dev Plain ETH is accepted too (a Pons flow or a manual top-up may pay ETH instead of WETH).

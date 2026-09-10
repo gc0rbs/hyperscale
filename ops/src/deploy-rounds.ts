@@ -16,7 +16,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseEther, type Address } from "viem";
+import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseEther, type Address, encodeDeployData } from "viem";
 import { artifact, REPO_ROOT } from "./lib/artifacts.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { ANVIL_KEYS, arg, chainId, clients, DEPLOYMENTS, hasFlag, loadAdapters, loadChainProfile } from "./lib/season.js";
@@ -156,6 +156,7 @@ async function main() {
   }
 
   let rig: Address, usdc: Address, oracle: Address, eligibility: Address, treasury: Address, stocks: Address[];
+  let operator: Address = account.address;
   let genesis: number;
   let weth: Address;
   let pools: Address[] = [];
@@ -200,6 +201,10 @@ async function main() {
     oracle = (chain.oracle && !zero.test(chain.oracle) ? chain.oracle : adapters?.oracle) as Address;
     eligibility = (chain.eligibility && !zero.test(chain.eligibility) ? chain.eligibility : adapters?.eligibility) as Address;
     treasury = (arg("--treasury") ?? chain.treasury) as Address;
+    // The operator (launch, halt, rescue, FeeFunder owner) may be a wallet whose key never touches this
+    // host: pass --operator and deploy from a gas-only key. Default: the deployer.
+    operator = (arg("--operator") as Address | undefined) ?? account.address;
+    if (!/^0x[0-9a-fA-F]{40}$/.test(operator) || zero.test(operator)) throw new Error("--operator must be an address");
     stocks = syms.map((s) => chain.stocks?.[s] as Address);
     for (const [k, v] of Object.entries({ usdc, oracle, eligibility, treasury })) if (!v || zero.test(v)) throw new Error(`profile is missing ${k}`);
     if (!prelaunch && (!/^0x[0-9a-fA-F]{40}$/.test(rig) || zero.test(rig))) throw new Error("pass --rig <the $VRAM address> (the chain profile's rig is not used), or --prelaunch to deploy before the token exists");
@@ -226,7 +231,7 @@ async function main() {
   const baseUri = arg("--base-uri", stage === "demo" ? "http://localhost:3000/api/frag/{id}.json" : (process.env.FRAG_BASE_URI ?? "https://www.hyperscaling.xyz/api/frag/{id}.json"));
   if (!baseUri || !/^https?:\/\/\S+\{id\}\S*$/.test(baseUri)) throw new Error("mainnet needs a valid --base-uri https://www.hyperscaling.xyz/api/frag/{id}.json (or FRAG_BASE_URI): it is immutable on the fragments contract");
   const vaultConfig = {
-    mine: mineAddr, fragments: fragAddr, usdc, eligibility, oracle, operator: account.address,
+    mine: mineAddr, fragments: fragAddr, usdc, eligibility, oracle, operator,
     cashOutFeeBps: Number(tpl.cashOutFeeBps), fragPerToken: BigInt(params.fragPerToken), maxPriceAge: Number(tpl.maxPriceAgeSeconds), stocks,
   };
   console.log(`[rounds] genesis ${genesis} (${new Date(genesis * 1000).toISOString()}) round ${roundSeconds}s claim ${claimSeconds}s`);
@@ -234,11 +239,13 @@ async function main() {
   console.log(`[rounds] paramsHash ${roundParamsHash(params)}`);
   if (hasFlag("--dry-run")) {
     const a = artifact("RoundMine.sol", "RoundMine");
-    await pub.call({ account, data: a.bytecode, to: undefined }).catch((e: Error) => { throw new Error(`RoundMine creation simulation failed: ${e.message}`); });
+    const data = encodeDeployData({ abi: a.abi, bytecode: a.bytecode, args: [roundParamsStruct(params), operator, fragAddr, vaultAddr] });
+    await pub.call({ account, data, to: undefined }).catch((e: Error) => { throw new Error(`RoundMine creation simulation failed: ${e.message.split("\n")[0]}`); });
     console.log("[rounds] --dry-run: not broadcasting");
     return;
   }
-  const mine = await deploy("RoundMine.sol", "RoundMine", [roundParamsStruct(params), account.address, fragAddr, vaultAddr]);
+  console.log(`[rounds] operator ${operator}${operator.toLowerCase() === account.address.toLowerCase() ? " (the deployer)" : " (not the deployer: launch, halt and rescue need its key)"}`);
+  const mine = await deploy("RoundMine.sol", "RoundMine", [roundParamsStruct(params), operator, fragAddr, vaultAddr]);
   const fragments = await deploy("StockFragments.sol", "StockFragments", [mineAddr, vaultAddr, stocks, BigInt(params.fragPerToken), false, baseUri]);
   const vault = await deploy("RoundVault.sol", "RoundVault", [vaultConfig]);
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
@@ -246,9 +253,8 @@ async function main() {
 
   // The FeeFunder: Pons pays its tax here; the flusher (keeper) turns it into the running round's pot.
   const legs = stocks.map((_, i) => ({ pool: pools[i], stock: i, shareBps: shareBps[i] }));
-  const feeFunder = await deploy("FeeFunder.sol", "FeeFunder", [account.address, mine, weth, legs]);
   const flusher = (arg("--flusher") as Address | undefined) ?? (process.env.FLUSHER_ADDRESS as Address | undefined);
-  if (flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [flusher, true]);
+  const feeFunder = await deploy("FeeFunder.sol", "FeeFunder", [operator, mine, weth, legs, flusher ?? "0x0000000000000000000000000000000000000000"]);
   console.log(`[rounds] FeeFunder ${feeFunder}: the Pons fee wallet. After the token launch: rounds-admin set-source --token 0x…, then the token deployer redirects fees here${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
   let ponsLocker: Address | undefined;
   let ponsFactory: Address | undefined;
@@ -293,7 +299,7 @@ async function main() {
       await send("MockStockToken.sol", "MockStockToken", s, "approve", [mine, pot0 + keep]);
     }
     for (let i = 0; i < 4; i++) await send("RoundMine.sol", "RoundMine", mine, "fund", [i, pot0]);
-    if (!flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [accounts[1], true]); // Anvil #1 flushes on the demo
+    if (!flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [accounts[1], true]); // Anvil #1 flushes on the demo (deployer is the owner on the demo)
     await send("MockERC20.sol", "MockERC20", usdc, "mint", [account.address, 50_000n * 10n ** 6n]);
     await send("MockERC20.sol", "MockERC20", usdc, "approve", [vault, 50_000n * 10n ** 6n]);
     await send("RoundVault.sol", "RoundVault", vault, "topUpReserve", [50_000n * 10n ** 6n]);
@@ -304,7 +310,7 @@ async function main() {
   }
 
   const out: RoundsDeployment = {
-    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, ponsLocker, ponsFactory, uniswapV3Factory, stocks, symbols: syms,
+    chainId: id, operator, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, ponsLocker, ponsFactory, uniswapV3Factory, stocks, symbols: syms,
     genesis, roundSeconds, claimSeconds, block: Number(await pub.getBlockNumber()), params, paramsHash: roundParamsHash(params),
   };
   const p = join(DEPLOYMENTS, `${id}-rounds.json`);
