@@ -33,3 +33,5 @@ app/playwright-report/
 
 # Mainnet deployment records are tracked (Railway snapshots honor this file, so they must not be ignored)
 !contracts/deployments/4663*.json
+app/.shot.tmp.mjs
+ops/verify/
