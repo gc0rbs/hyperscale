@@ -711,3 +711,20 @@ landing page on desktop and mobile against the handoff.
 **Known gaps.** The handoff's original source was not available (only the built site), so the scene
 port is a faithful re-derivation, not a copy; the season-era screens (`RigCard`, `PurchaseSheet`,
 `mine/new`) still say RIG because season mode keeps its own dev token name; nothing live runs on it.
+
+## 2026-09-10 – FeeFunder collects from the Pons locker
+
+**Shipped.** Verified the Pons fee mechanics on chain (DECISIONS 2026-09-10) and rebuilt the funding
+path on them: `IFeeFunder.Source` + `setSource`, `flush(minWethFromToken, minOut[])` collecting from
+the locker and selling the token half, per-pool pay-asset in the swap callback, `pendingToken`;
+`MockPonsLocker`; 10 FeeFunder tests (97 total); `flush-fees` quotes both bounds from the simulation
+and waits until a flush would spend `--min-eth`; `rounds-admin set-source` and status; the Anvil demo
+wires a mock locker and a token pool and accrues a first hour of fees; runbook §2b; copy says fees,
+not tax.
+
+**Next.** Deploy adapters and the round mine with `--prelaunch`; after the Pons launch: `set-source`,
+the deployer's `setFeeRedirect`, then the keeper and flusher services.
+
+**Known gaps.** The Pons factory at the profile address has public launches disabled; if the client
+launches through another Pons factory, pass `--pool`/`--locker` to `set-source` explicitly. Whether
+the Pons UI exposes the creator-wallet redirect is unverified; the `cast` command is the fallback.

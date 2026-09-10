@@ -40,10 +40,14 @@ export interface RoundsDeployment {
   mine: Address;
   fragments: Address;
   vault: Address;
-  /** FeeFunder: the Pons tax recipient. Set this address as the recipient on Pons. */
+  /** FeeFunder: the Pons fee wallet. Redirect the token's creator fees here (rounds-admin set-source). */
   feeFunder: Address;
   weth: Address;
   pools: Address[];
+  /** Pons: the locker that pays the creator fee share, the launch factory, the Uniswap factory (mainnet). */
+  ponsLocker?: Address;
+  ponsFactory?: Address;
+  uniswapV3Factory?: Address;
   stocks: Address[];
   symbols: string[];
   genesis: number;
@@ -144,9 +148,9 @@ async function main() {
     console.log(`[rounds] ${name} ${r.contractAddress} gas=${r.gasUsed}`);
     return r.contractAddress;
   }
-  async function send(file: string, name: string, address: Address, functionName: string, args: unknown[]) {
+  async function send(file: string, name: string, address: Address, functionName: string, args: unknown[], value?: bigint) {
     const a = artifact(file, name);
-    const hash = await wallet.writeContract({ abi: a.abi, address, functionName, args });
+    const hash = await wallet.writeContract({ abi: a.abi, address, functionName, args, value });
     const r = await pub.waitForTransactionReceipt({ hash });
     if (r.status !== "success") throw new Error(`${name}.${functionName} reverted (${hash})`);
   }
@@ -245,7 +249,34 @@ async function main() {
   const feeFunder = await deploy("FeeFunder.sol", "FeeFunder", [account.address, mine, weth, legs]);
   const flusher = (arg("--flusher") as Address | undefined) ?? (process.env.FLUSHER_ADDRESS as Address | undefined);
   if (flusher) await send("FeeFunder.sol", "FeeFunder", feeFunder, "setFlusher", [flusher, true]);
-  console.log(`[rounds] FeeFunder ${feeFunder}: set this address as the Pons tax recipient${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
+  console.log(`[rounds] FeeFunder ${feeFunder}: the Pons fee wallet. After the token launch: rounds-admin set-source --token 0x…, then the token deployer redirects fees here${flusher ? `; flusher ${flusher}` : "; no flusher set yet (rounds-admin set-flusher)"}`);
+  let ponsLocker: Address | undefined;
+  let ponsFactory: Address | undefined;
+  let uniswapV3Factory: Address | undefined;
+  if (stage === "demo") {
+    // The Pons side on Anvil: a locker that pays the fee share and the token's own WETH pool, wired
+    // exactly as mainnet will be (deployer redirects fees to the funder; owner sets the source).
+    const locker = await deploy("MockPonsLocker.sol", "MockPonsLocker", [weth]);
+    const wethFirst = weth.toLowerCase() < rig.toLowerCase();
+    const rigPerEth = 1_000_000n;
+    const rigPool = await deploy("MockV3Pool.sol", "MockV3Pool", [weth, rig, 10_000, wethFirst ? rigPerEth * WAD : (WAD * WAD) / (rigPerEth * WAD)]);
+    await send("MockWETH.sol", "MockWETH", weth, "deposit", [], parseEther("5"));
+    await send("MockWETH.sol", "MockWETH", weth, "transfer", [rigPool, parseEther("5")]);
+    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "register", [rig, account.address]);
+    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "setFeeRedirect", [rig, feeFunder]);
+    await send("FeeFunder.sol", "FeeFunder", feeFunder, "setSource", [{ locker, token: rig, pool: rigPool }]);
+    // A first hour of "trading": the locker owes the funder 0.5 WETH and 200k tokens (flush-fees --once collects it).
+    await send("MockWETH.sol", "MockWETH", weth, "deposit", [], parseEther("0.5"));
+    await send("MockWETH.sol", "MockWETH", weth, "transfer", [locker, parseEther("0.5")]);
+    await send("RIG.sol", "RIG", rig, "transfer", [locker, parseEther("200000")]);
+    await send("MockPonsLocker.sol", "MockPonsLocker", locker, "accrue", [rig, parseEther("0.5"), parseEther("200000")]);
+    ponsLocker = locker;
+  } else if (stage === "mainnet") {
+    const ext = (loadChainProfile(arg("--chain", "robinhood")!).external ?? {}) as Record<string, Address>;
+    ponsLocker = ext.ponsLocker;
+    ponsFactory = ext.ponsFactory;
+    uniswapV3Factory = ext.uniswapV3Factory;
+  }
 
   if (stage === "demo") {
     // Allowlist the vault and the Anvil accounts on every mock stock, fund a day of rounds, top up the reserve.
@@ -273,7 +304,7 @@ async function main() {
   }
 
   const out: RoundsDeployment = {
-    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, stocks, symbols: syms,
+    chainId: id, operator: account.address, rig, usdc, oracle, eligibility, mine, fragments, vault, feeFunder, weth, pools, ponsLocker, ponsFactory, uniswapV3Factory, stocks, symbols: syms,
     genesis, roundSeconds, claimSeconds, block: Number(await pub.getBlockNumber()), params, paramsHash: roundParamsHash(params),
   };
   const p = join(DEPLOYMENTS, `${id}-rounds.json`);

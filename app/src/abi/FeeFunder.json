@@ -51,12 +51,27 @@
     "name": "flush",
     "inputs": [
       {
+        "name": "minWethFromToken",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
         "name": "minOut",
         "type": "uint256[]",
         "internalType": "uint256[]"
       }
     ],
     "outputs": [
+      {
+        "name": "wethIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "wethFromToken",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
       {
         "name": "tokensOut",
         "type": "uint256[]",
@@ -174,6 +189,19 @@
   },
   {
     "type": "function",
+    "name": "pendingToken",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "setFlusher",
     "inputs": [
       {
@@ -219,6 +247,66 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setSource",
+    "inputs": [
+      {
+        "name": "s",
+        "type": "tuple",
+        "internalType": "struct IFeeFunder.Source",
+        "components": [
+          {
+            "name": "locker",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "pool",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "source",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IFeeFunder.Source",
+        "components": [
+          {
+            "name": "locker",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "pool",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -290,7 +378,13 @@
         "internalType": "address"
       },
       {
-        "name": "ethIn",
+        "name": "wethIn",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "tokenIn",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -361,6 +455,31 @@
   },
   {
     "type": "event",
+    "name": "SourceSet",
+    "inputs": [
+      {
+        "name": "locker",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "pool",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Swept",
     "inputs": [
       {
@@ -387,6 +506,11 @@
   {
     "type": "error",
     "name": "BadLegs",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadSource",
     "inputs": []
   },
   {
@@ -434,6 +558,22 @@
         "type": "uint8",
         "internalType": "uint8"
       },
+      {
+        "name": "out",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "minOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "TokenSlippage",
+    "inputs": [
       {
         "name": "out",
         "type": "uint256",
