@@ -5,6 +5,7 @@
  *   pnpm --filter @stock-miner/ops rounds-admin status
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin launch --token 0x… [--genesis next-hour] --yes   # pre-token deployments, once
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin set-source --token 0x… [--factory 0x…] --yes   # wire the Pons V2 collect calls after the token launch
+ *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin set-cuts --cuts 0x<walletA>:1667,0x<walletB>:1667 --yes   # ETH shares paid off the top of every flush (empty --cuts clears)
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin halt [--yes]
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin rescue [--yes]       # after halt
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
@@ -41,7 +42,7 @@ async function main() {
   async function broadcast(label: string, address: Address, abi: typeof roundMineAbi, fn: string, args: unknown[] = []) {
     // Everything but poke/halt reverts with NotCaughtUp while boundaries are unrecorded (docs/13 §2):
     // poke first when broadcasting (a dry run only reports it, since the simulation would fail).
-    if (fn !== "halt" && fn !== "rescue" && fn !== "launch" && fn !== "setFlusher" && fn !== "setCollects") {
+    if (fn !== "halt" && fn !== "rescue" && fn !== "launch" && fn !== "setFlusher" && fn !== "setCollects" && fn !== "setCuts") {
       if (yes) await catchUp(pub, wallet, dep.mine, TAG);
       else if (now >= dep.genesis && closed < current) console.log(`${TAG} mine is ${current - closed} rounds behind; the real run pokes first`);
     }
@@ -83,12 +84,15 @@ async function main() {
     console.log(`${TAG} vault USDG reserve ${formatUnits(reserve, udec)}`);
     if (dep.feeFunder) {
       const funder = { abi: feeFunderAbi, address: dep.feeFunder } as const;
-      const [pendingEth, collects] = await Promise.all([
+      const [pendingEth, collects, cutCount] = await Promise.all([
         pub.readContract({ ...funder, functionName: "pending" }) as Promise<bigint>,
         pub.readContract({ ...funder, functionName: "collectCount" }) as Promise<bigint>,
+        pub.readContract({ ...funder, functionName: "cutCount" }) as Promise<bigint>,
       ]);
+      const cuts = await Promise.all(Array.from({ length: Number(cutCount) }, (_, i) => pub.readContract({ ...funder, functionName: "cut", args: [BigInt(i)] }) as Promise<{ to: Address; bps: number }>));
+      const cutBps = cuts.reduce((a, c) => a + c.bps, 0);
       const escrowed = dep.ponsFeeEscrow ? (await pub.readContract({ abi: ponsV2EscrowAbi, address: dep.ponsFeeEscrow, functionName: "balanceOf", args: [dep.feeFunder] })) : undefined;
-      console.log(`${TAG} FeeFunder ${dep.feeFunder} (Pons creator fee recipient): ${formatUnits(pendingEth, 18)} ETH/WETH held${escrowed !== undefined ? ` + ${formatUnits(escrowed, 18)} ETH claimable in the Pons escrow` : ""}; ${collects > 0n ? `${collects} collect calls wired` : "NOT WIRED (rounds-admin set-source after the token launch)"}`);
+      console.log(`${TAG} FeeFunder ${dep.feeFunder} (Pons creator fee recipient): ${formatUnits(pendingEth, 18)} ETH/WETH held${escrowed !== undefined ? ` + ${formatUnits(escrowed, 18)} ETH claimable in the Pons escrow` : ""}; ${collects > 0n ? `${collects} collect calls wired` : "NOT WIRED (rounds-admin set-source after the token launch)"}; cuts ${cuts.length ? cuts.map((c) => `${c.to} ${(c.bps / 100).toFixed(2)}%`).join(", ") + ` (pots get ${((10_000 - cutBps) / 100).toFixed(2)}%)` : "none (pots get 100%)"}`);
     }
     return;
   }
@@ -208,7 +212,27 @@ async function main() {
     return;
   }
 
-  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause | set-flusher --address 0x… [--revoke] | set-source --token 0x… [--factory 0x…]  [--yes]");
+  if (cmd === "set-cuts") {
+    requireKey(operator, "operator", "OPERATOR_KEY");
+    if (!dep.feeFunder) throw new Error("no FeeFunder in the deployment");
+    const spec = arg("--cuts", "")!;
+    const cuts = spec.split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
+      const [to, bps] = s.split(":");
+      if (!/^0x[0-9a-fA-F]{40}$/.test(to ?? "") || !/^\d+$/.test(bps ?? "")) throw new Error(`bad cut "${s}": expected 0x<wallet>:<bps>`);
+      return { to: to as Address, bps: Number(bps) };
+    });
+    const total = cuts.reduce((a, c) => a + c.bps, 0);
+    if (total >= 10_000) throw new Error(`cuts sum to ${total} bps; the pots must keep something`);
+    for (const c of cuts) {
+      const code = await pub.getCode({ address: c.to });
+      if (code && code !== "0x") console.log(`${TAG} WARNING: ${c.to} is a contract; it must accept plain ETH or every flush reverts (CutFailed)`);
+    }
+    console.log(`${TAG} SET CUTS on FeeFunder ${dep.feeFunder}: ${cuts.length ? cuts.map((c) => `${c.to} ${(c.bps / 100).toFixed(2)}%`).join(", ") : "none"}; the pots get ${((10_000 - total) / 100).toFixed(2)}% of every flush. Paid in ETH off the top of each flush, before the swaps.`);
+    await broadcast(`setCuts(${cuts.length} cuts)`, dep.feeFunder, feeFunderAbi as typeof roundMineAbi, "setCuts", [cuts]);
+    return;
+  }
+
+  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause | set-flusher --address 0x… [--revoke] | set-source --token 0x… [--factory 0x…] | set-cuts --cuts 0x…:bps,…  [--yes]");
 }
 
 main().catch((e: Error) => { console.error(`${TAG} failed:`, e.message ?? e); process.exit(1); });

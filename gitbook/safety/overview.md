@@ -29,7 +29,7 @@ The team is publicly known and these powers are stated here and on the site. The
 
 | Item | Who | What if it fails |
 | --- | --- | --- |
-| Funding the pots | Trading volume on Pons (the creator fee is paid to the funding contract, no person in between) | A round with no fees in pays only the rollover; the site shows it |
+| Funding the pots | Trading volume on Pons (the creator fee is paid to the funding contract, which pays the team's share out and swaps the rest, no person in between) | A round with no fees in pays only the rollover; the site shows it |
 | Chainlink price feeds | Chainlink | Cash-out pauses on a stale price (four-day cap covers weekends). In-kind redemption is unaffected |
 | Robinhood Stock Tokens | Robinhood | Issued and priced by Robinhood; no ownership or voting rights in the underlying company |
 | The chain's sequencer | Robinhood Chain | If the chain stalls you cannot act; work keeps accruing by timestamp when it resumes |

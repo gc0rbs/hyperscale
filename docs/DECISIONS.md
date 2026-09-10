@@ -313,6 +313,17 @@ The token symbol was left as $RIG at the time; superseded by the 2026-09-09 deci
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
 
+## 2026-09-10 – Fee split: two thirds to the pots, one sixth to each of two wallets (client decision)
+
+**Decision (client, same day).** Of a 3% creator tax, 2% funds the game and 0.5% goes to each of
+two wallets. Implemented as owner-set **cuts** on the FeeFunder (`setCuts`, at most eight
+`(wallet, bps)` pairs summing to under 100%), paid in native ETH off the top of every flush before
+the swaps, so the split applies to everything the funder receives (creator tax plus the base-fee
+share) and no key ever holds the fees. A wallet that refuses ETH reverts the flush until the owner
+re-points it; the operator sets and changes the cuts (`rounds-admin set-cuts`). This relaxes the
+2026-09-08 "everything into the pots" framing by the client's choice; the site copy says a share of
+the creator fee funds the pots.
+
 ## 2026-09-10 – Pons V2: the FeeFunder is the creator fee recipient and claims from the escrow
 
 **Supersedes the entry below (same day).** The client launches on **Pons V2**, not V1; the V1

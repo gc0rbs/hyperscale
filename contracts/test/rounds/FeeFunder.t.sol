@@ -251,3 +251,58 @@ contract FeeFunderTest is RoundTestBase {
         assertEq(weth.balanceOf(bo), 1 ether);
     }
 }
+
+contract FeeFunderCutsTest is FeeFunderTest {
+    address internal walletA = makeAddr("walletA");
+    address internal walletB = makeAddr("walletB");
+
+    function _cuts(uint16 a, uint16 b) internal view returns (IFeeFunder.Cut[] memory c) {
+        c = new IFeeFunder.Cut[](2);
+        c[0] = IFeeFunder.Cut(walletA, a);
+        c[1] = IFeeFunder.Cut(walletB, b);
+    }
+
+    /// @dev Client decision 2026-09-10: of a 3% tax, 2% to the game and 0.5% to each of two wallets.
+    function test_cuts_are_paid_in_eth_off_the_top_and_the_rest_buys_the_pots() public {
+        funder.setCuts(_cuts(1667, 1667)); // 1/6 each
+        vm.warp(roundStart(2) + 100);
+        hook.accrue{value: 0.6 ether}(); // swept and claimed inside the flush
+        weth.transfer(address(funder), 0.6 ether); // plus WETH already held: 1.2 total
+        vm.prank(flusher);
+        (uint256 wethIn, uint256[] memory out) = funder.flush(_zeros());
+        uint256 each = (1.2 ether * 1667) / 10_000;
+        assertEq(walletA.balance, each, "wallet A paid in ETH");
+        assertEq(walletB.balance, each, "wallet B paid in ETH");
+        assertEq(wethIn, 1.2 ether - 2 * each, "the rest bought the pots");
+        assertEq(out[0], _expectedOut(0, (wethIn * 1500) / 10_000));
+        assertEq(mine.pot(2, 0), out[0]);
+        assertEq(funder.pending(), 0, "nothing left behind");
+        assertEq(funder.cutCount(), 2);
+        assertEq(funder.cut(1).to, walletB);
+    }
+
+    function test_cuts_are_validated_and_a_refusing_wallet_reverts_the_flush() public {
+        vm.expectRevert(IFeeFunder.BadCuts.selector);
+        funder.setCuts(_cuts(5000, 5000)); // nothing left for the pots
+        vm.expectRevert(IFeeFunder.BadCuts.selector);
+        funder.setCuts(_cuts(0, 100));
+        IFeeFunder.Cut[] memory c = new IFeeFunder.Cut[](1);
+        c[0] = IFeeFunder.Cut(address(0), 100);
+        vm.expectRevert(IFeeFunder.BadCuts.selector);
+        funder.setCuts(c);
+        vm.prank(ann);
+        vm.expectRevert(IFeeFunder.NotOwner.selector);
+        funder.setCuts(_cuts(100, 100));
+        // A cut wallet that cannot take ETH (a contract without receive) blocks the flush until re-pointed.
+        c[0] = IFeeFunder.Cut(address(mine), 1000);
+        funder.setCuts(c);
+        weth.transfer(address(funder), 1 ether);
+        vm.prank(flusher);
+        vm.expectRevert(abi.encodeWithSelector(IFeeFunder.CutFailed.selector, address(mine)));
+        funder.flush(_zeros());
+        funder.setCuts(new IFeeFunder.Cut[](0));
+        vm.prank(flusher);
+        (uint256 wethIn,) = funder.flush(_zeros());
+        assertEq(wethIn, 1 ether);
+    }
+}

@@ -8,7 +8,7 @@
   "mine": "0x5d0de1dcabff9a72fd4821a45c0d4427b86d99bd",
   "fragments": "0x434f0f077d620c768a232ae51a734b503c2535d1",
   "vault": "0xac55b46da7fafad28c2bbe6e9b0ecdf25d89bc8f",
-  "feeFunder": "0x82f08A8B988cA811902f7680Dc2aA2F931bDdba7",
+  "feeFunder": "0x8333d0d5Fd99f15d2f49A65a7308357D087FD9f5",
   "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
   "pools": [
     "0x62AB521f71431f78ac374CdbadC6cda3c8916b6C",
@@ -92,5 +92,5 @@
     "pauseGraceSeconds": 1800
   },
   "paramsHash": "0xbd35e726fb27458076777adc59e453201a453d227d1315c7fbf64dc859bd1249",
-  "feeFunderNote": "Pons V2 creator fee recipient, deployed 2026-09-10 in tx 0x1e965962e58efe5e113aec2155c976bb8a4808502c9703ccd29244a7062e3be1 (replaces the V1-shaped 0x5d4B1d5809A6aA73a209aE3567085A6C0d06d60B, unused, no funds)."
+  "feeFunderNote": "Pons V2 creator fee recipient with cuts, deployed 2026-09-10 in tx 0xa1a3ddd9a89f855bdb4c77d6f1599f719f3e52be9c87dd3e80571417064755d5 (replaces 0x82f08A8B988cA811902f7680Dc2aA2F931bDdba7 and 0x5d4B1d5809A6aA73a209aE3567085A6C0d06d60B, both unused, no funds)."
 }

@@ -97,6 +97,50 @@
   },
   {
     "type": "function",
+    "name": "cut",
+    "inputs": [
+      {
+        "name": "i",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IFeeFunder.Cut",
+        "components": [
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "bps",
+            "type": "uint16",
+            "internalType": "uint16"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "cutCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "flush",
     "inputs": [
       {
@@ -253,6 +297,31 @@
   },
   {
     "type": "function",
+    "name": "setCuts",
+    "inputs": [
+      {
+        "name": "cuts",
+        "type": "tuple[]",
+        "internalType": "struct IFeeFunder.Cut[]",
+        "components": [
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "bps",
+            "type": "uint16",
+            "internalType": "uint16"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setFlusher",
     "inputs": [
       {
@@ -385,6 +454,50 @@
   },
   {
     "type": "event",
+    "name": "CutPaid",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CutsSet",
+    "inputs": [
+      {
+        "name": "cuts",
+        "type": "tuple[]",
+        "indexed": false,
+        "internalType": "struct IFeeFunder.Cut[]",
+        "components": [
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "bps",
+            "type": "uint16",
+            "internalType": "uint16"
+          }
+        ]
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Flushed",
     "inputs": [
       {
@@ -495,8 +608,24 @@
   },
   {
     "type": "error",
+    "name": "BadCuts",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "BadLegs",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "CutFailed",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
