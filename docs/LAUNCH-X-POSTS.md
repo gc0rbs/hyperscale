@@ -54,54 +54,35 @@
 
 ## 2. Before T-0 (the hour before launch)
 
-**T-60m · Pinned thread (post now, pin, keep pinned all day).**
+**T-60m · Pinned thread (4 posts, pin, keep pinned all day).** Four is the limit: before launch
+nobody knows the account, and thread reads fall off a cliff after post two. Upgrades, decommission
+and redemption are covered by the hourly fillers once people are actually playing.
 
 > 1/ Hyperscaler goes live at {HH:00} UTC.
 >
-> Virtual GPUs. Stock-token rewards.
+> Stake $VRAM to run a virtual GPU.
+> Every hour, a pot of NVDA, MU, SNDK and QQQ is split by the compute each GPU served.
+> Claim it, on the hour, every hour.
 >
-> Stake $VRAM to bring a GPU online. Every hour the pot is split by the compute each GPU served. The pot is paid in NVDA, MU, SNDK and QQQ.
->
-> How it works, in 6 posts 🧵
+> 3 things to know 🧵
 
-> 2/ Where the pot comes from.
+> 2/ The pot is trading fees.
 >
-> Every $VRAM trade on Pons pays a creator fee. A share of that fee is swapped into the four Stock Tokens and dropped into the running round as it arrives.
+> Every $VRAM trade on Pons pays a creator fee. A share of it is swapped into the four Stock Tokens and dropped into the running round as it arrives. No emissions, no treasury.
 >
-> More trading → bigger pot. There is no other source. No emissions, no treasury.
+> Your share = your compute ÷ everyone's compute. Nothing runs on your device.
 
-> 3/ How it is split.
+> 3/ The clock.
 >
-> Compute = throughput × seconds.
-> Your share = your compute ÷ everyone's compute.
+> Round closes on the hour. 15 minutes to claim. Miss it and your share rolls into the next pot, not to us.
 >
-> Nothing runs on your device. Throughput is a number the contract derives from your stake and upgrades.
+> Upgrades burn $VRAM (100%, to 0x…dEaD). Your stake comes back when you leave, minus 3%. The operator can halt; stakes always return in full.
 
-> 4/ The clock.
+> 4/ Who can play.
 >
-> Round closes on the hour.
-> You have 15 minutes to claim.
-> Miss it → your share rolls into the next pot. Nothing goes to us.
+> Not available in the US, Canada, UK or Switzerland. Stock Tokens track a share price and carry no ownership rights. Not investment advice.
 >
-> Set an alarm for :00.
-
-> 5/ Upgrades.
->
-> GPU tiers (up to 2x throughput), cooling, overclocks (+50% until the end of next round).
-> Every upgrade is paid in $VRAM and 100% burned. Not to a treasury. To 0x…dEaD.
-
-> 6/ What you keep.
->
-> Your stake comes back when you decommission (minus 3%).
-> Claimed shards are yours: 1,000,000 shards = 1 Stock Token. Redeem for the token or cash out at the Chainlink price, any time.
->
-> The operator can pause or halt the game; stakes always return in full. It says so on the site.
-
-> 7/ Who can play.
->
-> Stock Tokens are not available in the US, Canada, UK or Switzerland, and neither is Hyperscaler. Stock Tokens track a share price and carry no ownership rights. Not investment advice.
->
-> Everything else: {SITE}/how-it-works
+> Full explainer: {SITE}/how-it-works
 
 **T-30m · Countdown + contract.**
 
@@ -322,7 +303,7 @@ players who wait to see others get paid.
 
 **H23 :30 · Thank-you + tomorrow.** "24 rounds. {total} paid. {N} GPUs. {B} $VRAM gone forever. Same time tomorrow: every hour, on the hour."
 
-**H24 :00 · Beat + 24-hour card, then re-pin.** Replace the pinned thread's first post with the 24-hour card quoting the thread, so the numbers are the first thing new visitors see and the explainer is one click away.
+**H24 :00 · Beat + 24-hour card, then re-pin.** Pin the 24-hour card quoting the thread, so the numbers are the first thing new visitors see and the explainer is one click away.
 
 ## 7. Reply templates (paste, fill, send within five minutes)
 
