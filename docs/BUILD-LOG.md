@@ -712,7 +712,30 @@ landing page on desktop and mobile against the handoff.
 port is a faithful re-derivation, not a copy; the season-era screens (`RigCard`, `PurchaseSheet`,
 `mine/new`) still say RIG because season mode keeps its own dev token name; nothing live runs on it.
 
-## 2026-09-10 – FeeFunder collects from the Pons locker
+## 2026-09-10 – FeeFunder for Pons V2: creator fee recipient, escrow claim
+
+**Shipped.** The client launches on Pons V2, so the V1 locker design (earlier today, below) was
+replaced (DECISIONS 2026-09-10, first entry): `IFeeFunder` v3 with owner-set collect calls
+(`setCollects`, `collectCount`, `collect`) run at the start of `flush(minOut[])`; the token-sale leg
+and `Source` are gone; the swap callback pays WETH only. `MockPonsV2.sol` (escrow + sweeper) replaces
+`MockPonsLocker`; 10 FeeFunder tests (97 total, snapshot refreshed). Ops: `ponsV2PoolId`,
+`ponsV2Collects` (unit-tested against a `cast`-computed vector), `rounds-admin set-source` reads the
+V2 launch record and sets the calls, status shows the escrow balance, `flush-fees` uses the new
+signature, the demo wires the mocks and accrues 0.5 ETH of fees; chain profile `external` holds the V2
+factory, escrow and hook. Docs: 13 §2, runbook §2b/§3/checklist, gitbook and app copy say "creator
+fee on every $VRAM trade".
+
+**Next.** Redeploy the FeeFunder on 4663 (the 2026-09-10 one is V1-shaped), update the deployment
+record and Railway variables; at the Pons launch enter the new FeeFunder as the creator fee recipient
+with buyback off; then `rounds-admin launch`, `set-source`, keeper and flusher services.
+
+**Known gaps.** During the hook phase, when memecoin-side fees are pending, only Pons' sweep operator
+can sweep, so fee arrival follows their cadence. The curve's `sweepFees` by the recipient is only
+possible with buyback off. Not rehearsed against the real Pons V2 contracts (no launch yet): the
+collect calls are verified against the verified sources and the escrow's revert on an empty claim was
+checked on chain.
+
+## 2026-09-10 – (superseded) FeeFunder collects from the Pons locker
 
 **Shipped.** Verified the Pons fee mechanics on chain (DECISIONS 2026-09-10) and rebuilt the funding
 path on them: `IFeeFunder.Source` + `setSource`, `flush(minWethFromToken, minOut[])` collecting from

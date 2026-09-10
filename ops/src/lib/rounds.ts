@@ -3,6 +3,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { encodeAbiParameters, encodeFunctionData, keccak256, parseAbi } from "viem";
 import type { Account, Address, Chain, Hex, PublicClient, Transport, WalletClient } from "viem";
 import { artifact } from "./artifacts.js";
 import { chainId, DEPLOYMENTS } from "./season.js";
@@ -22,9 +23,10 @@ export interface RoundsDeployment {
   feeFunder?: Address;
   weth?: Address;
   pools?: Address[];
-  /** Pons: the locker that pays the creator fee share and the factory that records launches (docs/13 §2). */
-  ponsLocker?: Address;
+  /** Pons V2: the launch factory, the fee escrow the creator claims from and the meme hook (docs/13 §2). */
   ponsFactory?: Address;
+  ponsFeeEscrow?: Address;
+  ponsMemeHook?: Address;
   uniswapV3Factory?: Address;
   genesis: number;
   roundSeconds: number;
@@ -58,8 +60,9 @@ export function loadRoundsDeployment(id = chainId()): RoundsDeployment {
     stocks,
     symbols: symbols.length === stocks.length ? symbols : stocks.map((_, i) => `stock${i}`),
     feeFunder: process.env.FEE_FUNDER_ADDRESS as Address | undefined,
-    ponsLocker: process.env.PONS_LOCKER_ADDRESS as Address | undefined,
     ponsFactory: process.env.PONS_FACTORY_ADDRESS as Address | undefined,
+    ponsFeeEscrow: process.env.PONS_FEE_ESCROW_ADDRESS as Address | undefined,
+    ponsMemeHook: process.env.PONS_MEME_HOOK_ADDRESS as Address | undefined,
     uniswapV3Factory: process.env.UNISWAP_V3_FACTORY_ADDRESS as Address | undefined,
     genesis: Number(process.env.GENESIS ?? 0),
     roundSeconds: Number(process.env.ROUND_SECONDS ?? 3600),
@@ -84,6 +87,34 @@ export async function syncLaunchFromChain(dep: RoundsDeployment, pub: { readCont
 }
 export const roundVaultAbi = artifact("RoundVault.sol", "RoundVault").abi;
 export const feeFunderAbi = artifact("FeeFunder.sol", "FeeFunder").abi;
+
+export const ponsV2FactoryAbi = parseAbi([
+  "function getLaunchedToken(address) view returns ((address token,address curve,address deployer,address creatorFeeRecipient,address pairToken,uint256 graduationThreshold,uint24 poolFee,int24 tickSpacing,uint16 creatorTaxBps,bool buybackEnabled,uint8 phase,uint256 sweptQuote,uint256 sweptTokens,uint256 sweptAt,bool exists))",
+  "function feeEscrow() view returns (address)",
+  "function memeHook() view returns (address)",
+]);
+export const ponsV2EscrowAbi = parseAbi(["function balanceOf(address) view returns (uint256)", "function claim() returns (uint256)"]);
+
+/**
+ * Uniswap v4 pool id of a graduated Pons V2 launch: keccak256 of the PoolKey (currencies sorted, native
+ * ETH is address(0) and so always currency0; fee and tick spacing snapshotted at launch; the meme hook).
+ */
+export function ponsV2PoolId(token: Address, pairToken: Address, poolFee: number, tickSpacing: number, hook: Address): Hex {
+  const [c0, c1] = BigInt(token) < BigInt(pairToken) ? [token, pairToken] : [pairToken, token];
+  return keccak256(encodeAbiParameters(
+    [{ type: "address" }, { type: "address" }, { type: "uint24" }, { type: "int24" }, { type: "address" }],
+    [c0, c1, poolFee, tickSpacing, hook],
+  ));
+}
+
+/** The collect calls the FeeFunder runs at the start of every flush for a Pons V2 launch (docs/13 §2). */
+export function ponsV2Collects(curve: Address, hook: Address, poolId: Hex, escrow: Address): { target: Address; data: Hex }[] {
+  return [
+    { target: curve, data: encodeFunctionData({ abi: parseAbi(["function sweepFees(uint256)"]), functionName: "sweepFees", args: [0n] }) },
+    { target: hook, data: encodeFunctionData({ abi: parseAbi(["function sweepPoolFees(bytes32,uint256,uint256)"]), functionName: "sweepPoolFees", args: [poolId, 0n, 0n] }) },
+    { target: escrow, data: encodeFunctionData({ abi: ponsV2EscrowAbi, functionName: "claim" }) },
+  ];
+}
 
 /** Haircut a simulated flush's outputs into the minOut the real call is sent with. Pure. */
 export function haircut(outs: readonly bigint[], slippageBps: number): bigint[] {

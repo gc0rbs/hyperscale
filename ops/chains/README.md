@@ -5,9 +5,11 @@ One JSON per target chain, read by `ops plan` and the runbook. `anvil.json` is c
 filled and the season addresses still zero; `robinhood-testnet.json` is a placeholder set. Every zero
 address below has to be filled in once the corresponding assumption in `docs/01-PRD.md` §10 is verified.
 
-$VRAM is launched on Pons: a plain ERC-20 (1B supply, 18 decimals, no burn function), graduating to a
-Uniswap v3 RIG/WETH pool whose position is an NFT held by the Pons locker. The mine burns by
-transferring to the dead address, and LP staking is off (`lpToken` zero, decided 2026-09-04).
+$VRAM is launched on Pons V2: a plain ERC-20 (1B supply, 18 decimals, no burn function) sold on a
+bonding curve, then graduating to a Uniswap v4 pool with the Pons meme hook. The mine burns by
+transferring to the dead address, and LP staking is off (`lpToken` zero, decided 2026-09-04). The
+`external` block holds the Pons V2 factory, fee escrow and meme hook the FeeFunder is wired to
+(`rounds-admin set-source`, docs/13 §2).
 
 | Field | What it is | Depends on |
 |---|---|---|

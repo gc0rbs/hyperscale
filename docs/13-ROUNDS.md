@@ -38,22 +38,26 @@ not claimed rolls into the next pot.
   first hour pays out whatever accrued during it, and a project can run for two hours or two weeks
   with no funding calendar. Nothing is ever scheduled ahead, so there is nothing to unschedule; the
   operator's only way out is `halt` (below).
-- **FeeFunder.** How Pons pays, verified on chain 2026-09-10 (DECISIONS same date): a Pons token has
-  no transfer tax. Its liquidity is a locked Uniswap v3 position (1% fee tier) and the creator's share
-  of that pool's fees (70%; Pons keeps 30%) is paid by the Pons locker's `collectFees(token)` as
-  plain ERC-20 transfers of both pool assets, WETH and the token, to the token's fee wallet. The
-  `FeeFunder` contract (`contracts/src/rounds/FeeFunder.sol`) is that fee wallet: the token deployer
-  redirects the creator fees to it after the launch (`setFeeRedirect`), and the operator wires the
-  locker, token and token pool into it (`setSource`). A flusher (the keeper key, holding only gas)
-  calls `flush(minWethFromToken, minOut[])` every few minutes: the contract collects from the locker,
-  wraps any ETH, sells the token half for WETH on the token's own pool, splits the WETH across the
-  four stocks by share (15/20/25/40 by default), swaps directly against each stock's Uniswap v3 WETH
-  pool (the contract is the swap caller and pays in `uniswapV3SwapCallback`, which only accepts a
-  configured pool and only pays that pool's input asset), and funds every token bought into the
-  running round in the same transaction. Both minimums are quoted off-chain right before sending
-  (simulate, then a 1% haircut); a moved price reverts the whole flush and the fees wait. No key ever
-  holds the fees. The owner (the operator) can re-point pools and shares (`setLegs`, `setSource`),
-  allow flushers, and sweep the contract.
+- **FeeFunder.** How Pons V2 pays, verified on chain 2026-09-10 (DECISIONS same date): a launch
+  names a **creator fee recipient** and a creator tax (up to 10% of every trade, on top of the base
+  fee whose creator share is 70%). Everything the creator earns is ETH, but it is never pushed: the
+  bonding curve (before graduation) and the Pons meme hook on the Uniswap v4 pool (after it) credit
+  the recipient in the shared `PonsV2FeeEscrow`, and the recipient must `claim()` from the escrow.
+  Sweeping the pending fees into the escrow is the Pons sweep operator's job; the recipient may also
+  sweep when no internal swap is needed. The `FeeFunder` contract
+  (`contracts/src/rounds/FeeFunder.sol`) is that recipient: its address is entered as the creator fee
+  recipient when the token is launched, and the operator wires its **collect calls** afterwards
+  (`setCollects`: `curve.sweepFees(0)`, `hook.sweepPoolFees(poolId, 0, 0)`, `escrow.claim()`; a
+  revert is swallowed, so nothing owed and a phase that is over are not errors). A flusher (the keeper
+  key, holding only gas) calls `flush(minOut[])` every few minutes: the contract runs the collect
+  calls, wraps every ETH, splits the WETH across the four stocks by share (15/20/25/40 by default),
+  swaps directly against each stock's Uniswap v3 WETH pool (the contract is the swap caller and pays
+  in `uniswapV3SwapCallback`, which only accepts a configured pool and only pays WETH), and funds
+  every token bought into the running round in the same transaction. The minimums are quoted
+  off-chain right before sending (simulate, then a 1% haircut); a moved price reverts the whole flush
+  and the fees wait. No key ever holds the fees. The owner (the operator) can re-point pools and
+  shares (`setLegs`), re-wire the collect calls (`setCollects`), allow flushers, and sweep the
+  contract. A collect call can never target WETH, the mine or a configured pool.
 - **Claim.** After round `r` closes, each rig that worked in it can `claim` during
   `[close, close + claimSeconds)` (900 s) and receives `pot[r][s] × rigWork[r] / roundWork[r]` of each
   stock as fragments (whole fragments; dust stays in the pot). Only the latest closed round is ever

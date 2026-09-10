@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { haircut, resolveStocks, roundClock } from "../src/lib/rounds.js";
+import { haircut, ponsV2Collects, ponsV2PoolId, resolveStocks, roundClock } from "../src/lib/rounds.js";
 import { roundKeeperDecision, type RoundKeeperView } from "../src/lib/rounds-keeper-logic.js";
 
 const G = 1_000_000;
@@ -104,5 +104,22 @@ describe("haircut (flush minOut)", () => {
     expect(haircut([1000n, 0n, 33n], 100)).toEqual([990n, 0n, 32n]);
     expect(haircut([1000n], 0)).toEqual([1000n]);
     expect(() => haircut([1n], 10_001)).toThrow(/range/);
+  });
+});
+
+describe("ponsV2PoolId / ponsV2Collects (docs/13 §2 Pons V2 wiring)", () => {
+  const hook = "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044" as const;
+  const token = "0x1111111111111111111111111111111111111111" as const;
+  const eth = "0x0000000000000000000000000000000000000000" as const;
+  it("is keccak256(abi.encode(PoolKey)) with native ETH as currency0 (cast-computed vector)", () => {
+    expect(ponsV2PoolId(token, eth, 0, 200, hook)).toBe("0x5763342b7a962503f2b462a0ea275f6d8ba605443055b919b60e57797177b8e3");
+    expect(ponsV2PoolId(eth, token, 0, 200, hook)).toBe(ponsV2PoolId(token, eth, 0, 200, hook)); // sorted either way
+  });
+  it("encodes sweep, sweep, claim in that order (sweeps credit the escrow the claim then empties)", () => {
+    const c = ponsV2Collects("0x2222222222222222222222222222222222222222", hook, ponsV2PoolId(token, eth, 0, 200, hook), "0x3333333333333333333333333333333333333333");
+    expect(c.map((x) => x.target)).toEqual(["0x2222222222222222222222222222222222222222", hook, "0x3333333333333333333333333333333333333333"]);
+    expect(c[0].data.slice(0, 10)).toBe("0x3729bb9a"); // sweepFees(uint256)
+    expect(c[1].data.slice(0, 10)).toBe("0x3d61055e"); // sweepPoolFees(bytes32,uint256,uint256)
+    expect(c[2].data).toBe("0x4e71d92d"); // claim()
   });
 });

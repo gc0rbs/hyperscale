@@ -8,7 +8,7 @@
   "mine": "0x5d0de1dcabff9a72fd4821a45c0d4427b86d99bd",
   "fragments": "0x434f0f077d620c768a232ae51a734b503c2535d1",
   "vault": "0xac55b46da7fafad28c2bbe6e9b0ecdf25d89bc8f",
-  "feeFunder": "0x5d4b1d5809a6aa73a209ae3567085a6c0d06d60b",
+  "feeFunder": "0x82f08A8B988cA811902f7680Dc2aA2F931bDdba7",
   "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
   "pools": [
     "0x62AB521f71431f78ac374CdbadC6cda3c8916b6C",
@@ -16,8 +16,9 @@
     "0x995c1Ad5Eb998b1BdD89F515C4BB64760c411b62",
     "0xA40D00a55d43bA2d188039DCF88bD68f4F133E78"
   ],
-  "ponsLocker": "0x736D76699C26D0d966744cAe304C000d471f7F35",
-  "ponsFactory": "0xA5aAb3F0c6EeadF30Ef1D3Eb997108E976351feB",
+  "ponsFactory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+  "ponsFeeEscrow": "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e",
+  "ponsMemeHook": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
   "uniswapV3Factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
   "stocks": [
     "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
@@ -90,5 +91,6 @@
     "ocRoundSpan": 1,
     "pauseGraceSeconds": 1800
   },
-  "paramsHash": "0xbd35e726fb27458076777adc59e453201a453d227d1315c7fbf64dc859bd1249"
+  "paramsHash": "0xbd35e726fb27458076777adc59e453201a453d227d1315c7fbf64dc859bd1249",
+  "feeFunderNote": "Pons V2 creator fee recipient, deployed 2026-09-10 in tx 0x1e965962e58efe5e113aec2155c976bb8a4808502c9703ccd29244a7062e3be1 (replaces the V1-shaped 0x5d4B1d5809A6aA73a209aE3567085A6C0d06d60B, unused, no funds)."
 }

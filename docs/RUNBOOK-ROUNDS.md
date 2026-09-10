@@ -13,7 +13,7 @@ parameters, one operator per environment.
 |---|---|---|
 | Deployer | `PRIVATE_KEY` | a gas-only key that deploys once; pass `--operator` so it holds no power afterwards |
 | Operator | `OPERATOR_KEY` (only where it is needed) | the mine's `operator` and the FeeFunder owner: `launch` (once), `halt`, vault `rescue`, `set-source`. Its key never has to touch a hosted environment: each of those is one transaction, also doable from the wallet through the explorer |
-| FeeFunder (contract) | none | the Pons fee wallet: collects the creator fee share from the Pons locker; `flush` sells, swaps and funds. No key |
+| FeeFunder (contract) | none | the Pons V2 creator fee recipient: `flush` sweeps and claims the creator fees from the Pons escrow, swaps and funds. No key |
 | Flusher | `FLUSHER_KEY` (the keeper key is fine) | calls `FeeFunder.flush` every few minutes with a quoted slippage bound; holds gas only |
 | Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet |
 | Guardian | `GUARDIAN_KEY` | the `treasury` address: `pause`, `unpause`. Receives activation and exit fees |
@@ -61,8 +61,8 @@ only if the domain changes before the deploy.
 
 `--prelaunch` deploys the mine without a token or genesis so everything below (verification, hosting,
 funding, keeper, watcher, rehearsal against the real addresses) is done days ahead. Players see
-"Not live yet". The script also deploys the **FeeFunder** and prints its address (the Pons fee wallet;
-wired after the token launch, §2b), and allow the flusher with
+"Not live yet". The script also deploys the **FeeFunder** and prints its address (the creator fee
+recipient to enter at the Pons launch; wired after it, §2b), and allow the flusher with
 `OPERATOR_KEY=0x… pnpm rounds-admin set-flusher --address <keeper address> --yes` (or pass
 `--flusher` to the deploy). When the token is live:
 
@@ -73,22 +73,33 @@ OPERATOR_KEY=0x… pnpm rounds-admin launch --token 0x<RIG> --genesis next-hour 
 
 `--genesis` accepts `next-hour` (default, at least two minutes out), `+<seconds>` or a unix time.
 
-### 2b. Wire the Pons fees (right after the token launch)
+### 2b. Wire the Pons fees (at the token launch, then right after it)
 
-Pons has no transfer tax: the pot is the creator's share (70%) of the 1% pool fee on the token's
-locked Uniswap v3 position, paid in WETH and in the token (DECISIONS 2026-09-10). Launch the token on
-Pons **with the fee wallet field left empty** (a fee wallet set at launch also receives the developer
-buy), then:
+Pons V2 pays the creator in ETH through its fee escrow (DECISIONS 2026-09-10, second entry). At the
+launch on Pons V2 (factory `0x7eD5…EC7e`):
+
+- **Creator fee wallet / recipient: the FeeFunder address** (`feeFunder` in
+  `contracts/deployments/4663-rounds.json`, `FEE_FUNDER_ADDRESS` on Railway). Not a person's wallet.
+- **Creator tax:** the client's choice, up to 10%; this plus 70% of the base fee is the pot.
+- **Buyback: off.** With buyback on, part of the creator fee is locked as a five-year vest that the
+  funder cannot claim.
+- The recipient can be changed later only by the current recipient (`transferCreatorFeeRecipient`)
+  or by the Pons owner with a 3-day timelock, so get it right at launch.
+
+Then, from the operator:
 
 ```
-OPERATOR_KEY=0x… pnpm rounds-admin set-source --token 0x<VRAM> --yes   # locker + token + its WETH pool into the funder
-cast send <locker> "setFeeRedirect(address,address)" 0x<VRAM> <feeFunder> --rpc-url $RPC_URL --private-key <token deployer key>
-cast call <locker> "feeRedirects(address)(address)" 0x<VRAM> --rpc-url $RPC_URL      # must print the funder
+OPERATOR_KEY=0x… pnpm rounds-admin set-source --token 0x<VRAM>          # dry run: prints the launch record and the three collect calls
+OPERATOR_KEY=0x… pnpm rounds-admin set-source --token 0x<VRAM> --yes    # setCollects on the funder
+pnpm rounds-admin status                                                # "3 collect calls wired", ETH claimable in the escrow
+FLUSHER_KEY=0x… pnpm flush-fees --once --dry-run                        # what the next flush would claim and buy
 ```
 
-`set-source` derives the pool from the Pons launch record and prints the exact redirect command; only
-the wallet that launched the token may run it (the Pons UI may offer the same as "creator wallet").
-From then on every flush collects from the locker first.
+`set-source` reads the launch from the factory (curve, recipient, tax, buyback, phase), refuses a
+launch not quoted in ETH, warns if the recipient is not the funder or buyback is on, derives the
+Uniswap v4 pool id from the launch's fee, tick spacing and the meme hook, and sets the collect calls
+`curve.sweepFees(0)` → `hook.sweepPoolFees(poolId, 0, 0)` → `escrow.claim()`. From then on every flush
+sweeps what it may (Pons' own sweep operator sweeps the rest on its schedule) and claims.
 The app, keeper, watcher and admin read the token and genesis from the chain, so no variable or
 file changes at launch. If the token address is known at deploy time, omit `--prelaunch` and pass `--rig 0x<VRAM>` (the
 chain profile's `rig` is never used for the round mine): genesis is
@@ -114,11 +125,10 @@ FUNDER_KEY=0x… pnpm fund-rounds --stock all --amount 0.5     # optional: fund 
 FUNDER_KEY=0x… pnpm fund-rounds --reserve 500                # USDG for cash-outs, when low
 ```
 
-The Pons locker owes the FeeFunder the creator fee share (WETH + $VRAM). `flush-fees` (Railway
+Pons credits the FeeFunder's creator fees in its escrow. `flush-fees` (Railway
 `railway/flush-fees.json`) simulates a flush every five minutes; when it would spend at least
 `--min-eth` of WETH it takes a `--slippage-bps` (1%) haircut of the simulated amounts as the bounds
-and sends: collect, sell the token half, four swaps on the WETH pools, four `fund` calls, one
-transaction. The stock lands in the running round's pot at once and the pot is locked at
+and sends: sweep, claim, four swaps on the WETH pools, four `fund` calls, one transaction. The stock lands in the running round's pot at once and the pot is locked at
 the close, so the first hour pays out whatever came in during it. No calendar, no key holding fees,
 nothing to do for a project that runs two hours or two weeks. Three slippage reverts in a row alert:
 a pool moved or thinned; re-point it with `setLegs` or raise the haircut.
@@ -170,7 +180,7 @@ Halt: no round closes after it, no claim window opens, players recover their ful
 
 1. Anvil rehearsal (§1) passed on this commit, including the hosting path.
 2. Deployment file committed; contracts verified; hosting variables set; served page shows the mine.
-3. Fee wallet holds Stock Tokens and the funding loop is running; reserve sized to expected cash-outs.
+3. The FeeFunder is the creator fee recipient on Pons (§2b), its collect calls are wired and the flusher is running; reserve sized to expected cash-outs.
 4. Keeper and watcher running on their own keys with alerts wired; keeper ETH ≥ 0.05.
 5. One operator on the Railway project and the branch for the day; nobody else pushes or edits.
 6. Site notices live: fee-funded pots, operator halt, 15-minute claims and rollover.

@@ -13,7 +13,7 @@ Only the latest closed round can be claimed. There is no catching up on older ro
 
 ## Where the pot comes from
 
-The pots are funded by the trading fees on $VRAM: every trade on its Pons liquidity pool pays a fee, and the creator's share of that fee goes to a contract that collects it, swaps it into the four Stock Tokens on Robinhood Chain and adds them to the running round's pot every few minutes, so you can watch the pot grow during the hour. No person holds the fees on the way. The pot is locked the moment the round closes. The site shows the current pot and how much of it rolled over from the last round; a round with no fees pays only the rollover, and the site says so.
+The pots are funded by the trading fees on $VRAM: every trade on Pons pays a creator fee, and that fee goes to a contract that collects it, swaps it into the four Stock Tokens on Robinhood Chain and adds them to the running round's pot every few minutes, so you can watch the pot grow during the hour. No person holds the fees on the way. The pot is locked the moment the round closes. The site shows the current pot and how much of it rolled over from the last round; a round with no fees pays only the rollover, and the site says so.
 
 ## Fragments
 
