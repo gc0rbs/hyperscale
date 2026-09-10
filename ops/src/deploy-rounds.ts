@@ -16,7 +16,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseEther, type Address } from "viem";
+import { encodeAbiParameters, formatEther, getContractAddress, keccak256, parseEther, type Address, encodeDeployData } from "viem";
 import { artifact, REPO_ROOT } from "./lib/artifacts.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { ANVIL_KEYS, arg, chainId, clients, DEPLOYMENTS, hasFlag, loadAdapters, loadChainProfile } from "./lib/season.js";
@@ -239,7 +239,8 @@ async function main() {
   console.log(`[rounds] paramsHash ${roundParamsHash(params)}`);
   if (hasFlag("--dry-run")) {
     const a = artifact("RoundMine.sol", "RoundMine");
-    await pub.call({ account, data: a.bytecode, to: undefined }).catch((e: Error) => { throw new Error(`RoundMine creation simulation failed: ${e.message}`); });
+    const data = encodeDeployData({ abi: a.abi, bytecode: a.bytecode, args: [roundParamsStruct(params), operator, fragAddr, vaultAddr] });
+    await pub.call({ account, data, to: undefined }).catch((e: Error) => { throw new Error(`RoundMine creation simulation failed: ${e.message.split("\n")[0]}`); });
     console.log("[rounds] --dry-run: not broadcasting");
     return;
   }
