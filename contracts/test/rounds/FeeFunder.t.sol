@@ -33,8 +33,8 @@ contract FeeFunderTest is RoundTestBase {
             stocks[s].mint(address(pools[s]), 1_000e18);
             legs[s] = IFeeFunder.Leg({pool: address(pools[s]), stock: s, shareBps: share[s]});
         }
-        funder = new FeeFunder(address(this), address(mine), address(weth), legs);
-        funder.setFlusher(flusher, true);
+        funder = new FeeFunder(address(this), address(mine), address(weth), legs, flusher);
+        assertTrue(funder.flushers(flusher), "constructor flusher");
         for (uint8 s; s < 4; ++s) {
             stocks[s].setAllowed(address(funder), true);
         }

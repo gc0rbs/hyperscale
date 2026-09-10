@@ -11,7 +11,8 @@ parameters, one operator per environment.
 
 | Role | Env var | Powers |
 |---|---|---|
-| Deployer / operator | `PRIVATE_KEY` (deploy), `OPERATOR_KEY` (after) | deploys the three contracts once and is the mine's `operator`: `launch` (once), `halt`, vault `rescue` |
+| Deployer | `PRIVATE_KEY` | a gas-only key that deploys once; pass `--operator` so it holds no power afterwards |
+| Operator | `OPERATOR_KEY` (only where it is needed) | the mine's `operator` and the FeeFunder owner: `launch` (once), `halt`, vault `rescue`, `set-source`. Its key never has to touch a hosted environment: each of those is one transaction, also doable from the wallet through the explorer |
 | FeeFunder (contract) | none | the Pons fee wallet: collects the creator fee share from the Pons locker; `flush` sells, swaps and funds. No key |
 | Flusher | `FLUSHER_KEY` (the keeper key is fine) | calls `FeeFunder.flush` every few minutes with a quoted slippage bound; holds gas only |
 | Fee wallet `0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0` | `FUNDER_KEY` | optional: any wallet holding Stock Tokens can `fund` directly with `fund-rounds`; the client's wallet |
@@ -51,7 +52,7 @@ confirm the served page shows the Anvil mine before touching mainnet.
 ```
 export PRIVATE_KEY=0x… CHAIN_ID=4663 RPC_URL=https://…      # the operator key
 pnpm deploy-rounds mainnet --chain robinhood --prelaunch --dry-run   # predicted addresses, paramsHash
-pnpm deploy-rounds mainnet --chain robinhood --prelaunch             # three transactions, rig and genesis zero
+pnpm deploy-rounds mainnet --chain robinhood --prelaunch --operator 0x<operator wallet> --flusher 0x<keeper>   # four transactions, rig and genesis zero
 ```
 
 The shard metadata URL defaults to `https://www.hyperscaling.xyz/api/frag/{id}.json` (the client's domain,
