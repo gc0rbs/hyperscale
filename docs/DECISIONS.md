@@ -313,6 +313,31 @@ The token symbol was left as $RIG at the time; superseded by the 2026-09-09 deci
 identifiers, params and accounting are unchanged. Development continues in `gc0rbs/hyperscale`;
 `gc0rbs/stock-miner` is frozen at the fork point.
 
+## 2026-09-10 – How Pons actually pays fees; the FeeFunder collects from the Pons locker
+
+**Finding (verified on chain 4663 from the verified `PonsLaunchFactory` and `PonsLaunchLocker`
+sources).** A Pons token is a plain ERC-20 with no transfer tax, so there is no "3% / 5% tax" to point
+at a recipient. The launch puts the full supply into a Uniswap v3 position (WETH pair, 1% fee tier)
+locked in the Pons locker. The creator's revenue is the pool fee on every trade minus the Pons
+protocol share (30% today, capped at 50%): about 0.7% of volume, paid half in WETH and half in the
+token. The locker's `collectFees(token)` pays it out as ERC-20 transfers (a contract can receive) to
+the token deployer or to a redirect the deployer sets (`setFeeRedirect`); the redirect target may
+call `collectFees` itself. A fee wallet given at launch is also the recipient of the developer buy,
+so the token is launched with that field empty and the redirect is set afterwards.
+
+**Decision.** `FeeFunder` becomes the fee wallet: it collects from the locker inside `flush`, sells
+the token half for WETH on the token's own pool, then swaps and funds as before. `flush` takes a
+second bound for the token sale and returns what it spent, so the flusher's simulation is the quote.
+The owner wires `setSource(locker, token, pool)` once the token exists (`rounds-admin set-source`
+derives the pool from the Pons launch record); ETH or WETH pushed directly still works without a
+source. Copy says "trading fees on $VRAM" instead of "tax", and the runbook gains the post-launch
+wiring step (§2b). The client's fee wallet is not part of the flow.
+
+**Consequences.** Funding depends on trading volume on the Pons pool: 0.7% of volume per hour is the
+pot, split 15/20/25/40 across the four stocks. The current factory has launches disabled except for
+whitelisted launchers; the mechanics are the locker's, so the wiring is the same whichever Pons
+factory instance the launch goes through, as long as the pool pairs WETH.
+
 ## 2026-09-09 – Rebrand to Hyperscaler / $VRAM (client design handoff)
 
 **Decision.** The product is **Hyperscaler**; the game token is **$VRAM**, a new Pons launch that does

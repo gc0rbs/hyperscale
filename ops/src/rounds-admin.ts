@@ -4,11 +4,12 @@
  *
  *   pnpm --filter @stock-miner/ops rounds-admin status
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin launch --token 0x… [--genesis next-hour] --yes   # pre-token deployments, once
+ *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin set-source --token 0x… [--pool 0x…] [--locker 0x…] --yes   # wire the Pons fee source after the token launch
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin halt [--yes]
  *   OPERATOR_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin rescue [--yes]       # after halt
  *   GUARDIAN_KEY=0x… pnpm --filter @stock-miner/ops rounds-admin pause|unpause [--yes]
  */
-import { decodeEventLog, formatUnits, type Address } from "viem";
+import { decodeEventLog, formatUnits, parseAbi, type Address } from "viem";
 import { catchUp, feeFunderAbi, loadRoundsDeployment, roundClock, roundMineAbi, roundVaultAbi, syncLaunchFromChain } from "./lib/rounds.js";
 import { arg, clients, erc20Abi, hasFlag } from "./lib/season.js";
 
@@ -40,7 +41,7 @@ async function main() {
   async function broadcast(label: string, address: Address, abi: typeof roundMineAbi, fn: string, args: unknown[] = []) {
     // Everything but poke/halt reverts with NotCaughtUp while boundaries are unrecorded (docs/13 §2):
     // poke first when broadcasting (a dry run only reports it, since the simulation would fail).
-    if (fn !== "halt" && fn !== "rescue" && fn !== "launch" && fn !== "setFlusher") {
+    if (fn !== "halt" && fn !== "rescue" && fn !== "launch" && fn !== "setFlusher" && fn !== "setSource") {
       if (yes) await catchUp(pub, wallet, dep.mine, TAG);
       else if (now >= dep.genesis && closed < current) console.log(`${TAG} mine is ${current - closed} rounds behind; the real run pokes first`);
     }
@@ -81,8 +82,14 @@ async function main() {
     }
     console.log(`${TAG} vault USDG reserve ${formatUnits(reserve, udec)}`);
     if (dep.feeFunder) {
-      const pendingEth = (await pub.readContract({ abi: feeFunderAbi, address: dep.feeFunder, functionName: "pending" })) as bigint;
-      console.log(`${TAG} FeeFunder ${dep.feeFunder} (Pons tax recipient): ${formatUnits(pendingEth, 18)} ETH waiting to be flushed`);
+      const funder = { abi: feeFunderAbi, address: dep.feeFunder } as const;
+      const [pendingEth, pendingToken, src] = await Promise.all([
+        pub.readContract({ ...funder, functionName: "pending" }) as Promise<bigint>,
+        pub.readContract({ ...funder, functionName: "pendingToken" }) as Promise<bigint>,
+        pub.readContract({ ...funder, functionName: "source" }) as Promise<{ locker: Address; token: Address; pool: Address }>,
+      ]);
+      const wired = !/^0x0{40}$/i.test(src.locker);
+      console.log(`${TAG} FeeFunder ${dep.feeFunder} (Pons fee wallet): ${formatUnits(pendingEth, 18)} ETH/WETH + ${formatUnits(pendingToken, 18)} token held; source ${wired ? `locker ${src.locker} token ${src.token} pool ${src.pool}` : "NOT WIRED (rounds-admin set-source after the token launch)"}`);
     }
     return;
   }
@@ -173,7 +180,37 @@ async function main() {
     return;
   }
 
-  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause | set-flusher --address 0x… [--revoke]  [--yes]");
+  if (cmd === "set-source") {
+    requireKey(operator, "operator", "OPERATOR_KEY");
+    if (!dep.feeFunder) throw new Error("no FeeFunder in the deployment");
+    const token = arg("--token") as Address | undefined;
+    if (!token || !/^0x[0-9a-fA-F]{40}$/.test(token)) throw new Error("--token <the game token> is required");
+    const locker = (arg("--locker") ?? dep.ponsLocker) as Address | undefined;
+    if (!locker) throw new Error("--locker <Pons locker> is required (or ponsLocker in the deployment file / PONS_LOCKER_ADDRESS)");
+    let pool = arg("--pool") as Address | undefined;
+    if (!pool) {
+      // The Pons factory records the paired token and fee tier of the launch; the Uniswap factory has the pool.
+      if (!dep.ponsFactory || !dep.uniswapV3Factory || !dep.weth) throw new Error("--pool is required (no ponsFactory/uniswapV3Factory/weth in the deployment to derive it)");
+      const launched = (await pub.readContract({
+        address: dep.ponsFactory,
+        abi: parseAbi(["function getLaunchedToken(address) view returns ((address token,address deployer,address pairedToken,address positionManager,uint256 positionId,uint256 dexId,uint256 launchConfigId,uint256 restrictionsEndBlock,uint256 supply,bool isToken0,uint24 poolFee,bool exists,uint256 initialBuyAmount))"]),
+        functionName: "getLaunchedToken", args: [token],
+      })) as { pairedToken: Address; poolFee: number; exists: boolean; deployer: Address };
+      if (!launched.exists) throw new Error(`${token} is not a Pons launch on factory ${dep.ponsFactory}; pass --pool and --locker explicitly`);
+      if (launched.pairedToken.toLowerCase() !== dep.weth.toLowerCase()) throw new Error(`the Pons pool pairs ${launched.pairedToken}, not WETH ${dep.weth}: the funder can only sell the token for WETH`);
+      pool = (await pub.readContract({ address: dep.uniswapV3Factory, abi: parseAbi(["function getPool(address,address,uint24) view returns (address)"]), functionName: "getPool", args: [token, dep.weth, launched.poolFee] })) as Address;
+      if (/^0x0{40}$/i.test(pool)) throw new Error("no Uniswap v3 pool for the token against WETH at the launch fee tier");
+      console.log(`${TAG} Pons launch of ${token} by ${launched.deployer}: pool ${pool} (fee ${launched.poolFee})`);
+    }
+    console.log(`${TAG} SET SOURCE on FeeFunder ${dep.feeFunder}: locker ${locker} token ${token} pool ${pool}`);
+    await broadcast(`setSource(${locker}, ${token}, ${pool})`, dep.feeFunder, feeFunderAbi as typeof roundMineAbi, "setSource", [{ locker, token, pool }]);
+    console.log(`${TAG} NEXT, from the wallet that launched the token on Pons (only it may do this): redirect the creator fees to the funder:`);
+    console.log(`${TAG}   cast send ${locker} "setFeeRedirect(address,address)" ${token} ${dep.feeFunder} --rpc-url $RPC_URL --private-key <token deployer key>`);
+    console.log(`${TAG} then check with: cast call ${locker} "feeRedirects(address)(address)" ${token} --rpc-url $RPC_URL   # must print ${dep.feeFunder}`);
+    return;
+  }
+
+  throw new Error("usage: rounds-admin status | launch --token 0x… [--genesis next-hour|+seconds|unix] | halt | rescue | pause | unpause | set-flusher --address 0x… [--revoke] | set-source --token 0x… [--pool 0x…] [--locker 0x…]  [--yes]");
 }
 
 main().catch((e: Error) => { console.error(`${TAG} failed:`, e.message ?? e); process.exit(1); });

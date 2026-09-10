@@ -22,6 +22,10 @@ export interface RoundsDeployment {
   feeFunder?: Address;
   weth?: Address;
   pools?: Address[];
+  /** Pons: the locker that pays the creator fee share and the factory that records launches (docs/13 §2). */
+  ponsLocker?: Address;
+  ponsFactory?: Address;
+  uniswapV3Factory?: Address;
   genesis: number;
   roundSeconds: number;
   claimSeconds: number;
@@ -54,6 +58,9 @@ export function loadRoundsDeployment(id = chainId()): RoundsDeployment {
     stocks,
     symbols: symbols.length === stocks.length ? symbols : stocks.map((_, i) => `stock${i}`),
     feeFunder: process.env.FEE_FUNDER_ADDRESS as Address | undefined,
+    ponsLocker: process.env.PONS_LOCKER_ADDRESS as Address | undefined,
+    ponsFactory: process.env.PONS_FACTORY_ADDRESS as Address | undefined,
+    uniswapV3Factory: process.env.UNISWAP_V3_FACTORY_ADDRESS as Address | undefined,
     genesis: Number(process.env.GENESIS ?? 0),
     roundSeconds: Number(process.env.ROUND_SECONDS ?? 3600),
     claimSeconds: Number(process.env.CLAIM_SECONDS ?? 900),

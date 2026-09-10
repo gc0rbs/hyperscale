@@ -32,7 +32,7 @@
   },
   "feedsNote": "Chainlink proxies on chain 4663 (reference-data-directory feeds-robinhood-mainnet.json, 2026-09-04): 8 decimals, 24 h heartbeat, 0.5% deviation. NVDA verified live at $230.24. Also available: SPY 0x319724394D3A0e3669269846abE664Cd621f9f6A, ETH/USD 0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9, USDG/USD 0x61B7e5650328764B076A108EFF5fa7282a1B9aD2. Deploy ChainlinkOracle(stocks, feeds) and put its address in `oracle`; deploy OpenEligibility for `eligibility`.",
   "feeWallet": "0xC8156Dc02630fF103a7cBCbCc1DDe2673515d1c0",
-  "feeWalletNote": "Pons tax recipient (client, 2026-09-08). Receives the trading tax in ETH; its key is FUNDER_KEY on the funding service only. Swaps into the four Stock Tokens and calls RoundMine.fund via fund-rounds --loop.",
+  "feeWalletNote": "Client wallet (2026-09-08), optional manual funder (fund-rounds). Not the fee recipient: the creator share of the Pons pool fees is redirected to the FeeFunder contract (rounds-admin set-source, docs/RUNBOOK-ROUNDS §2b).",
   "pools": {
     "NVDA": {
       "pool": "0x62AB521f71431f78ac374CdbadC6cda3c8916b6C",

@@ -9,7 +9,7 @@
 ## 1. Why
 
 Seasons needed a pool fixed in advance, a deployment per season and a 30-day tail. The client's
-funding is now a stream (the Pons trading tax on $VRAM) and the product needs a payout every hour, not
+funding is now a stream (the trading fees on $VRAM's Pons pool) and the product needs a payout every hour, not
 every season. So: one permanent mine, rounds of one hour, a pot per round filled from the fee stream,
 split among the rigs by the work they did in that hour, claimable for fifteen minutes, and whatever is
 not claimed rolls into the next pot.
@@ -38,15 +38,22 @@ not claimed rolls into the next pot.
   first hour pays out whatever accrued during it, and a project can run for two hours or two weeks
   with no funding calendar. Nothing is ever scheduled ahead, so there is nothing to unschedule; the
   operator's only way out is `halt` (below).
-- **FeeFunder.** The Pons tax is paid in ETH to the `FeeFunder` contract (`contracts/src/rounds/
-  FeeFunder.sol`), which is set as the tax recipient. A flusher (the keeper key, holding only gas)
-  calls `flush(minOut[])` every few minutes: the ETH is wrapped, split across the four stocks by
-  share (15/20/25/40 by default), swapped directly against each stock's Uniswap v3 WETH pool (the
-  contract is the swap caller and pays in `uniswapV3SwapCallback`, which only accepts a configured
-  pool and only pays WETH), and every token bought is funded into the running round in the same
-  transaction. `minOut` is quoted off-chain right before sending (simulate, then a 1% haircut); a
-  moved price reverts the whole flush and the ETH waits. No key ever holds the fees. The owner (the
-  operator) can re-point pools and shares (`setLegs`), allow flushers, and sweep the contract.
+- **FeeFunder.** How Pons pays, verified on chain 2026-09-10 (DECISIONS same date): a Pons token has
+  no transfer tax. Its liquidity is a locked Uniswap v3 position (1% fee tier) and the creator's share
+  of that pool's fees (70%; Pons keeps 30%) is paid by the Pons locker's `collectFees(token)` as
+  plain ERC-20 transfers of both pool assets, WETH and the token, to the token's fee wallet. The
+  `FeeFunder` contract (`contracts/src/rounds/FeeFunder.sol`) is that fee wallet: the token deployer
+  redirects the creator fees to it after the launch (`setFeeRedirect`), and the operator wires the
+  locker, token and token pool into it (`setSource`). A flusher (the keeper key, holding only gas)
+  calls `flush(minWethFromToken, minOut[])` every few minutes: the contract collects from the locker,
+  wraps any ETH, sells the token half for WETH on the token's own pool, splits the WETH across the
+  four stocks by share (15/20/25/40 by default), swaps directly against each stock's Uniswap v3 WETH
+  pool (the contract is the swap caller and pays in `uniswapV3SwapCallback`, which only accepts a
+  configured pool and only pays that pool's input asset), and funds every token bought into the
+  running round in the same transaction. Both minimums are quoted off-chain right before sending
+  (simulate, then a 1% haircut); a moved price reverts the whole flush and the fees wait. No key ever
+  holds the fees. The owner (the operator) can re-point pools and shares (`setLegs`, `setSource`),
+  allow flushers, and sweep the contract.
 - **Claim.** After round `r` closes, each rig that worked in it can `claim` during
   `[close, close + claimSeconds)` (900 s) and receives `pot[r][s] × rigWork[r] / roundWork[r]` of each
   stock as fragments (whole fragments; dust stays in the pot). Only the latest closed round is ever

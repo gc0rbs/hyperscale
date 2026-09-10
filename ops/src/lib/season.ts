@@ -64,6 +64,8 @@ export interface ChainProfile {
   eligibility?: Address;
   treasury?: Address;
   stocks?: Record<string, Address>;
+  /** Chain-wide contracts the round mine's funder uses: weth, uniswapV3Factory, ponsFactory, ponsLocker. */
+  external?: Record<string, Address>;
 }
 
 export const DEPLOYMENTS = join(REPO_ROOT, "contracts", "deployments");

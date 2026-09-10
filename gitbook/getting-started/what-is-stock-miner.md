@@ -1,6 +1,6 @@
 # What is Hyperscaler?
 
-Hyperscaler is one permanent game with **hourly rounds**. Every round has a pot of four Robinhood Stock Tokens, filled by the trading tax on $VRAM while the round runs. Players point throughput at the game by staking $VRAM on a virtual GPU. When the round closes, the pot is split by the share of that hour's work each GPU did.
+Hyperscaler is one permanent game with **hourly rounds**. Every round has a pot of four Robinhood Stock Tokens, filled by the trading fees on $VRAM while the round runs. Players point throughput at the game by staking $VRAM on a virtual GPU. When the round closes, the pot is split by the share of that hour's work each GPU did.
 
 ## The loop
 
